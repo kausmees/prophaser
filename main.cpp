@@ -1,7 +1,6 @@
 #include <chrono>
 
 #include "HaplotypePhaser.h"
-#include "VcfUtils.h"
 #include "Parameters.h"
 #include "Pedigree.h"
 //#include "VcfLoader.h"
@@ -30,12 +29,11 @@ int main(int argc, char ** argv){
 	phaser.LoadData(ref_file, sample_file, 626);
 //	VcfUtils::CompareHaplotypes();
 
-	printf("Num inds= %d num markers= %d num states = %d \n", phaser.num_inds, phaser.num_markers, phaser.num_states);
+//	printf("Num inds= %d num markers= %d num states = %d \n", phaser.num_inds, phaser.num_markers, phaser.num_states);
 //	phaser.CalcForward();
 //	phaser.CalcBackward();
 //	phaser.CalcPosteriorOld();
 
-//	Doing marker = 1 state = 34544
 
 	chrono::steady_clock::time_point begin = chrono::steady_clock::now();
 	cout << "Starting Forward \n";
@@ -49,11 +47,35 @@ int main(int argc, char ** argv){
 	chrono::steady_clock::time_point end= std::chrono::steady_clock::now();
 
 	cout << "Time difference = " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
-//
+
 	int * ml_states = new int[phaser.num_markers];
 	phaser.SampleHaplotypesNew(ml_states);
-	phaser.PrintHaplotypes(ml_states);
+	VcfUtils::HaplotypePair inferred_haps = phaser.PrintHaplotypes(ml_states);
 	delete [] ml_states;
+
+
+	VcfUtils::HaplotypePair true_haps = VcfUtils::loadHaplotypesFromVCF("/home/kristiina/Projects/Data/1KGData/vcfs/chrom20/A_ref.vcf", 624);
+
+	printf("Inferred: \n");
+	inferred_haps.print();
+//	printf("\n");
+	printf("True: \n");
+	true_haps.print();
+//	printf("\n");
+	VcfUtils::HaplotypePair mach_haps= VcfUtils::loadHaplotypesFromMACH("/home/kristiina/Programs/mach.1.0.18.Linux/executables/mach1.out");
+	printf("Mach: \n");
+	mach_haps.print();
+
+//
+	printf("lengths true %d %d \n", true_haps.h1.size(), true_haps.h2.size());
+	printf("lengths inferred %d %d \n", inferred_haps.h1.size(), inferred_haps.h2.size());
+	printf("lengths mach %d %d \n", mach_haps.h1.size(), mach_haps.h2.size());
+	printf("true inferred equal: %d \n", true_haps.isEqual(inferred_haps));
+	printf("true mach equal: %d \n", true_haps.isEqual(mach_haps));
+	printf("mach inferred equal: %d \n", mach_haps.isEqual(inferred_haps));
+
+
+
 	/*
 
 	cout << "HAPLOTYPES" << "\n";

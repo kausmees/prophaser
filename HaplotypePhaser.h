@@ -1,4 +1,5 @@
 #include "Pedigree.h"
+#include "VcfUtils.h"
 #include <vector>
 
 /**
@@ -72,5 +73,5 @@ public:
 	void SampleHaplotypesNew(int * ml_states);
 	void InferHaplotypes();
 
-	void PrintHaplotypes(int * states);
+	VcfUtils::HaplotypePair PrintHaplotypes(int * states);
 };

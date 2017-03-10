@@ -56,7 +56,7 @@ void LoadReferenceMarkers(const String &file_name){
 		}
 
 		// if marker is a monomorphic SNP with no missing bases
-		if(record.getNumRefBases() == 1 && record.getNumAlts() == 1 && strcmp(record.getRefStr(),"N") != 0) {
+		if(record.getNumRefBases() == 1 && record.getNumAlts() == 1 && strcmp(record.getRefStr(),"N") != 0 && strlen(record.getRefStr()) == 1 && strlen(record.getAltStr()) == 1) {
 
 			int marker_id = Pedigree::GetMarkerID(marker_name);
 			printf("added marker (%d, %s) to pedigree \n", marker_id, marker_name);
@@ -132,7 +132,7 @@ void LoadHaplotypes(const String &file_name, const Pedigree &ped, char** haploty
 		std::stringstream ss;
 		ss << record.getChromStr() << ":" << record.get1BasedPosition();
 		marker_name = ss.str().c_str();
-		int marker_id = ped.LookupMarker(marker_name);
+		int marker_id = Pedigree::LookupMarker(marker_name);
 		if(marker_id >= 0){
 
 			for (int ind = 0; ind < ped.count; ind++) {
@@ -180,7 +180,7 @@ void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, char*
 		ss << record.getChromStr() << ":" << record.get1BasedPosition();
 		marker_name = ss.str().c_str();
 
-		int marker_id = ped.LookupMarker(marker_name);
+		int marker_id = Pedigree::LookupMarker(marker_name);
 
 		if(marker_id >= 0){
 			printf("DOING MARKER ID %d\n", marker_id);
@@ -341,14 +341,89 @@ void LoadGeneticMap(const char *file_name, const Pedigree &ped, vector<double> &
 		}
 	}
 
-//	for (auto & t : thetas) {
-//		printf("Theta: %f \n", t);
-//	}
+	//	for (auto & t : thetas) {
+	//		printf("Theta: %f \n", t);
+	//	}
 
 	for (int i = 0; i < Pedigree::markerCount; i++) {
 		printf("Marker : %d, Theta: %f \n", GetMarkerPos(i), thetas[i]);
 	}
 	printf("%d lines read from map \n", c);
+
+}
+
+/**
+ * Load haplotypes of individual sample_ind from file_name at markers
+ * specified in pedigree.
+ */
+HaplotypePair loadHaplotypesFromVCF(const char * file_name, int sample_ind) {
+	HaplotypePair haps;
+	VcfFileReader reader;
+	VcfHeader header;
+	reader.open(file_name, header);
+	int g1, g2;
+
+	const char * marker_name;
+	VcfRecord record;
+	while(reader.readRecord(record)){
+		std::stringstream ss;
+		ss << record.getChromStr() << ":" << record.get1BasedPosition();
+		marker_name = ss.str().c_str();
+		int marker_id = Pedigree::LookupMarker(marker_name);
+		if(marker_id >= 0){
+
+			g1 = record.getGT(sample_ind,0);
+			g2 = record.getGT(sample_ind,1);
+			if(marker_id == 14 || marker_id ==13 || marker_id == 15){
+				printf("%dth: %d %d \n", marker_id, g1, g2);
+				printf("Alleles: %s %s \n", Pedigree::GetMarkerInfo(marker_id)->GetAlleleLabel(g1+1).c_str(), Pedigree::GetMarkerInfo(marker_id)->GetAlleleLabel(g2+1).c_str());
+
+						}
+			haps.h1.push_back(Pedigree::GetMarkerInfo(marker_id)->GetAlleleLabel(g1+1));
+			haps.h2.push_back(Pedigree::GetMarkerInfo(marker_id)->GetAlleleLabel(g2+1));
+		}
+	}
+	reader.close();
+	return haps;
+}
+
+HaplotypePair loadHaplotypesFromMACH(const char * file_name) {
+	HaplotypePair hp;
+	FILE * hapstream = fopen(file_name, "r");
+	int c;
+
+	while(!feof(hapstream) && c != ' '){
+		c = fgetc(hapstream);
+	}
+	c = fgetc(hapstream);
+	while(!feof(hapstream) && c != ' '){
+		c = fgetc(hapstream);
+	}
+	c = fgetc(hapstream);
+	while(!feof(hapstream) && c != '\n'){
+		hp.h1.push_back(String(char(c)));
+		c = fgetc(hapstream);
+	}
+	while(!feof(hapstream) && c != ' '){
+		c = fgetc(hapstream);
+	}
+	c = fgetc(hapstream);
+	while(!feof(hapstream) && c != ' '){
+		c = fgetc(hapstream);
+	}
+	c = fgetc(hapstream);
+	while(!feof(hapstream) && c != '\n'){
+		hp.h2.push_back(String(char(c)));
+		c = fgetc(hapstream);
+
+	}
+
+//	while(!feof(hapstream) && *fgets(buffer, 1, hapstream) != '\n'){
+//		hp.h2.push_back(String(buffer[0]));
+//	}
+
+	return hp;
+
 
 }
 
@@ -385,24 +460,25 @@ void CompareHaplotypes(){
 	}
 
 	for(int i = 0; i < Pedigree::markerCount; i++) {
-			if(ha1[i] != hb2[i]){
-				printf("ha1 and hb2 differ at position %d \n", i);
-			}
+		if(ha1[i] != hb2[i]){
+			printf("ha1 and hb2 differ at position %d \n", i);
+		}
 	}
 
 	for(int i = 0; i < Pedigree::markerCount; i++) {
-			if(ha2[i] != hb1[i]){
-				printf("ha2 and hb1 differ at position %d \n", i);
-			}
+		if(ha2[i] != hb1[i]){
+			printf("ha2 and hb1 differ at position %d \n", i);
+		}
 	}
 
 	for(int i = 0; i < Pedigree::markerCount; i++) {
-			if(ha2[i] != hb2[i]){
-				printf("ha2 and hb2 differ at position %d \n", i);
-			}
+		if(ha2[i] != hb2[i]){
+			printf("ha2 and hb2 differ at position %d \n", i);
+		}
 	}
 
 
 }
+
 
 }

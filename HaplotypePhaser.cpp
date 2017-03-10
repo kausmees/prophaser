@@ -2,10 +2,7 @@
 #include <string.h>
 
 #include "HaplotypePhaser.h"
-#include "VcfUtils.h"
-
 #include "MemoryAllocators.h"
-//#include "VcfLoader.h"
 
 
 HaplotypePhaser::~HaplotypePhaser(){
@@ -72,8 +69,7 @@ void HaplotypePhaser::LoadData(const String &ref_file, const String &sample_file
 	AllocateMemory();
 	VcfUtils::LoadHaplotypes(ref_file, ped, haplotypes);
 	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, genotypes, sample_index);
-	//	const char * map_file = ;"/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map"
-	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, thetas);
+//	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, thetas);
 };
 
 
@@ -619,7 +615,11 @@ void HaplotypePhaser::InferHaplotypes() {
 	delete [] sampled_haplotypes;
 }
 
-void HaplotypePhaser::PrintHaplotypes(int * ml_states){
+
+/**
+ * Translate maximum likelihood states to haplotypes.
+ */
+VcfUtils::HaplotypePair HaplotypePhaser::PrintHaplotypes(int * ml_states){
 	VcfUtils::HaplotypePair hp;
 
 	int num_h = 2*num_inds - 2;
@@ -633,17 +633,5 @@ void HaplotypePhaser::PrintHaplotypes(int * ml_states){
 		hp.h1.push_back(Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap1][m]+1));
 		hp.h2.push_back(Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap2][m]+1));
 	}
-
-	for (auto & t : hp.h1) {
-		printf("%s", t.c_str());
-
-	}
-
-	printf("\n");
-
-	for (auto & t : hp.h2) {
-		printf("%s", t.c_str());
-	}
-
-	printf("\n");
+	return hp;
 }
