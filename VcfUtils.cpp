@@ -12,6 +12,74 @@
 
 namespace VcfUtils{
 
+HaplotypePair::HaplotypePair(std::vector<String> in1, std::vector<String> in2) {
+	if(in1.size() != in2.size())
+		throw std::invalid_argument("Haplotypes not of same length.");
+
+	length = in1.size();
+	h1=in1;
+	h2=in2;
+}
+
+void HaplotypePair::print(){
+	for (auto & t : h1) {
+		printf("%s", t.ToUpper().c_str());
+
+	}
+	printf("\n");
+	for (auto & t : h2) {
+		printf("%s", t.ToUpper().c_str());
+	}
+	printf("\n");
+}
+
+bool HaplotypePair::isEqual(HaplotypePair other) {
+	return HaplotypePair::pairEqual(h1,h2,other.h1,other.h2);
+};
+
+double HaplotypePair::switchError(HaplotypePair other) {
+	double count = 0.0;
+
+	if(length != other.length)
+		return -1.0;
+
+	std::vector<String>::iterator this_1 = h1.begin()+1;
+	std::vector<String>::iterator this_2 = h2.begin()+1;
+	std::vector<String>::iterator other_1 = other.h1.begin()+1;
+	std::vector<String>::iterator other_2 = other.h2.begin()+1;
+
+	while(this_1 != h1.end()) {
+		if(!pairEqual(subVector(this_1-1,2), subVector(this_2-1,2), subVector(other_1-1,2),subVector(other_2-1,2))) {
+			count++;
+		}
+		this_1++;
+		this_2++;
+		other_1++;
+		other_2++;
+	}
+	return count / (h1.size() - 1);
+}
+
+/**
+ * Compare genotype implied by h1 and h2 to that of haplotype pair h_true
+ * at marker indices specified in positions.
+ *
+ * Return percentage of incorrect markers.
+ *
+ */
+double HaplotypePair::imputeError(HaplotypePair h_true, std::vector<int> positions){
+	double count = 0.0;
+	for(int & i : positions) {
+		if(!pairEqual(h1[i], h2[i], h_true.h1[i], h_true.h2[i])) {
+			count++;
+		}
+	}
+	return count / positions.size();
+}
+
+
+
+
 int max_pl = 255;
 std::vector<int> unphased_marker_subset;
 
@@ -309,7 +377,7 @@ int GetMarkerPos(int marker_id){
  *
  *
  */
-void LoadGeneticMap(const char *file_name, const Pedigree &ped, vector<double> &thetas) {
+void LoadGeneticMap(const char *file_name, const Pedigree &ped, vector<double> &distances) {
 	int ped_pos;
 	int map_pos;
 	double dist;
@@ -317,6 +385,8 @@ void LoadGeneticMap(const char *file_name, const Pedigree &ped, vector<double> &
 	int c = 0;
 	char marker_name [256];
 	int result;
+	//TODO dont hardcode Ne
+	double pop_const = 4*11418;
 	FILE * mapstream = fopen(file_name, "r");
 
 	result = fscanf(mapstream, "%255s %d %lf", marker_name, &map_pos, &prev_dist);
@@ -330,23 +400,19 @@ void LoadGeneticMap(const char *file_name, const Pedigree &ped, vector<double> &
 		if(map_pos == ped_pos) {
 
 			//TODO what should it be set to if it is zero??
-			thetas[i] = (dist - prev_dist > 0.00000001) ? dist - prev_dist : 0.001;
+			distances[i] = (dist - prev_dist > 0.00000001) ? (dist - prev_dist)*pop_const : 0.001*pop_const;
 			prev_dist = dist;
 		}
 		else{
-			thetas[i] = thetas[i-1];
+			distances[i] = distances[i-1];
 			//	TODO throw warning
 			printf("WARNING: Marker %d is not present in crossover file. \n", GetMarkerPos(i));
 			continue;
 		}
 	}
 
-	//	for (auto & t : thetas) {
-	//		printf("Theta: %f \n", t);
-	//	}
-
 	for (int i = 0; i < Pedigree::markerCount; i++) {
-		printf("Marker : %d, Theta: %f \n", GetMarkerPos(i), thetas[i]);
+		printf("Marker : %d, Theta: %f \n", GetMarkerPos(i), distances[i]);
 	}
 	printf("%d lines read from map \n", c);
 
@@ -357,7 +423,9 @@ void LoadGeneticMap(const char *file_name, const Pedigree &ped, vector<double> &
  * specified in pedigree.
  */
 HaplotypePair loadHaplotypesFromVCF(const char * file_name, int sample_ind) {
-	HaplotypePair haps;
+	std::vector<String> h1;
+	std::vector<String> h2;
+
 	VcfFileReader reader;
 	VcfHeader header;
 	reader.open(file_name, header);
@@ -378,17 +446,20 @@ HaplotypePair loadHaplotypesFromVCF(const char * file_name, int sample_ind) {
 				printf("%dth: %d %d \n", marker_id, g1, g2);
 				printf("Alleles: %s %s \n", Pedigree::GetMarkerInfo(marker_id)->GetAlleleLabel(g1+1).c_str(), Pedigree::GetMarkerInfo(marker_id)->GetAlleleLabel(g2+1).c_str());
 
-						}
-			haps.h1.push_back(Pedigree::GetMarkerInfo(marker_id)->GetAlleleLabel(g1+1));
-			haps.h2.push_back(Pedigree::GetMarkerInfo(marker_id)->GetAlleleLabel(g2+1));
+			}
+			h1.push_back(Pedigree::GetMarkerInfo(marker_id)->GetAlleleLabel(g1+1));
+			h2.push_back(Pedigree::GetMarkerInfo(marker_id)->GetAlleleLabel(g2+1));
 		}
 	}
 	reader.close();
+	HaplotypePair haps(h1,h2);
 	return haps;
 }
 
 HaplotypePair loadHaplotypesFromMACH(const char * file_name) {
-	HaplotypePair hp;
+	std::vector<String> h1;
+	std::vector<String> h2;
+
 	FILE * hapstream = fopen(file_name, "r");
 	int c;
 
@@ -401,7 +472,7 @@ HaplotypePair loadHaplotypesFromMACH(const char * file_name) {
 	}
 	c = fgetc(hapstream);
 	while(!feof(hapstream) && c != '\n'){
-		hp.h1.push_back(String(char(c)));
+		h1.push_back(String(char(c)));
 		c = fgetc(hapstream);
 	}
 	while(!feof(hapstream) && c != ' '){
@@ -413,14 +484,15 @@ HaplotypePair loadHaplotypesFromMACH(const char * file_name) {
 	}
 	c = fgetc(hapstream);
 	while(!feof(hapstream) && c != '\n'){
-		hp.h2.push_back(String(char(c)));
+		h2.push_back(String(char(c)));
 		c = fgetc(hapstream);
 
 	}
 
-//	while(!feof(hapstream) && *fgets(buffer, 1, hapstream) != '\n'){
-//		hp.h2.push_back(String(buffer[0]));
-//	}
+	//	while(!feof(hapstream) && *fgets(buffer, 1, hapstream) != '\n'){
+	//		hp.h2.push_back(String(buffer[0]));
+	//	}
+	HaplotypePair hp(h1,h2);
 
 	return hp;
 

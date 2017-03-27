@@ -3,6 +3,8 @@
 #include "HaplotypePhaser.h"
 #include "Parameters.h"
 #include "Pedigree.h"
+
+
 //#include "VcfLoader.h"
 
 
@@ -34,7 +36,7 @@ int main(int argc, char ** argv){
 //	phaser.CalcBackward();
 //	phaser.CalcPosteriorOld();
 
-
+//
 	chrono::steady_clock::time_point begin = chrono::steady_clock::now();
 	cout << "Starting Forward \n";
 	phaser.CalcScaledForward();
@@ -50,31 +52,73 @@ int main(int argc, char ** argv){
 
 	int * ml_states = new int[phaser.num_markers];
 	phaser.SampleHaplotypesNew(ml_states);
+	printf("before Inferred: \n");
 	VcfUtils::HaplotypePair inferred_haps = phaser.PrintHaplotypes(ml_states);
+	printf("after Inferred: \n");
 	delete [] ml_states;
 
-
+	printf("Before True: \n");
 	VcfUtils::HaplotypePair true_haps = VcfUtils::loadHaplotypesFromVCF("/home/kristiina/Projects/Data/1KGData/vcfs/chrom20/A_ref.vcf", 624);
 
 	printf("Inferred: \n");
 	inferred_haps.print();
-//	printf("\n");
+	printf("\n");
 	printf("True: \n");
 	true_haps.print();
-//	printf("\n");
+	printf("\n");
 	VcfUtils::HaplotypePair mach_haps= VcfUtils::loadHaplotypesFromMACH("/home/kristiina/Programs/mach.1.0.18.Linux/executables/mach1.out");
 	printf("Mach: \n");
 	mach_haps.print();
 
-//
+
 	printf("lengths true %d %d \n", true_haps.h1.size(), true_haps.h2.size());
 	printf("lengths inferred %d %d \n", inferred_haps.h1.size(), inferred_haps.h2.size());
 	printf("lengths mach %d %d \n", mach_haps.h1.size(), mach_haps.h2.size());
+
 	printf("true inferred equal: %d \n", true_haps.isEqual(inferred_haps));
+	printf("true inferred switch: %f \n", true_haps.switchError(inferred_haps));
+
+
 	printf("true mach equal: %d \n", true_haps.isEqual(mach_haps));
+	printf("true mach switch: %f \n", true_haps.switchError(mach_haps));
+
 	printf("mach inferred equal: %d \n", mach_haps.isEqual(inferred_haps));
 
 
+
+
+
+//	std::vector<String> t1{ "A", "T", "G", "A" };
+//	std::vector<String> t2{ "T", "C", "C", "T" };
+
+
+//	std::vector<String> i1{ "A", "T", "C", "T" };
+//	std::vector<String> i2{ "T", "C", "G", "A" };
+
+//
+//	std::vector<String> i1{ "A", "T", "G", "A" };
+//	std::vector<String> i2{ "T", "C", "C", "T" };
+//
+//	std::vector<String> i1{ "A", "T", "G", "A" };
+//	std::vector<String> i2{ "R", "R", "C", "R" };
+//
+//
+//	VcfUtils::HaplotypePair th(t1,t2);
+//	VcfUtils::HaplotypePair ih(i1,i2);
+//
+//
+//	std::vector<int> pos1{0,1,2,3};
+//	std::vector<int> pos2{0};
+//	std::vector<int> pos3{2};
+//	std::vector<int> pos4{3};
+
+
+//	printf("equal = %d \n", th.isEqual(ih));
+//	printf("switch = %f \n", th.switchError(ih));
+//	printf("impute error1 = %f \n", ih.imputeError(th, pos1));
+//	printf("impute error2 = %f \n", ih.imputeError(th, pos2));
+//	printf("impute error3 = %f \n", ih.imputeError(th, pos3));
+//	printf("impute error4 = %f \n", ih.imputeError(th, pos4));
 
 	/*
 
