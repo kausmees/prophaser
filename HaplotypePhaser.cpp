@@ -1,3 +1,4 @@
+
 #include <math.h>
 #include <string.h>
 
@@ -69,9 +70,39 @@ void HaplotypePhaser::LoadData(const String &ref_file, const String &sample_file
 	VcfUtils::LoadIndividuals(ped,ref_file, sample_file, sample_index);
 	AllocateMemory();
 	VcfUtils::LoadHaplotypes(ref_file, ped, haplotypes);
+
 	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, genotypes, sample_index);
 	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
 };
+
+/**
+ * Load vcf data from files. Only reference data.
+ *
+ */
+void HaplotypePhaser::LoadReferenceData(const String &ref_file, const String &sample_file, int sample_index){
+	VcfUtils::LoadReferenceMarkers(ref_file);
+	VcfUtils::LoadIndividuals(ped,ref_file, sample_file, sample_index);
+	AllocateMemory();
+	VcfUtils::LoadHaplotypes(ref_file, ped, haplotypes);
+
+	//	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, genotypes, sample_index);
+	//	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
+};
+
+/**
+ * Load vcf data from files. Only reference data.
+ *
+ */
+void HaplotypePhaser::LoadSampleData(const String &ref_file, const String &sample_file, int sample_index){
+	//	VcfUtils::LoadReferenceMarkers(ref_file);
+	//	VcfUtils::LoadIndividuals(ped,ref_file, sample_file, sample_index);
+	//	AllocateMemory();
+	//	VcfUtils::LoadHaplotypes(ref_file, ped, haplotypes);
+
+	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, genotypes, sample_index);
+	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
+};
+
 
 
 /**
@@ -281,22 +312,22 @@ void HaplotypePhaser::CalcTransitionProbs(int marker, int marker_state, double *
 		}
 	}
 
-//	for(int i = 0; i < num_states; i++){
-//		other_c1 = i / num_h;
-//		other_c2 = i % num_h;
-//
-//		if(other_c1 - marker_c1 == 0 and other_c2 - marker_c2 == 0) {
-//			probs[i] = pow(1 - distances[marker], 2) + ((2 * (1 - distances[marker]) * distances[marker]) / num_h) + (pow(distances[marker],2) / pow(num_h,2));
-//		}
-//		else {
-//			if(other_c1-marker_c1 != 0 and other_c2 - marker_c2 != 0) {
-//				probs[i] = pow(distances[marker]/num_h, 2);
-//			}
-//			else{
-//				probs[i] = (((1 - distances[marker]) * distances[marker]) / num_h) + pow(distances[marker]/num_h, 2);
-//			}
-//		}
-//	}
+	//	for(int i = 0; i < num_states; i++){
+	//		other_c1 = i / num_h;
+	//		other_c2 = i % num_h;
+	//
+	//		if(other_c1 - marker_c1 == 0 and other_c2 - marker_c2 == 0) {
+	//			probs[i] = pow(1 - distances[marker], 2) + ((2 * (1 - distances[marker]) * distances[marker]) / num_h) + (pow(distances[marker],2) / pow(num_h,2));
+	//		}
+	//		else {
+	//			if(other_c1-marker_c1 != 0 and other_c2 - marker_c2 != 0) {
+	//				probs[i] = pow(distances[marker]/num_h, 2);
+	//			}
+	//			else{
+	//				probs[i] = (((1 - distances[marker]) * distances[marker]) / num_h) + pow(distances[marker]/num_h, 2);
+	//			}
+	//		}
+	//	}
 
 }
 
@@ -433,46 +464,147 @@ void HaplotypePhaser::InitPriorScaledBackward(){
 
 
 void HaplotypePhaser::CalcScaledForward(){
+	float min_test = 0.0;
+	float max_test = 0.5;
+
+
+	std::clock_t start;
+	double duration;
+
 	float * emission_probs = new float[num_states];
 	double * transition_probs = new double[num_states];
 	float sum;
+	float sum_normalizer;
 	float c;
+	float c_test;
+	float * normalizers_test = new float[num_markers];
 
 	InitPriorScaledForward();
 
 	for(int m = 1; m < num_markers; m++){
-
+		start = std::clock();
+//		printf("outer loop: %d of %d \n", m, num_markers);
 
 		CalcEmissionProbs(m, emission_probs);
 
 		c = 0.0;
-
-		for(int k = 0; k < num_states; k++){
-			//printf("Doing marker = %d state = %d \n", m, j);
-
-			CalcTransitionProbs(m, k, transition_probs);
-			sum = 0.0;
-			for(int j = 0; j < num_states; j++) {
-
-				sum += s_forward[m-1][j]*transition_probs[j];
-			}
-
-			c += emission_probs[k]*sum;
-		}
-
-		normalizers[m] = c;
-
+		c_test = 0.0;
 		for(int s = 0; s < num_states; s++){
 			CalcTransitionProbs(m, s, transition_probs);
 			sum = 0.0;
+			sum_normalizer = 0.0;
 			for(int j = 0; j < num_states; j++){
 				sum += s_forward[m-1][j] * transition_probs[j];
+				sum_normalizer += s_forward[m-1][j]*transition_probs[j];
 			}
-			s_forward[m][s] =  emission_probs[s] * sum / c;
+			s_forward[m][s] =  emission_probs[s] * sum;
+			c += emission_probs[s]*sum;
+			c_test += emission_probs[s]*sum;
+		}
+		normalizers[m] = c;
+		normalizers_test[m] = 1.0/c;
+
+
+		for(int s = 0; s < num_states; s++){
+
+			float test1 = s_forward[m][s] * normalizers[m];
+			float test2 = s_forward[m][s] * normalizers_test[m];
+
+			s_forward[m][s] = s_forward[m][s] / normalizers[m];
+			//			s_forward[m][s] = s_forward[m][s] * normalizers_test[m];
+
+
+
+
+//			if(s_forward[m][s] > max_test || s_forward[m][s] < min_test) {
+//				printf("OUT OF BOUNDS %d %d \n", m, s);
+//			}
+//
+//			if(m==5 && s==0) {
+//				float test3 = s_forward[m][s];
+//				printf(" Forward ms = %f \n", s_forward[m][s]);
+//				printf("\n");
+//			}
+//			if(abs(test1 - test2) != 0.0) {
+//				printf("Not equal \n");
+//			}
+
+		}
+
+		duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+
+		std::cout<<"duration: "<< duration <<'\n';
+	}
+
+	//	for(int m = 0; m < num_markers; m++) {
+	//		printf("Normalizer %d %f %f \n", m, normalizers[m], 1/normalizers[m]);
+	//	}
+
+	float min = 10000.0;
+	float max = 0.0;
+
+	for(int m = 0; m < num_markers; m++) {
+		for(int s = 0; s < num_states; s++) {
+			//			printf("Normalized alpha %d %f \n", m, s_forward[m][s]);
+			if(s_forward[m][s] < min) {
+				min = s_forward[m][s];
+			}
+			if(s_forward[m][s] > max) {
+				max = s_forward[m][s];
+			}
 		}
 	}
+	printf("Min = %f Max = %f \n", min, max);
+
 	delete [] transition_probs;
 	delete [] emission_probs;
+	delete [] normalizers_test;
+
+	//Working, done tests on
+	//	float * emission_probs = new float[num_states];
+	//	double * transition_probs = new double[num_states];
+	//	float sum;
+	//	float c;
+	//
+	//	InitPriorScaledForward();
+	//
+	//	for(int m = 1; m < num_markers; m++){
+	//		start = std::clock();
+	//		printf("outer loop: %d of %d \n", m, num_markers);
+	//
+	//		CalcEmissionProbs(m, emission_probs);
+	//
+	//		c = 0.0;
+	//
+	//		for(int k = 0; k < num_states; k++){
+	//
+	//			CalcTransitionProbs(m, k, transition_probs);
+	//			sum = 0.0;
+	//			for(int j = 0; j < num_states; j++) {
+	//
+	//				sum += s_forward[m-1][j]*transition_probs[j];
+	//			}
+	//
+	//			c += emission_probs[k]*sum;
+	//		}
+	//
+	//		normalizers[m] = c;
+	//
+	//		for(int s = 0; s < num_states; s++){
+	//			CalcTransitionProbs(m, s, transition_probs);
+	//			sum = 0.0;
+	//			for(int j = 0; j < num_states; j++){
+	//				sum += s_forward[m-1][j] * transition_probs[j];
+	//			}
+	//			s_forward[m][s] =  emission_probs[s] * sum / c;
+	//		}
+	//
+	//		duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+	//
+	//		std::cout<<"printf: "<< duration <<'\n';
+	//	}
+	//	delete [] transition_probs;
+	//	delete [] emission_probs;
 
 }
 
@@ -516,6 +648,14 @@ void HaplotypePhaser::CalcPosterior(){
 	float sum;
 	float norm;
 
+	for(int s = 0; s < num_states; s++) {
+		if(s_forward[0][s] <= 0.0001 || s_backward[0][s] <= 0.0001) {
+			float forw = s_forward[0][s];
+			float backw = s_backward[0][s];
+
+		}
+	}
+
 
 	for(int m = 0; m < num_markers; m++) {
 		float norm = 0.0;
@@ -527,6 +667,13 @@ void HaplotypePhaser::CalcPosterior(){
 		// when calculatig betas, store alpha[m][s] * beta[m][s] in vector[m][s]
 		// Use vector sum, accumulate or whatever
 		for(int s = 0; s < num_states; s++) {
+			if(s== 0 && m==0) {
+				float oldOne = s_forward[m][s];
+				float newOne = s_forward[m][s] * s_backward[m][s] / norm;
+				float backward = s_backward[m][s];
+
+				printf("\n");
+			}
 			s_forward[m][s] = s_forward[m][s] * s_backward[m][s] / norm;
 		}
 	}
@@ -594,6 +741,9 @@ void HaplotypePhaser::SampleHaplotypesNew(int * ml_states){
 		for(int s = 0; s < num_states; s++) {
 			posterior = s_forward[m][s];
 
+			if(m==0) {
+				printf("\n");
+			}
 			if(posterior > max_posterior) {
 				ml_state = s;
 				max_posterior = posterior;
@@ -633,7 +783,7 @@ void HaplotypePhaser::InferHaplotypes() {
 /**
  * Translate maximum likelihood states to haplotypes.
  */
-VcfUtils::HaplotypePair HaplotypePhaser::PrintHaplotypes(int * ml_states){
+void HaplotypePhaser::PrintHaplotypes(int * ml_states){
 	std::vector<String> h1;
 	std::vector<String> h2;
 
@@ -641,13 +791,17 @@ VcfUtils::HaplotypePair HaplotypePhaser::PrintHaplotypes(int * ml_states){
 	int ref_hap1;
 	int ref_hap2;
 
+	int tester1 =  ml_states[0];
 	for(int m = 0; m < num_markers; m++) {
 		ref_hap1 = ml_states[m] / num_h;
 		ref_hap2 = ml_states[m] % num_h;
 
 		h1.push_back(Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap1][m]+1));
 		h2.push_back(Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap2][m]+1));
+		printf(" yy \n");
+
 	}
-	VcfUtils::HaplotypePair hp(h1,h2);
-	return hp;
+
+//	VcfUtils::HaplotypePair hp(h1,h2);
+	//Print to file
 }

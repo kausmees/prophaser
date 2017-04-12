@@ -1,6 +1,7 @@
 #include "Pedigree.h"
 #include "VcfUtils.h"
 #include <vector>
+#include <chrono>
 
 /**
 
@@ -15,14 +16,19 @@ public:
 	Pedigree ped;
 	float theta;
 	float error;
+	int Ne;
 
 	std::vector<double> errors;
-	std::vector<double> thetas;
+	std::vector<double> distances;
 
+	// phred_probs[i] contains linear-scale genotype likelihood
 	float * phred_probs;
 
 	~HaplotypePhaser();
 	void LoadData(const String &ref_file, const String &sample_file, int sample_index);
+	void LoadReferenceData(const String &ref_file, const String &sample_file, int sample_index);
+	void LoadSampleData(const String &ref_file, const String &sample_file, int sample_index);
+
 
 
 //private:
@@ -73,5 +79,5 @@ public:
 	void SampleHaplotypesNew(int * ml_states);
 	void InferHaplotypes();
 
-	VcfUtils::HaplotypePair PrintHaplotypes(int * states);
+	void PrintHaplotypes(int * states);
 };
