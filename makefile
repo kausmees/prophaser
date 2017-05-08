@@ -9,7 +9,7 @@ all: $(TARGET)
 
 
 $(TARGET): $(OBJECTS)
-	$(CC) -g -o $@ $^ -L../../haplotyperProject/libStatGen -lStatGen_debug -lz 
+	$(CC) -g -o $@ $^ ../../haplotyperProject/genoUtils/GenoUtils.o -L../../haplotyperProject/libStatGen -lStatGen_debug -lz 
 
 %.o: %.cpp %.h
 	$(CC) $(CFLAGS) -g $< -I ../../haplotyperProject/libStatGen/include/ -I ../../haplotyperProject/genoUtils/

@@ -2,7 +2,7 @@
 #include "HaplotypePhaser.h"
 #include "Parameters.h"
 #include "Pedigree.h"
-
+#include "GenoUtils.h"
 
 using namespace std;
 
@@ -22,19 +22,19 @@ int main(int argc, char ** argv){
 	parameter_list.Status();
 
 
-//	String orig_sample_file = "../../Data/1KGData/vcfs/chrom20/A/4_A_snps.vcf";
-//	String ref_file = "../../Data/1KGData/vcfs/chrom20/A/4_A_10inds_snps.vcf";
-//
-//
-//	const char * file4_lowcov1 = "../../Data/1KGData/vcfs/chrom20/A/4_A_snps_0.100000_0.001000.vcf";
-//	const char * file4_lowcov2 = "../../Data/1KGData/vcfs/chrom20/A/4_A_snps_0.200000_0.001000.vcf";
-//	const char * file4_lowcov3 = "../../Data/1KGData/vcfs/chrom20/A/4_A_snps_0.300000_0.001000.vcf";
-//	const char * file4_lowcov4 = "../../Data/1KGData/vcfs/chrom20/A/4_A_snps_0.400000_0.001000.vcf";
-//	const char * file4_lowcov5 = "../../Data/1KGData/vcfs/chrom20/A/4_A_snps_0.500000_0.001000.vcf";
-//	const char * file4_lowcov6 = "../../Data/1KGData/vcfs/chrom20/A/4_A_snps_0.600000_0.001000.vcf";
-//	const char * file4_lowcov7 = "../../Data/1KGData/vcfs/chrom20/A/4_A_snps_0.700000_0.001000.vcf";
-//	const char * file4_lowcov8 = "../../Data/1KGData/vcfs/chrom20/A/4_A_snps_0.800000_0.001000.vcf";
-//	const char * file4_lowcov9 = "../../Data/1KGData/vcfs/chrom20/A/4_A_snps_0.900000_0.001000.vcf";
+	String orig_sample_file = "../../Data/1KGData/vcfs/chrom20/A/4_A_snps.vcf";
+	String ref_file_ = "../../Data/1KGData/vcfs/chrom20/A/4_A_10inds_snps.vcf";
+
+
+	const char * file4_lowcov1 = "../../Data/1KGData/vcfs/chrom20/A/4_A_snps_0.100000_0.001000.vcf";
+	const char * file4_lowcov2 = "../../Data/1KGData/vcfs/chrom20/A/4_A_snps_0.200000_0.001000.vcf";
+	const char * file4_lowcov3 = "../../Data/1KGData/vcfs/chrom20/A/4_A_snps_0.300000_0.001000.vcf";
+	const char * file4_lowcov4 = "../../Data/1KGData/vcfs/chrom20/A/4_A_snps_0.400000_0.001000.vcf";
+	const char * file4_lowcov5 = "../../Data/1KGData/vcfs/chrom20/A/4_A_snps_0.500000_0.001000.vcf";
+	const char * file4_lowcov6 = "../../Data/1KGData/vcfs/chrom20/A/4_A_snps_0.600000_0.001000.vcf";
+	const char * file4_lowcov7 = "../../Data/1KGData/vcfs/chrom20/A/4_A_snps_0.700000_0.001000.vcf";
+	const char * file4_lowcov8 = "../../Data/1KGData/vcfs/chrom20/A/4_A_snps_0.800000_0.001000.vcf";
+	const char * file4_lowcov9 = "../../Data/1KGData/vcfs/chrom20/A/4_A_snps_0.900000_0.001000.vcf";
 
 //	String orig_sample_file = "../../Data/1KGData/vcfs/chrom20/B/4_B_snps.vcf";
 //	String ref_file = "../../Data/1KGData/vcfs/chrom20/B/4_B_10inds_snps.vcf";
@@ -51,23 +51,26 @@ int main(int argc, char ** argv){
 //	const char * file4_lowcov9 = "../../Data/1KGData/vcfs/chrom20/B/4_B_snps_0.900000_0.001000.vcf";
 //
 //
-//	const char * sample_name = "NA18909";
-//
-//	int sample_ind = VcfUtils::get_sample_index(orig_sample_file.c_str(), sample_name);
-//	printf("Ind index = %d \n", sample_ind);
-//
-//
-//
-//	vector<String> sample_files =  {file4_lowcov1,
-//									file4_lowcov2,
-//									file4_lowcov3,
-//									file4_lowcov4,
-//									file4_lowcov5,
-//									file4_lowcov6,
-//									file4_lowcov7,
-//									file4_lowcov8,
-//									file4_lowcov9,
-//									orig_sample_file};
+	const char * sample_name = "NA18909";
+
+	PedFile ped_file = PedFile(2);
+
+
+	int sample_ind = get_sample_index(orig_sample_file.c_str(), sample_name);
+	printf("Ind index = %d \n", sample_ind);
+
+
+
+	vector<String> sample_files =  {file4_lowcov1,
+									file4_lowcov2,
+									file4_lowcov3,
+									file4_lowcov4,
+									file4_lowcov5,
+									file4_lowcov6,
+									file4_lowcov7,
+									file4_lowcov8,
+									file4_lowcov9,
+									orig_sample_file};
 //
 //
 //	vector<double> switch_error_mine;
@@ -145,47 +148,47 @@ int main(int argc, char ** argv){
 
 
 
-
-	HaplotypePhaser phaser;
 //
-//	const char * sample_name = "NA18909";
-//	int sample_ind = VcfUtils::get_sample_index(sample_file, sample_name);
-
-	int sample_ind = 624;
-	phaser.LoadData(ref_file, sample_file, sample_ind);
+//	HaplotypePhaser phaser;
+////
+////	const char * sample_name = "NA18909";
+////	int sample_ind = VcfUtils::get_sample_index(sample_file, sample_name);
 //
-//	VcfUtils::HaplotypePair true_haps = VcfUtils::loadHaplotypesFromVCF(sample_file, 624);
-//
-//
-////	VcfUtils::HaplotypePair beagle_haps = VcfUtils::loadHaplotypesFromVCF("/home/kristiina/Programs/beagle/4_A_snps_NA18909_beagle.vcf", 0);
-//	VcfUtils::HaplotypePair beagle_haps = VcfUtils::loadHaplotypesFromVCF("/home/kristiina/Programs/beagle/4_A_snps_0.500000_0.001000_NA18909_beagle.vcf", 0);
-//
-//
-//
+//	int sample_ind = 624;
+//	phaser.LoadData(ref_file, sample_file, sample_ind);
+////
+////	VcfUtils::HaplotypePair true_haps = VcfUtils::loadHaplotypesFromVCF(sample_file, 624);
+////
+////
+//////	VcfUtils::HaplotypePair beagle_haps = VcfUtils::loadHaplotypesFromVCF("/home/kristiina/Programs/beagle/4_A_snps_NA18909_beagle.vcf", 0);
+////	VcfUtils::HaplotypePair beagle_haps = VcfUtils::loadHaplotypesFromVCF("/home/kristiina/Programs/beagle/4_A_snps_0.500000_0.001000_NA18909_beagle.vcf", 0);
+////
+////
+////
+//////	VcfUtils::HaplotypePair mach_haps =
+//////			VcfUtils::loadHaplotypesFromMACH("/home/kristiina/Programs/mach.1.0.18.Linux/executables/errorRate0_1/mach1_4_A_snps_NA18909.out");
 ////	VcfUtils::HaplotypePair mach_haps =
-////			VcfUtils::loadHaplotypesFromMACH("/home/kristiina/Programs/mach.1.0.18.Linux/executables/errorRate0_1/mach1_4_A_snps_NA18909.out");
-//	VcfUtils::HaplotypePair mach_haps =
-//			VcfUtils::loadHaplotypesFromMACH("/home/kristiina/Programs/mach.1.0.18.Linux/executables/errorRate0_1/mach1_4_A_snps_0.500000_0.001000_NA18909.out");
+////			VcfUtils::loadHaplotypesFromMACH("/home/kristiina/Programs/mach.1.0.18.Linux/executables/errorRate0_1/mach1_4_A_snps_0.500000_0.001000_NA18909.out");
+////
+////
+//	chrono::steady_clock::time_point begin = chrono::steady_clock::now();
+//	cout << "Starting Forward \n";
+//	phaser.CalcScaledForward();
+//
+//	cout << "Starting Backward \n";
+//	phaser.CalcScaledBackward();
+//
+//	cout << "Starting Posterior \n";
+//	phaser.CalcPosterior();
+//	chrono::steady_clock::time_point end= std::chrono::steady_clock::now();
+//	cout << "Time difference = " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
 //
 //
-	chrono::steady_clock::time_point begin = chrono::steady_clock::now();
-	cout << "Starting Forward \n";
-	phaser.CalcScaledForward();
-
-	cout << "Starting Backward \n";
-	phaser.CalcScaledBackward();
-
-	cout << "Starting Posterior \n";
-	phaser.CalcPosterior();
-	chrono::steady_clock::time_point end= std::chrono::steady_clock::now();
-	cout << "Time difference = " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
-
-
-	int * ml_states = new int[phaser.num_markers];
-	phaser.SampleHaplotypesNew(ml_states);
-
-	phaser.PrintHaplotypes(ml_states);
-	delete [] ml_states;
+//	int * ml_states = new int[phaser.num_markers];
+//	phaser.SampleHaplotypesNew(ml_states);
+//
+//	phaser.PrintHaplotypes(ml_states);
+//	delete [] ml_states;
 
 //
 //
