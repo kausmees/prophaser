@@ -79,5 +79,5 @@ public:
 	void SampleHaplotypesNew(int * ml_states);
 	void InferHaplotypes();
 
-	void PrintHaplotypes(int * states);
+	HaplotypePair PrintHaplotypesToFile(int * states, const char * out_file);
 };

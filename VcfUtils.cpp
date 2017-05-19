@@ -75,9 +75,10 @@ void LoadReferenceMarkers(const String &file_name){
 };
 
 /**
- * Add individuals from file_name to the pedigree ped.
+ * Add individuals from ref_file to the pedigree ped.
+ * Also individual sample_indeix from sample_file.
+ *
  * TODO possibly no need to have individuals in pedigree.
-
  */
 void LoadIndividuals(Pedigree &ped, const String &ref_file, const String &sample_file, int sample_index) {
 
@@ -328,8 +329,14 @@ void LoadGeneticMap(const char *file_name, const Pedigree &ped, vector<double> &
 		if(map_pos == ped_pos) {
 
 			//TODO what should it be set to if it is zero??
-			distances[i] = (dist - prev_dist > 0.00000001) ? (dist - prev_dist)*pop_const : 0.001*pop_const;
+//			distances[i] = (dist - prev_dist > 0.00000001) ? (dist - prev_dist) * pop_const : 0.001 * pop_const;
+			distances[i] = (dist - prev_dist > 0.00000001) ? (dist - prev_dist) * 5 : 0.01;
+
+			double this_dist = dist - prev_dist;
+			printf("Dist = %f \n", this_dist);
+
 			prev_dist = dist;
+
 		}
 		else{
 			distances[i] = distances[i-1];
@@ -339,10 +346,10 @@ void LoadGeneticMap(const char *file_name, const Pedigree &ped, vector<double> &
 		}
 	}
 
-	//	for (int i = 0; i < Pedigree::markerCount; i++) {
-	//		printf("Marker : %d, Theta: %f \n", GetMarkerPos(i), distances[i]);
-	//	}
-	//	printf("%d lines read from map \n", c);
+		for (int i = 0; i < Pedigree::markerCount; i++) {
+//			printf("Marker : %d, Theta: %f \n", GetMarkerPos(i), distances[i]);
+		}
+		printf("%d lines read from map \n", c);
 
 };
 

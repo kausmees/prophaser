@@ -8,33 +8,131 @@ using namespace std;
 
 
 int main(int argc, char ** argv){
-	String sample_file;
-	String ref_file;
-
-	ParameterList parameter_list;
-	LongParamContainer long_parameters;
-	long_parameters.addGroup("Input files");
-	long_parameters.addString("sampleVCF", &sample_file);
-	long_parameters.addString("referenceVCF", &ref_file);
-
-	parameter_list.Add(new LongParameters("Options",long_parameters.getLongParameterList()));
-	parameter_list.Read(argc, argv);
-	parameter_list.Status();
-
-
-	String orig_sample_file = "../../Data/1KGData/vcfs/chrom20/A/4_A_snps.vcf";
-	String ref_file_ = "../../Data/1KGData/vcfs/chrom20/A/4_A_10inds_snps.vcf";
+//	String sample_file;
+//	String ref_file;
+//
+//	ParameterList parameter_list;
+//	LongParamContainer long_parameters;
+//	long_parameters.addGroup("Input files");
+//	long_parameters.addString("sampleVCF", &sample_file);
+//	long_parameters.addString("referenceVCF", &ref_file);
+//
+//	parameter_list.Add(new LongParameters("Options",long_parameters.getLongParameterList()));
+//	parameter_list.Read(argc, argv);
+//	parameter_list.Status();
 
 
-	const char * file4_lowcov1 = "../../Data/1KGData/vcfs/chrom20/A/4_A_snps_0.100000_0.001000.vcf";
-	const char * file4_lowcov2 = "../../Data/1KGData/vcfs/chrom20/A/4_A_snps_0.200000_0.001000.vcf";
-	const char * file4_lowcov3 = "../../Data/1KGData/vcfs/chrom20/A/4_A_snps_0.300000_0.001000.vcf";
-	const char * file4_lowcov4 = "../../Data/1KGData/vcfs/chrom20/A/4_A_snps_0.400000_0.001000.vcf";
-	const char * file4_lowcov5 = "../../Data/1KGData/vcfs/chrom20/A/4_A_snps_0.500000_0.001000.vcf";
-	const char * file4_lowcov6 = "../../Data/1KGData/vcfs/chrom20/A/4_A_snps_0.600000_0.001000.vcf";
-	const char * file4_lowcov7 = "../../Data/1KGData/vcfs/chrom20/A/4_A_snps_0.700000_0.001000.vcf";
-	const char * file4_lowcov8 = "../../Data/1KGData/vcfs/chrom20/A/4_A_snps_0.800000_0.001000.vcf";
-	const char * file4_lowcov9 = "../../Data/1KGData/vcfs/chrom20/A/4_A_snps_0.900000_0.001000.vcf";
+
+
+//	String dir = "../../Data/1KGData/vcfs/chrom20/";
+//	String data_id = "4";
+//	String subset_id = "A";
+
+	String dir = "../../Data/1KGData/vcfs/chrom20/";
+	String data_id = "4";
+	String subset_id = "B";
+
+
+//	vector<double> coverages = {0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+	vector<double> coverages = {0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+
+	double error = 0.001;
+	String file_name_in;
+	String file_name_out;
+
+//	String sample_file = dir+subset_id+"/" + data_id +"_" + subset_id + "_snps.vcf";
+//	int sample_ind = 624;
+
+	String sample_file = dir+subset_id+"/" + data_id +"_" + subset_id + "_NA18909_snps.vcf";
+	int sample_ind = 0;
+
+
+	String ref_file = dir+subset_id+"/" + data_id +"_" + subset_id + "_10inds_snps.vcf";
+
+	HaplotypePhaser phaser;
+	phaser.LoadReferenceData(ref_file, sample_file, sample_ind);
+
+	HaplotypePair true_haps = loadHaplotypesFromVCF(sample_file, sample_ind);
+
+
+	////////////////////////////////////////////// phasing start //////////////////////////////////////////////////////////////
+
+	file_name_in = dir + subset_id + "/" + data_id + "_" + subset_id + "_" + "NA18909" + "_snps.vcf" ;
+	file_name_out = "./Results/" + data_id + "_" + subset_id + "_" + "NA18909" + "_snps_phased_4" ;
+	phaser. (ref_file, file_name_in, 0);
+
+	chrono::steady_clock::time_point begin = chrono::steady_clock::now();
+		cout << "Starting Forward \n";
+	phaser.CalcScaledForward();
+
+		cout << "Starting Backward \n";
+	phaser.CalcScaledBackward();
+
+	cout << "Starting Posterior \n";
+	phaser.CalcPosterior();
+
+	chrono::steady_clock::time_point end= std::chrono::steady_clock::now();
+
+	cout << "Original: " << endl;
+	cout << "Time = " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
+
+	int * ml_states = new int[phaser.num_markers];
+
+	cout << "Sampling " << endl;
+
+	phaser.SampleHaplotypesNew(ml_states);
+	cout << "Printing " << endl;
+
+	HaplotypePair mine_haps = phaser.PrintHaplotypesToFile(ml_states, file_name_out);
+	mine_haps.print();
+	delete [] ml_states;
+
+
+
+	for(auto cov : coverages) {
+		file_name_in = dir + subset_id + "/" + data_id + "_" + subset_id + "_" + "NA18909" + "_snps_" + (to_string(cov)).c_str() + "_" + (to_string(error)).c_str() + ".vcf" ;
+		file_name_out ="./Results/" + data_id + "_" + subset_id + "_" + "NA18909" + "_snps_" + (to_string(cov)).c_str() + "_" + (to_string(error)).c_str() + "_phased_4" ;
+		phaser.LoadSampleData(ref_file, file_name_in, 0);
+
+		chrono::steady_clock::time_point begin = chrono::steady_clock::now();
+//		cout << "Starting Forward \n";
+		phaser.CalcScaledForward();
+
+//		cout << "Starting Backward \n";
+		phaser.CalcScaledBackward();
+
+//		cout << "Starting Posterior \n";
+		phaser.CalcPosterior();
+		chrono::steady_clock::time_point end= std::chrono::steady_clock::now();
+		cout << "Coverage: " << cov << endl;
+		cout << "Time = " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
+
+
+		int * ml_states = new int[phaser.num_markers];
+		phaser.SampleHaplotypesNew(ml_states);
+		HaplotypePair mine_haps = phaser.PrintHaplotypesToFile(ml_states, file_name_out);
+		delete [] ml_states;
+
+	}
+
+
+
+
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//	String orig_sample_file = "../../Data/1KGData/vcfs/chrom20/A/First/4_A_snps.vcf";
+//	String ref_file_ = "../../Data/1KGData/vcfs/chrom20/A/First/4_A_10inds_snps.vcf";
+//
+//
+//	const char * file4_lowcov1 = "../../Data/1KGData/vcfs/chrom20/A/First/4_A_snps_0.100000_0.001000.vcf";
+//	const char * file4_lowcov2 = "../../Data/1KGData/vcfs/chrom20/A/First/4_A_snps_0.200000_0.001000.vcf";
+//	const char * file4_lowcov3 = "../../Data/1KGData/vcfs/chrom20/A/First/4_A_snps_0.300000_0.001000.vcf";
+//	const char * file4_lowcov4 = "../../Data/1KGData/vcfs/chrom20/A/First/4_A_snps_0.400000_0.001000.vcf";
+//	const char * file4_lowcov5 = "../../Data/1KGData/vcfs/chrom20/A/First/4_A_snps_0.500000_0.001000.vcf";
+//	const char * file4_lowcov6 = "../../Data/1KGData/vcfs/chrom20/A/First/4_A_snps_0.600000_0.001000.vcf";
+//	const char * file4_lowcov7 = "../../Data/1KGData/vcfs/chrom20/A/First/4_A_snps_0.700000_0.001000.vcf";
+//	const char * file4_lowcov8 = "../../Data/1KGData/vcfs/chrom20/A/First/4_A_snps_0.800000_0.001000.vcf";
+//	const char * file4_lowcov9 = "../../Data/1KGData/vcfs/chrom20/A/First/4_A_snps_0.900000_0.001000.vcf";
 
 //	String orig_sample_file = "../../Data/1KGData/vcfs/chrom20/B/4_B_snps.vcf";
 //	String ref_file = "../../Data/1KGData/vcfs/chrom20/B/4_B_10inds_snps.vcf";
@@ -51,28 +149,28 @@ int main(int argc, char ** argv){
 //	const char * file4_lowcov9 = "../../Data/1KGData/vcfs/chrom20/B/4_B_snps_0.900000_0.001000.vcf";
 //
 //
-	const char * sample_name = "NA18909";
-
-	PedFile ped_file = PedFile(2);
-
-
-	int sample_ind = get_sample_index(orig_sample_file.c_str(), sample_name);
-	printf("Ind index = %d \n", sample_ind);
-
-
-
-	vector<String> sample_files =  {file4_lowcov1,
-									file4_lowcov2,
-									file4_lowcov3,
-									file4_lowcov4,
-									file4_lowcov5,
-									file4_lowcov6,
-									file4_lowcov7,
-									file4_lowcov8,
-									file4_lowcov9,
-									orig_sample_file};
+//	const char * sample_name = "NA18909";
+//
+//	PedFile ped_file = PedFile(2);
 //
 //
+//	int sample_ind = get_sample_index(orig_sample_file.c_str(), sample_name);
+//	printf("Ind index = %d \n", sample_ind);
+//
+//
+//
+//	vector<String> sample_files =  {file4_lowcov1,
+//									file4_lowcov2,
+//									file4_lowcov3,
+//									file4_lowcov4,
+//									file4_lowcov5,
+//									file4_lowcov6,
+//									file4_lowcov7,
+//									file4_lowcov8,
+//									file4_lowcov9,
+//									orig_sample_file};
+////
+////
 //	vector<double> switch_error_mine;
 //	vector<double> switch_error_mach;
 //
@@ -87,7 +185,7 @@ int main(int argc, char ** argv){
 ////		printf("in for \n");
 //
 //		phaser.LoadSampleData(ref_file, sample_file, sample_ind);
-//		VcfUtils::HaplotypePair true_haps = VcfUtils::loadHaplotypesFromVCF(orig_sample_file.c_str(), 624);
+//		HaplotypePair true_haps = loadHaplotypesFromVCF(orig_sample_file.c_str(), 624);
 //
 //		chrono::steady_clock::time_point begin = chrono::steady_clock::now();
 ////		cout << "Starting Forward \n";
@@ -105,7 +203,7 @@ int main(int argc, char ** argv){
 //		int * ml_states = new int[phaser.num_markers];
 //		phaser.SampleHaplotypesNew(ml_states);
 //
-//		VcfUtils::HaplotypePair mine_haps = phaser.PrintHaplotypes(ml_states);
+//		HaplotypePair mine_haps = phaser.PrintHaplotypes(ml_states);
 //
 //		delete [] ml_states;
 //
@@ -115,10 +213,10 @@ int main(int argc, char ** argv){
 //		string subst = file_name.substr(pos4);
 //		string::size_type posdot = subst.rfind('.', file_name.length());
 //		subst.replace(posdot, mach_end.length(), mach_end);
-//		string mach_res = "/home/kristiina/Programs/mach.1.0.18.Linux/executables/mach1_"+ subst;
+//		string mach_res = "/home/kristiina/Programs/mach.1.0.18.Linux/executables/First/mach1_"+ subst;
 //		printf("Sample file %s reading mach file %s \n", sample_file.c_str(), mach_res.c_str());
 //
-//		VcfUtils::HaplotypePair mach_haps = VcfUtils::loadHaplotypesFromMACH(mach_res.c_str());
+//		HaplotypePair mach_haps = loadHaplotypesFromMACH(mach_res.c_str());
 //
 //		double mach_switch = mach_haps.switchError(true_haps);
 //		double mach_geno = mach_haps.genotypeError(true_haps);
@@ -140,10 +238,10 @@ int main(int argc, char ** argv){
 //	}
 //	const char * out_file = "../../Data/1KGData/vcfs/chrom20/A/results_A_macherror0_5.csv";
 //
-//	VcfUtils::writeVectorToCSV(out_file, switch_error_mine);
-//	VcfUtils::writeVectorToCSV(out_file, switch_error_mach);
-//	VcfUtils::writeVectorToCSV(out_file, geno_error_mine);
-//	VcfUtils::writeVectorToCSV(out_file, geno_error_mach);
+//	writeVectorToCSV(out_file, switch_error_mine);
+//	writeVectorToCSV(out_file, switch_error_mach);
+//	writeVectorToCSV(out_file, geno_error_mine);
+//	writeVectorToCSV(out_file, geno_error_mach);
 
 
 

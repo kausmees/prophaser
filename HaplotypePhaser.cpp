@@ -72,7 +72,7 @@ void HaplotypePhaser::LoadData(const String &ref_file, const String &sample_file
 	VcfUtils::LoadHaplotypes(ref_file, ped, haplotypes);
 
 	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, genotypes, sample_index);
-	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
+//	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
 };
 
 /**
@@ -293,25 +293,41 @@ void HaplotypePhaser::CalcTransitionProbs(int marker, int marker_state, double *
 	int other_c1;
 	int other_c2;
 
-	double scaled_dist = 1-exp(-distances[marker]/num_h);
+//	double scaled_dist = 1-exp(-distances[marker]/num_h);
+//	double scaled_dist = 1-exp(-distances[marker]);
+	double scaled_dist = 0.01;
 
+
+	int occurrences_counter_p1 = 0;
+	int occurrences_counter_p2 = 0;
+	int occurrences_counter_p3 = 0;
+	double prob_sum = 0;
 	for(int i = 0; i < num_states; i++){
 		other_c1 = i / num_h;
 		other_c2 = i % num_h;
 
+		//no switch
 		if(other_c1 - marker_c1 == 0 and other_c2 - marker_c2 == 0) {
 			probs[i] = pow(1 - scaled_dist, 2) + ((2 * (1 - scaled_dist) * scaled_dist) / num_h) + (pow(scaled_dist,2) / pow(num_h,2));
+			prob_sum += probs[i];
+
+			occurrences_counter_p3 ++;
 		}
 		else {
+			// both switch
 			if(other_c1-marker_c1 != 0 and other_c2 - marker_c2 != 0) {
 				probs[i] = pow(scaled_dist/num_h, 2);
+				occurrences_counter_p1 ++;
+				prob_sum += probs[i];
 			}
+			// one switch
 			else{
 				probs[i] = (((1 - scaled_dist) * scaled_dist) / num_h) + pow(scaled_dist/num_h, 2);
+				occurrences_counter_p2 ++;
+				prob_sum += probs[i];
 			}
 		}
 	}
-
 	//	for(int i = 0; i < num_states; i++){
 	//		other_c1 = i / num_h;
 	//		other_c2 = i % num_h;
@@ -533,7 +549,7 @@ void HaplotypePhaser::CalcScaledForward(){
 
 		duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
 
-		std::cout<<"duration: "<< duration <<'\n';
+//		std::cout<<"duration: "<< duration <<'\n';
 	}
 
 	//	for(int m = 0; m < num_markers; m++) {
@@ -554,7 +570,7 @@ void HaplotypePhaser::CalcScaledForward(){
 			}
 		}
 	}
-	printf("Min = %f Max = %f \n", min, max);
+//	printf("Min = %f Max = %f \n", min, max);
 
 	delete [] transition_probs;
 	delete [] emission_probs;
@@ -672,7 +688,7 @@ void HaplotypePhaser::CalcPosterior(){
 				float newOne = s_forward[m][s] * s_backward[m][s] / norm;
 				float backward = s_backward[m][s];
 
-				printf("\n");
+//				printf("\n");
 			}
 			s_forward[m][s] = s_forward[m][s] * s_backward[m][s] / norm;
 		}
@@ -782,8 +798,11 @@ void HaplotypePhaser::InferHaplotypes() {
 
 /**
  * Translate maximum likelihood states to haplotypes.
+ *
+ * Haplotypes printed to out_file and returned.
+ *
  */
-void HaplotypePhaser::PrintHaplotypes(int * ml_states){
+HaplotypePair HaplotypePhaser::PrintHaplotypesToFile(int * ml_states, const char * out_file){
 	std::vector<String> h1;
 	std::vector<String> h2;
 
@@ -792,16 +811,19 @@ void HaplotypePhaser::PrintHaplotypes(int * ml_states){
 	int ref_hap2;
 
 	int tester1 =  ml_states[0];
+
 	for(int m = 0; m < num_markers; m++) {
 		ref_hap1 = ml_states[m] / num_h;
 		ref_hap2 = ml_states[m] % num_h;
 
 		h1.push_back(Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap1][m]+1));
 		h2.push_back(Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap2][m]+1));
-		printf(" yy \n");
+//		printf(" yy \n");
 
 	}
 
-//	VcfUtils::HaplotypePair hp(h1,h2);
-	//Print to file
+	HaplotypePair hp(h1,h2);
+	hp.printToFile(out_file);
+	return hp;
+//	Print to file
 }
