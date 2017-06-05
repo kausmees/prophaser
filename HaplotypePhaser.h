@@ -12,7 +12,8 @@ class HaplotypePhaser {
 
 public:
 	char ** haplotypes;
-	char ** genotypes;
+//	char ** genotypes;
+	vector <double> sample_gls;
 	Pedigree ped;
 	float theta;
 	float error;
@@ -45,10 +46,10 @@ public:
 	// remove
 	float ** forward;
 	float ** backward;
-	float ** s_backward;
+	double ** s_backward;
 
-	float ** s_forward;
-	float * normalizers;
+	double ** s_forward;
+	double * normalizers;
 
 	void AllocateMemory();
 	//TODO remove, for testing
@@ -56,7 +57,8 @@ public:
 	void CalcGenoEmissions();
 	double GetEmissionProb(int state, int marker);
 	void CalcTransitionProbs(int marker, int marker_state, double * probs);
-	void CalcEmissionProbs(int marker, float * probs);
+	void CalcTransitionProbs(int marker, double ** probs);
+	void CalcEmissionProbs(int marker, double * probs);
 	void InitPriorForward();
 	void InitPriorBackward();
 
@@ -80,4 +82,5 @@ public:
 	void InferHaplotypes();
 
 	HaplotypePair PrintHaplotypesToFile(int * states, const char * out_file);
+	HaplotypePair PrintReferenceHaplotypes(int * ml_states);
 };

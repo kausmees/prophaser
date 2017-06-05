@@ -1,7 +1,5 @@
 
 #include "VcfUtils.h"
-
-
 #include <sstream>
 #include <stdio.h>
 #include <string.h>
@@ -130,7 +128,6 @@ void LoadHaplotypes(const String &file_name, const Pedigree &ped, char** haploty
 		marker_name = ss.str().c_str();
 		int marker_id = Pedigree::LookupMarker(marker_name);
 		if(marker_id >= 0){
-
 			for (int ind = 0; ind < ped.count; ind++) {
 				int i0 = record.getGT(ind,0);
 				int i1 = record.getGT(ind,1);
@@ -152,18 +149,18 @@ void LoadHaplotypes(const String &file_name, const Pedigree &ped, char** haploty
  *
  * temproary: fill all other genotypes with 0
  */
-void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, char** genotypes, int sample_index_file) {
+void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, vector<double> & sample_gls, int sample_index_file) {
 	printf("Loading genotype likelihoods from file %s \n", file_name.c_str());
 
-	int sample_index_ped = ped.count-1;
-	std::string lformat;
-	const std::string *likelihood;
+//	int sample_index_ped = ped.count-1;
+//	std::string lformat;
+//	const std::string *likelihood;
 	const char * marker_name;
-	int pl_00, pl_01, pl_11;
+//	int pl_00, pl_01, pl_11;
 	int num_common_markers = 0;
 	int num_total_markers = 0;
 
-	std::string sub00, sub01, sub11;
+//	std::string sub00, sub01, sub11;
 
 	VcfFileReader reader;
 	VcfHeader header;
@@ -213,61 +210,66 @@ void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, char*
 			//			printf("PED REF = %s  SAMPLE REF = %s \n",  phased_ref_base.c_str(), sample_ref_base.c_str());
 			//			printf("PED ALT = %s  SAMPLE ALT = %s \n",  phased_alt_base.c_str(), sample_alt_base.c_str());
 
-
-			lformat = "GL";
-			//check if this record has GL or PL
-			likelihood = record.getGenotypeInfo().getString(lformat,0);
-			if(likelihood == NULL) {
-				lformat = "PL";
-				likelihood = record.getGenotypeInfo().getString(lformat,0);
-
-				if(likelihood == NULL) {
-					//TODO throw error
-					printf("ERROR: RECORD WITH NO PL OR GL FOUND\n");
-					//TODO check how this affects imputation. this marker will behave as one we have no info on in sample,
-					//do we want it to be imputed as if it was missing in sample?
-					continue;
-				}
-			}
+//
+//			lformat = "GL";
+//			//check if this record has GL or PL
+//			likelihood = record.getGenotypeInfo().getString(lformat,0);
+//			if(likelihood == NULL) {
+//				lformat = "PL";
+//				likelihood = record.getGenotypeInfo().getString(lformat,0);
+//
+//				if(likelihood == NULL) {
+//					//TODO throw error
+//					printf("ERROR: RECORD WITH NO PL OR GL FOUND\n");
+//					//TODO check how this affects imputation. this marker will behave as one we have no info on in sample,
+//					//do we want it to be imputed as if it was missing in sample?
+//					continue;
+//				}
+//			}
 
 
 			// if VCF record has GL/PL but sample has missing field with :    then likelihood = "."
 			// if VCF record has GL/PL but sample has missing field with nothing    then likelihood = ""
 			// if VCF record does not have GL/PL then likelihood is NULL pointer
-			likelihood = record.getGenotypeInfo().getString(lformat,sample_index_file);
-
-			if(*likelihood == "" || *likelihood == ".") {
-				//TODO throw error
-				printf("ERROR: INDIVIDUAL WITH NO LIKELIHOOD FOUND \n");
-			}
-
-
-			std::istringstream iss(*likelihood);
-
-			std::getline(iss, sub00, ',');
-			std::getline(iss, sub01, ',');
-			std::getline(iss, sub11, ',');
+//			likelihood = record.getGenotypeInfo().getString(lformat,sample_index_file);
+//
+//			if(*likelihood == "" || *likelihood == ".") {
+//				//TODO throw error
+//				printf("ERROR: INDIVIDUAL WITH NO LIKELIHOOD FOUND \n");
+//			}
 
 
-			pl_00 = (lformat == "PL") ? atoi(sub00.c_str()) : static_cast<int>(-10.0 * atof(sub00.c_str()));
-			pl_01 = (lformat == "PL") ? atoi(sub01.c_str()) : static_cast<int>(-10.0 * atof(sub01.c_str()));
-			pl_11 = (lformat == "PL") ? atoi(sub11.c_str()) : static_cast<int>(-10.0 * atof(sub11.c_str()));
+//			std::istringstream iss(*likelihood);
+//
+//			std::getline(iss, sub00, ',');
+//			std::getline(iss, sub01, ',');
+//			std::getline(iss, sub11, ',');
+//
+//
+//			pl_00 = (lformat == "PL") ? atoi(sub00.c_str()) : static_cast<int>(-10.0 * atof(sub00.c_str()));
+//			pl_01 = (lformat == "PL") ? atoi(sub01.c_str()) : static_cast<int>(-10.0 * atof(sub01.c_str()));
+//			pl_11 = (lformat == "PL") ? atoi(sub11.c_str()) : static_cast<int>(-10.0 * atof(sub11.c_str()));
+//
+//			if(pl_00 < 0 || pl_01 < 0 || pl_11 < 0) {
+//				//TODO throw error
+//				printf("ERROR: NEGATIVE PL \n");
+//				//TODO check how this affects imputation. this marker will behave as one we have no info on in sample,
+//				//do we want it to be imputed as if it was missing in sample?
+//				continue;
+//			}
+//
+//			pl_00 = std::min(pl_00, max_pl);
+//			pl_01 = std::min(pl_01, max_pl);
+//			pl_11 = std::min(pl_11, max_pl);
 
-			if(pl_00 < 0 || pl_01 < 0 || pl_11 < 0) {
-				//TODO throw error
-				printf("ERROR: NEGATIVE PL \n");
-				//TODO check how this affects imputation. this marker will behave as one we have no info on in sample,
-				//do we want it to be imputed as if it was missing in sample?
-				continue;
-			}
+//			genotypes[sample_index_ped][marker_id*3] = pl_00;
+//			genotypes[sample_index_ped][marker_id*3+1] = pl_01;
+//			genotypes[sample_index_ped][marker_id*3+2] = pl_11;
 
-			pl_00 = std::min(pl_00, max_pl);
-			pl_01 = std::min(pl_01, max_pl);
-			pl_11 = std::min(pl_11, max_pl);
-
-			genotypes[sample_index_ped][marker_id*3] = pl_00;
-			genotypes[sample_index_ped][marker_id*3+1] = pl_01;
-			genotypes[sample_index_ped][marker_id*3+2] = pl_11;
+			vector<double> gls = get_GL(header, record, sample_index_file);
+			sample_gls[marker_id*3] = pow(10,gls[0]);
+			sample_gls[marker_id*3+1] = pow(10,gls[1]);
+			sample_gls[marker_id*3+2] = pow(10,gls[2]);
 
 			unphased_marker_subset[marker_id] = 1;
 			num_common_markers += 1;
@@ -277,19 +279,11 @@ void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, char*
 
 	for(int marker_id = 0; marker_id < ped.markerCount; marker_id++){
 		if(!unphased_marker_subset[marker_id]){
-			//			printf("hejhej");
-			genotypes[sample_index_ped][marker_id*3] = 0.3333;
-			genotypes[sample_index_ped][marker_id*3+1] = 0.3333;
-			genotypes[sample_index_ped][marker_id*3+2] = 0.3333;
+			sample_gls[marker_id*3] = 0.3333;
+			sample_gls[marker_id*3+1] = 0.3333;
+			sample_gls[marker_id*3+2] = 0.3333;
 		}
 
-		//TODO temproary, fill in reference genotypes as 0
-		for(int i = 0; i < ped.count -1 ; i++){
-			genotypes[i][marker_id*3] = 0;
-			genotypes[i][marker_id*3+1] = 0;
-			genotypes[i][marker_id*3+2] = 0;
-
-		}
 	}
 	//	printf("Num reference markers : %d, Num sample markers: %d, %d of which are also in reference. \n", ped.markerCount, num_total_markers, num_common_markers);
 };

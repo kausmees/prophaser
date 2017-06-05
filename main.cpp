@@ -34,7 +34,7 @@ int main(int argc, char ** argv){
 
 
 //	vector<double> coverages = {0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
-	vector<double> coverages = {0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+	vector<double> coverages = {0.1};
 
 	double error = 0.001;
 	String file_name_in;
@@ -47,7 +47,7 @@ int main(int argc, char ** argv){
 	int sample_ind = 0;
 
 
-	String ref_file = dir+subset_id+"/" + data_id +"_" + subset_id + "_10inds_snps.vcf";
+	String ref_file = dir+subset_id+"/" + data_id +"_" + subset_id + "_50inds_snps.vcf";
 
 	HaplotypePhaser phaser;
 	phaser.LoadReferenceData(ref_file, sample_file, sample_ind);
@@ -55,26 +55,30 @@ int main(int argc, char ** argv){
 	HaplotypePair true_haps = loadHaplotypesFromVCF(sample_file, sample_ind);
 
 
-	////////////////////////////////////////////// phasing start //////////////////////////////////////////////////////////////
+	//////////////////////////////////////////// phasing start //////////////////////////////////////////////////////////////
 
 	file_name_in = dir + subset_id + "/" + data_id + "_" + subset_id + "_" + "NA18909" + "_snps.vcf" ;
-	file_name_out = "./Results/" + data_id + "_" + subset_id + "_" + "NA18909" + "_snps_phased_4" ;
-	phaser. (ref_file, file_name_in, 0);
+	file_name_out = "./Results/" + data_id + "_" + subset_id + "_" + "NA18909" + "_snps_phased_50ref" ;
+	phaser.LoadSampleData(ref_file, file_name_in, 0);
+	printf("Num states = %d Num markers = %d Num inds = %d \n", phaser.num_states, phaser.num_markers, phaser.num_inds);
+
+//	for(int i=0; i<phaser.num_markers;i++){
+//		printf("Marker %d : %f %f %f \n", i, phaser.sample_gls[3*i],phaser.sample_gls[3*i+1],phaser.sample_gls[3*i+2]);
+//
+//	}
+
 
 	chrono::steady_clock::time_point begin = chrono::steady_clock::now();
-		cout << "Starting Forward \n";
+	cout << "Starting Forward \n";
 	phaser.CalcScaledForward();
 
-		cout << "Starting Backward \n";
+	cout << "Starting Backward \n";
 	phaser.CalcScaledBackward();
 
 	cout << "Starting Posterior \n";
 	phaser.CalcPosterior();
 
-	chrono::steady_clock::time_point end= std::chrono::steady_clock::now();
 
-	cout << "Original: " << endl;
-	cout << "Time = " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
 
 	int * ml_states = new int[phaser.num_markers];
 
@@ -83,37 +87,50 @@ int main(int argc, char ** argv){
 	phaser.SampleHaplotypesNew(ml_states);
 	cout << "Printing " << endl;
 
+	for(int i = 0; i < phaser.num_markers; i++) {
+		printf("%d \n", ml_states[i]);
+	}
+
+
 	HaplotypePair mine_haps = phaser.PrintHaplotypesToFile(ml_states, file_name_out);
-	mine_haps.print();
+	printf("Second \n");
+	HaplotypePair mine_haps2 = phaser.PrintReferenceHaplotypes(ml_states);
+	printf("Equal = %d \n", mine_haps.isEqual(mine_haps2));
+	mine_haps2.print();
+	true_haps.print();
 	delete [] ml_states;
 
+	chrono::steady_clock::time_point end= std::chrono::steady_clock::now();
 
+	cout << "Time = " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
 
-	for(auto cov : coverages) {
-		file_name_in = dir + subset_id + "/" + data_id + "_" + subset_id + "_" + "NA18909" + "_snps_" + (to_string(cov)).c_str() + "_" + (to_string(error)).c_str() + ".vcf" ;
-		file_name_out ="./Results/" + data_id + "_" + subset_id + "_" + "NA18909" + "_snps_" + (to_string(cov)).c_str() + "_" + (to_string(error)).c_str() + "_phased_4" ;
-		phaser.LoadSampleData(ref_file, file_name_in, 0);
-
-		chrono::steady_clock::time_point begin = chrono::steady_clock::now();
-//		cout << "Starting Forward \n";
-		phaser.CalcScaledForward();
-
-//		cout << "Starting Backward \n";
-		phaser.CalcScaledBackward();
-
-//		cout << "Starting Posterior \n";
-		phaser.CalcPosterior();
-		chrono::steady_clock::time_point end= std::chrono::steady_clock::now();
-		cout << "Coverage: " << cov << endl;
-		cout << "Time = " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
-
-
-		int * ml_states = new int[phaser.num_markers];
-		phaser.SampleHaplotypesNew(ml_states);
-		HaplotypePair mine_haps = phaser.PrintHaplotypesToFile(ml_states, file_name_out);
-		delete [] ml_states;
-
-	}
+//	for(auto cov : coverages) {
+//		file_name_in = dir + subset_id + "/" + data_id + "_" + subset_id + "_" + "NA18909" + "_snps_" + (to_string(cov)).c_str() + "_" + (to_string(error)).c_str() + ".vcf" ;
+//		file_name_out ="./Results/" + data_id + "_" + subset_id + "_" + "NA18909" + "_snps_" + (to_string(cov)).c_str() + "_" + (to_string(error)).c_str() + "_phased_4" ;
+//		phaser.LoadSampleData(ref_file, file_name_in, 0);
+//
+//		chrono::steady_clock::time_point begin = chrono::steady_clock::now();
+////		cout << "Starting Forward \n";
+//		phaser.CalcScaledForward();
+//
+////		cout << "Starting Backward \n";
+//		phaser.CalcScaledBackward();
+//
+////		cout << "Starting Posterior \n";
+//		phaser.CalcPosterior();
+//		chrono::steady_clock::time_point end= std::chrono::steady_clock::now();
+//		cout << "Coverage: " << cov << endl;
+//		cout << "Time = " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
+//
+//
+//		int * ml_states = new int[phaser.num_markers];
+//		phaser.SampleHaplotypesNew(ml_states);
+////		HaplotypePair mine_haps = phaser.PrintHaplotypesToFile(ml_states, file_name_out);
+//		HaplotypePair mine_haps = phaser.PrintReferenceHaplotypes(ml_states);
+//		delete [] ml_states;
+//		mine_haps.print();
+//		true_haps.print();
+//	}
 
 
 

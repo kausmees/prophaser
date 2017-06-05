@@ -1,6 +1,7 @@
 ## Phaser
 CC = g++
-CFLAGS = -std=c++14 -O0 -g3 -Wall -c 
+CFLAGS = -std=c++14 -O3 -g3 -Wall -c -fopenmp
+LFLAGS = -fopenmp -g -o
 SOURCES=$(wildcard *.cpp)
 OBJECTS=$(SOURCES:.cpp=.o)
 TARGET=phase
@@ -9,10 +10,10 @@ all: $(TARGET)
 
 
 $(TARGET): $(OBJECTS)
-	$(CC) -g -o $@ $^ ../../haplotyperProject/genoUtils/GenoUtils.o -L../../haplotyperProject/libStatGen -lStatGen_debug -lz 
+	$(CC) $(LFLAGS) $@ $^ ../../haplotyperProject/genoUtils/GenoUtils.o -L../../haplotyperProject/libStatGen -lStatGen_debug -lz 
 
 %.o: %.cpp %.h
-	$(CC) $(CFLAGS) -g $< -I ../../haplotyperProject/libStatGen/include/ -I ../../haplotyperProject/genoUtils/
+	$(CC) $(CFLAGS) -g $< -I ../../haplotyperProject/libStatGen/include/ -I ../../haplotyperProject/genoUtils/ 
 	
 	
 %.o: %.cpp
