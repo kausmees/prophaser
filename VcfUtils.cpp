@@ -327,8 +327,6 @@ void LoadGeneticMap(const char *file_name, const Pedigree &ped, vector<double> &
 			distances[i] = (dist - prev_dist > 0.00000001) ? (dist - prev_dist) * 5 : 0.01;
 
 			double this_dist = dist - prev_dist;
-			printf("Dist = %f \n", this_dist);
-
 			prev_dist = dist;
 
 		}
@@ -340,10 +338,10 @@ void LoadGeneticMap(const char *file_name, const Pedigree &ped, vector<double> &
 		}
 	}
 
-		for (int i = 0; i < Pedigree::markerCount; i++) {
+//		for (int i = 0; i < Pedigree::markerCount; i++) {
 //			printf("Marker : %d, Theta: %f \n", GetMarkerPos(i), distances[i]);
-		}
-		printf("%d lines read from map \n", c);
+//		}
+//		printf("%d lines read from map \n", c);
 
 };
 

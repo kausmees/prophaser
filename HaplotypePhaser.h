@@ -52,35 +52,18 @@ public:
 	double * normalizers;
 
 	void AllocateMemory();
-	//TODO remove, for testing
 	void DeAllocateMemory();
-	void CalcGenoEmissions();
-	double GetEmissionProb(int state, int marker);
+
 	void CalcTransitionProbs(int marker, int marker_state, double * probs);
 	void CalcTransitionProbs(int marker, double ** probs);
 	void CalcEmissionProbs(int marker, double * probs);
-	void InitPriorForward();
-	void InitPriorBackward();
-
-	//Old
-	void CalcForward();
-	void CalcBackward();
-	void CalcPosteriorOld();
-
 
 	void InitPriorScaledForward();
 	void InitPriorScaledBackward();
-
 	void CalcScaledForward();
-	void CalcPosterior();
-
-	//Old
 	void CalcScaledBackward();
-
-	void SampleHaplotypes(int * ml_states);
-	void SampleHaplotypesNew(int * ml_states);
-	void InferHaplotypes();
+	void GetMLHaplotypes(int * ml_states);
 
 	HaplotypePair PrintHaplotypesToFile(int * states, const char * out_file);
-	HaplotypePair PrintReferenceHaplotypes(int * ml_states);
+	HaplotypePair PrintReferenceHaplotypes(int * ml_states, const char * out_file);
 };
