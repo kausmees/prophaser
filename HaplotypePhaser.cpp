@@ -59,7 +59,9 @@ void HaplotypePhaser::DeAllocateMemory(){
 	FreeCharMatrix(haplotypes, ped.count*2);
 	//	FreeCharMatrix(genotypes, ped.count);
 };
-
+void HaplotypePhaser::setDistanceCode(int c) {
+	distance_code = c;
+};
 
 /**
  * Load vcf data from files.
@@ -75,6 +77,9 @@ void HaplotypePhaser::LoadData(const String &ref_file, const String &sample_file
 
 	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls, sample_index);
 	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
+//		VcfUtils::LoadGeneticMap("data/chr20.OMNI.interpolated_genetic_map", ped, distances);
+
+
 };
 
 /**
@@ -103,6 +108,8 @@ void HaplotypePhaser::LoadSampleData(const String &ref_file, const String &sampl
 
 	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls, sample_index);
 	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
+//		VcfUtils::LoadGeneticMap("data/chr20.OMNI.interpolated_genetic_map", ped, distances);
+
 };
 
 
@@ -211,10 +218,34 @@ void HaplotypePhaser::CalcEmissionProbs(int marker, double * probs) {
 void HaplotypePhaser::CalcTransitionProbs(int marker, double ** probs){
 	int num_h = 2*num_inds - 2;
 
-//	double scaled_dist = 1-exp(-distances[marker]/num_h);
-	//		double scaled_dist = 1-exp(-distances[marker]);
-			double scaled_dist = 0.01;
-//	printf("Scaled dist = %e \n", scaled_dist);
+	double scaled_dist;
+
+	if(distance_code == 1) {
+		scaled_dist = 1-exp(-distances[marker]);
+	}
+
+	if(distance_code == 2) {
+		scaled_dist = 1-exp(-distances[marker]/num_h);
+	}
+
+	if(distance_code == 3) {
+		scaled_dist = 1-exp(-(distances[marker]*4*11000)/num_h);
+	}
+
+	if(distance_code == 4) {
+		scaled_dist = 0.01;
+	}
+
+
+//		double scaled_dist = 1-exp(-distances[marker]);
+
+//	double scaled_dist = 1-exp(-(distances[marker]*4*11000)/num_h);
+
+//	double
+//	double scaled_dist = 0.01;
+
+
+	//	printf("Scaled dist = %e \n", scaled_dist);
 
 #pragma omp parallel for
 	for(int marker_state = 0; marker_state < num_states; marker_state++) {
@@ -376,6 +407,9 @@ void HaplotypePhaser::CalcScaledForward(){
 		c = 0.0;
 #pragma omp parallel for schedule(dynamic,32)
 		for(int s = 0; s < num_states; s++){
+			if(m==1 && s==0) {
+				printf("Num threads = %d \n", omp_get_num_threads());
+			}
 			double sum = 0;
 			//			double * transition_probs = new double[num_states];
 			//			CalcTransitionProbs(m, s,transition_probs);
@@ -426,17 +460,13 @@ void HaplotypePhaser::CalcScaledBackward(){
 		CalcTransitionProbs(m+1, transition_probs);
 #pragma omp parallel for
 		for(int s = 0; s < num_states; s++){
-			//			s_backward[m][s] = 0;
 			double sum = 0.0;
 #pragma GCC ivdep
 			for(int i = 0; i < num_states; i++){
 
 				sum += s_backward[m+1][i] * transition_probs[s][i] * emission_probs[i];
-				//				s_backward[m][s] += s_backward[m+1][i] * transition_probs[s][i] * emission_probs[i];
 			}
 			s_backward[m][s] = sum / normalizers[m];
-			//			s_backward[m][s] = s_backward[m][s] / normalizers[m];
-
 		}
 	}
 
@@ -482,6 +512,66 @@ void HaplotypePhaser::GetMLHaplotypes(int * ml_states){
 
 	}
 }
+
+
+
+/**
+ * For every marker m, get the state with highest posterior probability at that location, given the entire observation sequence
+ * (not most likely sequence of states)
+ *
+ * Calculate array ml_states s.t.
+ * ml_states[m] = s_i that maximises P(Q_m = s_i | O_1 ... O_num_markers)
+ *
+ * for m in {0 ... num_markers-1}
+ *
+ */
+vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename){
+
+	vector<vector<double>> stats;
+
+	for(int m = 0; m < num_markers; m++) {
+		stats.push_back({});
+		stats[m].resize(41,-1.0);
+	}
+
+	for(int m = 0; m < num_markers; m++) {
+		vector<double> posteriors;
+		posteriors.resize(num_states, -1);
+
+		double norm = 0.0;
+		for(int i = 0; i < num_states; i++) {
+			norm += s_forward[m][i] * s_backward[m][i];
+		}
+
+		double sum = 0.0;
+		for(int s = 0; s < num_states; s++) {
+			posteriors[s] = s_forward[m][s] * s_backward[m][s] / norm;
+			sum += posteriors[s];
+		}
+
+		vector<size_t> res = sort_indexes(posteriors);
+
+		//add lowest elements to stats[m]
+		for(int i = 0; i < 10; i++) {
+			stats[m][i] = posteriors[res[i]];
+		}
+		for(int i = 0; i < 10; i++) {
+			stats[m][10 + i] = res[i];
+		}
+		for(int i = 0; i < 10; i++) {
+			stats[m][20 + i] = posteriors[res[posteriors.size() - 10 + i]];
+		}
+		for(int i = 0; i < 10; i++) {
+			stats[m][30 + i] = res[posteriors.size() - 10 + i];
+		}
+
+		stats[m][40] = sum / posteriors.size();
+
+	}
+	writeVectorToCSV(filename, stats);
+	return stats;
+}
+
 
 
 /**
@@ -565,27 +655,40 @@ HaplotypePair HaplotypePhaser::PrintReferenceHaplotypes(int * ml_states, const c
 	FILE * hapout = fopen(out_file, "w");
 
 	for(auto h : ref1) {
-		putc(codes[h], hapout);
+		fprintf(hapout,"%d\n",h);
 	}
 	putc('\n', hapout);
 	for(auto h : ref2) {
-		putc(codes[h], hapout);
+		fprintf(hapout,"%d\n",h);
 	}
 
 	fclose(hapout);
 
 
-	for(auto h : ref1){
-		printf("%c",codes[h]);
-	}
-	printf("\n");
+	//	for(auto h : ref1) {
+	//		putc(codes[h], hapout);
+	//	}
+	//	putc('\n', hapout);
+	//	for(auto h : ref2) {
+	//		putc(codes[h], hapout);
+	//	}
+	//
+	//	fclose(hapout);
 
-	for(auto h : ref2){
-		printf("%c",codes[h]);
-	}
-	printf("\n");
+
+//	for(auto h : ref1){
+//		printf("%c",codes[h]);
+//	}
+//	printf("\n");
+//
+//	for(auto h : ref2){
+//		printf("%c",codes[h]);
+//	}
+//	printf("\n");
 
 	HaplotypePair hp(h1,h2);
 	return hp;
 	//	Print to file
 }
+
+

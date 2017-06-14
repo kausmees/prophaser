@@ -1,7 +1,11 @@
+#ifndef __HAPLOPHASER_H__
+#define __HAPLOPHASER_H__
+
 #include "Pedigree.h"
 #include "VcfUtils.h"
 #include <vector>
 #include <chrono>
+#include <algorithm>
 
 /**
 
@@ -22,6 +26,9 @@ public:
 	std::vector<double> errors;
 	std::vector<double> distances;
 
+	int distance_code;
+
+
 	// phred_probs[i] contains linear-scale genotype likelihood
 	float * phred_probs;
 
@@ -29,6 +36,8 @@ public:
 	void LoadData(const String &ref_file, const String &sample_file, int sample_index);
 	void LoadReferenceData(const String &ref_file, const String &sample_file, int sample_index);
 	void LoadSampleData(const String &ref_file, const String &sample_file, int sample_index);
+	void setDistanceCode(int c);
+
 
 
 
@@ -63,7 +72,11 @@ public:
 	void CalcScaledForward();
 	void CalcScaledBackward();
 	void GetMLHaplotypes(int * ml_states);
+	vector<vector<double>> GetPosteriorStats(const char * filename);
 
 	HaplotypePair PrintHaplotypesToFile(int * states, const char * out_file);
 	HaplotypePair PrintReferenceHaplotypes(int * ml_states, const char * out_file);
 };
+
+
+#endif
