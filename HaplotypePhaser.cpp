@@ -244,9 +244,9 @@ void HaplotypePhaser::CalcTransitionProbs(int marker, double ** probs){
 //	double
 //	double scaled_dist = 0.01;
 
-
-	//	printf("Scaled dist = %e \n", scaled_dist);
-
+	if(marker==15) {
+		printf("Scaled dist = %e \n", scaled_dist);
+	}
 #pragma omp parallel for
 	for(int marker_state = 0; marker_state < num_states; marker_state++) {
 
@@ -568,10 +568,134 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 		stats[m][40] = sum / posteriors.size();
 
 	}
-	writeVectorToCSV(filename, stats);
+	writeVectorToCSV(filename, stats, "w");
 	return stats;
 }
 
+/**
+ * Read stats from filena,e
+ */
+vector<vector<double>>  HaplotypePhaser::ReadPosteriorStats(const char * filename){
+
+	vector<vector<double>> stats;
+
+
+	FILE * statstream = fopen(filename, "r");
+
+	printf("Opened statsream for %s \n", filename);
+	float low1;
+	float low2;
+	float low3;
+	float low4;
+	float low5;
+	float low6;
+	float low7;
+	float low8;
+	float low9;
+	float low10;
+
+	float low1_i;
+	float low2_i;
+	float low3_i;
+	float low4_i;
+	float low5_i;
+	float low6_i;
+	float low7_i;
+	float low8_i;
+	float low9_i;
+	float low10_i;
+
+	float high1;
+	float high2;
+	float high3;
+	float high4;
+	float high5;
+	float high6;
+	float high7;
+	float high8;
+	float high9;
+	float high10;
+
+	float high1_i;
+	float high2_i;
+	float high3_i;
+	float high4_i;
+	float high5_i;
+	float high6_i;
+	float high7_i;
+	float high8_i;
+	float high9_i;
+	float high10_i;
+
+	float average;
+	int result;
+
+
+	for(int m = 0; m < num_markers; m++) {
+		stats.push_back({});
+		stats[m].resize(41,-1.0);
+	}
+
+	for(int m = 0; m < num_markers; m++) {
+		printf("scanning for marker = %d \n", m);
+		result = fscanf(statstream, "%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,\n",
+				&low1,&low2,&low3,&low4,&low5,&low6,&low7,&low8,&low9,&low10,&low1_i,&low2_i,&low3_i,&low4_i,&low5_i,&low6_i,&low7_i,&low8_i,&low9_i,&low10_i,
+				&high1,&high2,&high3,&high4,&high5,&high6,&high7,&high8,&high9,&high10,&high1_i,&high2_i,&high3_i,&high4_i,&high5_i,&high6_i,&high7_i,&high8_i,&high9_i,&high10_i,&average);
+
+
+		printf("result = %d \n", result);
+
+		printf("scanned for marker = %d \n", m);
+		stats[m][0] = low1;
+		stats[m][1] = low2;
+		stats[m][2] = low3;
+		stats[m][3] = low4;
+		stats[m][4] = low5;
+		stats[m][5] = low6;
+		stats[m][6] = low7;
+		stats[m][7] = low8;
+		stats[m][8] = low9;
+		stats[m][9] = low10;
+
+		stats[m][10] = low1_i;
+		stats[m][11] = low2_i;
+		stats[m][12] = low3_i;
+		stats[m][13] = low4_i;
+		stats[m][14] = low5_i;
+		stats[m][15] = low6_i;
+		stats[m][16] = low7_i;
+		stats[m][17] = low8_i;
+		stats[m][18] = low9_i;
+		stats[m][19] = low10_i;
+
+		stats[m][20] = high1;
+		stats[m][21] = high2;
+		stats[m][22] = high3;
+		stats[m][23] = high4;
+		stats[m][24] = high5;
+		stats[m][25] = high6;
+		stats[m][26] = high7;
+		stats[m][27] = high8;
+		stats[m][28] = high9;
+		stats[m][29] = high10;
+
+		stats[m][30] = high1_i;
+		stats[m][31] = high2_i;
+		stats[m][32] = high3_i;
+		stats[m][33] = high4_i;
+		stats[m][34] = high5_i;
+		stats[m][35] = high6_i;
+		stats[m][36] = high7_i;
+		stats[m][37] = high8_i;
+		stats[m][38] = high9_i;
+		stats[m][39] = high10_i;
+
+		stats[m][40] = average;
+
+
+	}
+	return stats;
+}
 
 
 /**
