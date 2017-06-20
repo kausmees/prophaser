@@ -236,6 +236,10 @@ void HaplotypePhaser::CalcTransitionProbs(int marker, double ** probs){
 		scaled_dist = 0.01;
 	}
 
+	if(distance_code == 5) {
+		scaled_dist = 1-exp(-distances[marker]/(num_h*100));
+	}
+
 
 //		double scaled_dist = 1-exp(-distances[marker]);
 
@@ -526,13 +530,28 @@ void HaplotypePhaser::GetMLHaplotypes(int * ml_states){
  *
  */
 vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename){
-
+	int num_h = 2*num_inds - 2;
 	vector<vector<double>> stats;
+
+	// geno_probs[m][0] is probability that genotype at marker m is 0
+	// geno_probs[m][1] is probability that genotype at marker m is 1
+	// geno_probs[m][2] is probability that genotype at marker m is 2
+
+
+	vector<vector<double>> geno_probs;
+
+
 
 	for(int m = 0; m < num_markers; m++) {
 		stats.push_back({});
-		stats[m].resize(41,-1.0);
+		stats[m].resize(44,-1.0);
 	}
+
+	for(int m = 0; m < num_markers; m++) {
+		geno_probs.push_back({});
+		geno_probs[m].resize(3,0.0);
+	}
+
 
 	for(int m = 0; m < num_markers; m++) {
 		vector<double> posteriors;
@@ -547,7 +566,49 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 		for(int s = 0; s < num_states; s++) {
 			posteriors[s] = s_forward[m][s] * s_backward[m][s] / norm;
 			sum += posteriors[s];
+
+
+			//////////genotype probability/////////////////
+			int ref_hap1 = s / num_h;
+			int ref_hap2 = s % num_h;
+
+
+			// CT
+			String allele1 = Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap1][m]+1);
+			String allele2 = Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap2][m]+1);
+
+			// 00, 01, 10, 11
+			int hapcode1 = haplotypes[ref_hap1][m];
+			int hapcode2 = haplotypes[ref_hap2][m];
+
+			int geno_code;
+
+			if(hapcode1 != hapcode2) {
+				geno_code = 1;
+			}
+			else {
+				geno_code = (hapcode1 == 0) ? 0 : 2;
+			}
+
+			geno_probs[m][geno_code] += posteriors[s];
+
+
+//			if(m==4) {
+//				printf("At marker %d : When ref haps are: (%d,%d) then hapcode is %d%d and alleles are %s%s and geno code is %d \n", m, ref_hap1, ref_hap2, hapcode1, hapcode2, allele1.c_str(), allele2.c_str(), geno_code);
+//			}
+
 		}
+
+		float check_sum = 0.0;
+		for(int i = 0; i < 3 ; i++) {
+			check_sum += geno_probs[m][i];
+		}
+		if(abs(check_sum - 1.0) > 0.000001 ) {
+			printf("!!!!!!!!!!!!!!!!!!!!!!!!!Sum of all geno probs is %f at marker %d !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1\n ", check_sum, m);
+		}
+
+
+
 
 		vector<size_t> res = sort_indexes(posteriors);
 
@@ -566,8 +627,15 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 		}
 
 		stats[m][40] = sum / posteriors.size();
+		stats[m][41] = geno_probs[m][0];
+		stats[m][42] = geno_probs[m][1];
+		stats[m][43] = geno_probs[m][2];
+
 
 	}
+
+
+
 	writeVectorToCSV(filename, stats, "w");
 	return stats;
 }
@@ -696,6 +764,57 @@ vector<vector<double>>  HaplotypePhaser::ReadPosteriorStats(const char * filenam
 	}
 	return stats;
 }
+
+/**
+ * Translate genotype probabilities to most likely genotypes (represented as haplotype pair).
+ *
+ * Haplotypes printed to out_file and returned.
+ *
+ */
+HaplotypePair HaplotypePhaser::PrintGenotypesToFile(vector<vector<double>> & stats, const char * out_file){
+	std::vector<String> h1;
+	std::vector<String> h2;
+
+	//hapcodes 00, 10, 11  represent geno_codes 0,1,2
+	int hapcode1;
+	int hapcode2;
+	int max_geno_code;
+	float max_geno_prob;
+
+	for(int m = 0; m < num_markers; m++) {
+
+		max_geno_prob = 0.0;
+		for(int i=0; i<3;i++) {
+			if(stats[m][41+i] > max_geno_prob) {
+				max_geno_prob = stats[m][41+i];
+				max_geno_code = i;
+			}
+		}
+
+		if(max_geno_code == 0) {
+			hapcode1 = 0;
+			hapcode2 = 0;
+		}
+		if(max_geno_code == 1) {
+			hapcode1 = 0;
+			hapcode2 = 1;
+		}
+		if(max_geno_code == 2) {
+			hapcode1 = 1;
+			hapcode2 = 1;
+		}
+
+		h1.push_back(Pedigree::GetMarkerInfo(m)->GetAlleleLabel(hapcode1+1));
+		h2.push_back(Pedigree::GetMarkerInfo(m)->GetAlleleLabel(hapcode2+1));
+
+	}
+
+	HaplotypePair hp(h1,h2);
+	hp.printToFile(out_file);
+	return hp;
+	//	Print to file
+}
+
 
 
 /**
