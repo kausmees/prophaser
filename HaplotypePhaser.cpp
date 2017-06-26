@@ -11,8 +11,6 @@ HaplotypePhaser::~HaplotypePhaser(){
 	FreeCharMatrix(haplotypes, ped.count*2);
 	//	FreeCharMatrix(genotypes, ped.count);
 	delete [] phred_probs;
-	FreeFloatMatrix(forward, num_markers);
-	FreeFloatMatrix(backward, num_markers);
 	FreeDoubleMatrix(s_forward, num_markers);
 	FreeDoubleMatrix(s_backward, num_markers);
 
@@ -46,12 +44,15 @@ void HaplotypePhaser::AllocateMemory(){
 	sample_gls.resize(num_markers*3);
 	//	genotypes = AllocateCharMatrix(num_inds, num_markers*3);
 
-	forward = AllocateFloatMatrix(num_markers, num_states);
-	backward = AllocateFloatMatrix(num_markers, num_states);
 
 	s_forward = AllocateDoubleMatrix(num_markers, num_states);
 	s_backward = AllocateDoubleMatrix(num_markers, num_states);
 	normalizers = new double[num_markers];
+
+
+	//	s_forward2 = AllocateDoubleMatrix(num_markers, num_states);
+	//	s_backward2 = AllocateDoubleMatrix(num_markers, num_states);
+	//	normalizers2 = new double[num_markers];
 
 };
 
@@ -76,8 +77,8 @@ void HaplotypePhaser::LoadData(const String &ref_file, const String &sample_file
 	VcfUtils::LoadHaplotypes(ref_file, ped, haplotypes);
 
 	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls, sample_index);
-	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
-//		VcfUtils::LoadGeneticMap("data/chr20.OMNI.interpolated_genetic_map", ped, distances);
+//	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
+			VcfUtils::LoadGeneticMap("data/chr20.OMNI.interpolated_genetic_map", ped, distances);
 
 
 };
@@ -107,8 +108,8 @@ void HaplotypePhaser::LoadSampleData(const String &ref_file, const String &sampl
 	//	VcfUtils::LoadHaplotypes(ref_file, ped, haplotypes);
 
 	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls, sample_index);
-	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
-//		VcfUtils::LoadGeneticMap("data/chr20.OMNI.interpolated_genetic_map", ped, distances);
+//	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
+			VcfUtils::LoadGeneticMap("data/chr20.OMNI.interpolated_genetic_map", ped, distances);
 
 };
 
@@ -219,38 +220,32 @@ void HaplotypePhaser::CalcTransitionProbs(int marker, double ** probs){
 	int num_h = 2*num_inds - 2;
 
 	double scaled_dist;
+//
+//	if(distance_code == 1) {
+//		scaled_dist = 1-exp(-distances[marker]);
+//	}
+//
+//	if(distance_code == 2) {
+//		scaled_dist = 1-exp(-distances[marker]/num_h);
+//	}
+//
+//	if(distance_code == 3) {
+//		scaled_dist = 1-exp(-(distances[marker]*4*11000)/num_h);
+//	}
+//
+//	if(distance_code == 4) {
+//		scaled_dist = 0.01;
+//	}
+//
+//	if(distance_code == 5) {
+//		scaled_dist = 1-exp(-distances[marker]/(num_h*100));
+//	}
+//
+//	if(distance_code == 6) {
+		scaled_dist = 1-exp(-(distances[marker]*4*11418)/(num_h*100));
+//	}
 
-	if(distance_code == 1) {
-		scaled_dist = 1-exp(-distances[marker]);
-	}
 
-	if(distance_code == 2) {
-		scaled_dist = 1-exp(-distances[marker]/num_h);
-	}
-
-	if(distance_code == 3) {
-		scaled_dist = 1-exp(-(distances[marker]*4*11000)/num_h);
-	}
-
-	if(distance_code == 4) {
-		scaled_dist = 0.01;
-	}
-
-	if(distance_code == 5) {
-		scaled_dist = 1-exp(-distances[marker]/(num_h*100));
-	}
-
-
-//		double scaled_dist = 1-exp(-distances[marker]);
-
-//	double scaled_dist = 1-exp(-(distances[marker]*4*11000)/num_h);
-
-//	double
-//	double scaled_dist = 0.01;
-
-	if(marker==15) {
-		printf("Scaled dist = %e \n", scaled_dist);
-	}
 #pragma omp parallel for
 	for(int marker_state = 0; marker_state < num_states; marker_state++) {
 
@@ -372,11 +367,23 @@ void HaplotypePhaser::InitPriorScaledForward(){
 		c1 += emission_probs[s];
 	};
 
-	normalizers[0] = prior*c1;
+	//	normalizers[0] = prior*c1;
+	//	normalizers2[0] = 1/(prior*c1);
+	normalizers[0] = 1.0/(prior*c1);
+
+
+
+
 	//	printf("First Normalizer = %e Prior = %e c1 = %e \n", normalizers[0], prior, c1);
 
 	for(int s = 0; s < num_states; s++){
-		s_forward[0][s] = (prior*emission_probs[s]) / normalizers[0];
+
+		//		s_forward[0][s] = (prior*emission_probs[s]) / normalizers[0];
+		//		s_forward2[0][s] = (prior*emission_probs[s]) * normalizers2[0];
+		s_forward[0][s] = (prior*emission_probs[s]) * normalizers[0];
+
+
+
 	};
 
 	delete [] emission_probs;
@@ -384,14 +391,14 @@ void HaplotypePhaser::InitPriorScaledForward(){
 
 void HaplotypePhaser::InitPriorScaledBackward(){
 
-	//	printf("Init prior Backward : \n");
-	//	for(int i = 0; i< num_markers; i++){
-	//		printf(" marker = %d normalizer = %e \n", i, normalizers[i]);
-	//	}
-
-
 	for(int s = 0; s < num_states; s++){
-		s_backward[num_markers-1][s] = 1.0 / normalizers[num_markers-1];
+
+		//		s_backward[num_markers-1][s] = 1.0 / normalizers[num_markers-1];
+		//		s_backward2[num_markers-1][s] = normalizers2[num_markers-1];
+		s_backward[num_markers-1][s] = normalizers[num_markers-1];
+
+
+
 	};
 };
 
@@ -402,6 +409,8 @@ void HaplotypePhaser::CalcScaledForward(){
 	double ** transition_probs = AllocateDoubleMatrix(num_states, num_states);
 
 	double c;
+	double c2;
+
 
 	InitPriorScaledForward();
 
@@ -409,35 +418,50 @@ void HaplotypePhaser::CalcScaledForward(){
 		CalcEmissionProbs(m, emission_probs);
 		CalcTransitionProbs(m, transition_probs);
 		c = 0.0;
+		c2 = 0.0;
 #pragma omp parallel for schedule(dynamic,32)
 		for(int s = 0; s < num_states; s++){
-			if(m==1 && s==0) {
-				printf("Num threads = %d \n", omp_get_num_threads());
-			}
-			double sum = 0;
-			//			double * transition_probs = new double[num_states];
-			//			CalcTransitionProbs(m, s,transition_probs);
-
-
+			double sum = 0.0;
+			//			double sum2 = 0.0;
 #pragma GCC ivdep
 			for(int j = 0; j < num_states; j++){
 				sum += s_forward[m-1][j] * transition_probs[s][j];
-				//				sum += s_forward[m-1][j] * transition_probs[j];
+				//				sum2 += s_forward2[m-1][j] * transition_probs[s][j];
+
 			}
 			s_forward[m][s] =  emission_probs[s] * sum;
+			//			s_forward2[m][s] =  emission_probs[s] * sum2;
+
 			//			c += emission_probs[s]*sum;
 
-			//			delete [] transition_probs;
+
 		}
 
 		for(int s = 0; s < num_states; s++){
 			c+= s_forward[m][s];
 		}
 
-		normalizers[m] = c;
+//#pragma omp parallel for ordered reduction(+:c2)
+//		for(int s = 0; s < num_states; s++){
+//			c2+= s_forward[m][s];
+//		}
+//
+//		if(c != c2) {
+//			printf("DIFF C %e at %d \n", abs(c-c2), m);
+//		}
+
+
+		//		normalizers[m] = c;
+		//		normalizers2[m] = 1.0/c2;
+		normalizers[m] = 1.0/c;
+
+
 
 		for(int s = 0; s < num_states; s++){
-			s_forward[m][s] = s_forward[m][s] / normalizers[m];
+			//			s_forward[m][s] = s_forward[m][s] / normalizers[m];
+			//			s_forward2[m][s] = s_forward2[m][s] * normalizers2[m];
+			s_forward[m][s] = s_forward[m][s] * normalizers[m];
+
 
 		}
 	}
@@ -465,12 +489,20 @@ void HaplotypePhaser::CalcScaledBackward(){
 #pragma omp parallel for
 		for(int s = 0; s < num_states; s++){
 			double sum = 0.0;
+			//			double sum2 = 0.0;
+
 #pragma GCC ivdep
 			for(int i = 0; i < num_states; i++){
 
 				sum += s_backward[m+1][i] * transition_probs[s][i] * emission_probs[i];
+				//				sum2 += s_backward2[m+1][i] * transition_probs[s][i] * emission_probs[i];
+
 			}
-			s_backward[m][s] = sum / normalizers[m];
+			//			s_backward[m][s] = sum / normalizers[m];
+			//			s_backward2[m][s] = sum2 * normalizers2[m];
+			s_backward[m][s] = sum * normalizers[m];
+
+
 		}
 	}
 
@@ -538,6 +570,34 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 	// geno_probs[m][2] is probability that genotype at marker m is 2
 
 
+
+
+
+	////////////////////
+	//	for(int m = 0; m < num_markers; m++) {
+	//		if(abs(normalizers[m] - normalizers2[m]) >= std::numeric_limits<double>::epsilon() ) {
+	//			printf("Normalizers diff = %e  at %d \n", abs(normalizers[m] - normalizers2[m]), m);
+	//		}
+	//
+	//		for(int s = 0; s < num_states; s++) {
+	//			if(abs(s_forward[m][s] - s_forward2[m][s]) >= std::numeric_limits<double>::epsilon() ) {
+	//				printf("Scaled forward diff = %e  at %d %d\n",abs(s_forward[m][s] - s_forward2[m][s]), m,s);
+	//			}
+	//
+	//			if(abs(s_backward[m][s] - s_backward2[m][s]) >= std::numeric_limits<double>::epsilon() ) {
+	//				printf("Scaled backward diff = %e  at %d %d\n", abs(s_backward[m][s] - s_backward2[m][s]), m,s);
+	//			}
+	//
+	//		}
+	//	}
+
+
+
+	///////////////////
+
+
+
+
 	vector<vector<double>> geno_probs;
 
 
@@ -593,9 +653,9 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 			geno_probs[m][geno_code] += posteriors[s];
 
 
-//			if(m==4) {
-//				printf("At marker %d : When ref haps are: (%d,%d) then hapcode is %d%d and alleles are %s%s and geno code is %d \n", m, ref_hap1, ref_hap2, hapcode1, hapcode2, allele1.c_str(), allele2.c_str(), geno_code);
-//			}
+			//			if(m==4) {
+			//				printf("At marker %d : When ref haps are: (%d,%d) then hapcode is %d%d and alleles are %s%s and geno code is %d \n", m, ref_hap1, ref_hap2, hapcode1, hapcode2, allele1.c_str(), allele2.c_str(), geno_code);
+			//			}
 
 		}
 
@@ -919,15 +979,15 @@ HaplotypePair HaplotypePhaser::PrintReferenceHaplotypes(int * ml_states, const c
 	//	fclose(hapout);
 
 
-//	for(auto h : ref1){
-//		printf("%c",codes[h]);
-//	}
-//	printf("\n");
-//
-//	for(auto h : ref2){
-//		printf("%c",codes[h]);
-//	}
-//	printf("\n");
+	//	for(auto h : ref1){
+	//		printf("%c",codes[h]);
+	//	}
+	//	printf("\n");
+	//
+	//	for(auto h : ref2){
+	//		printf("%c",codes[h]);
+	//	}
+	//	printf("\n");
 
 	HaplotypePair hp(h1,h2);
 	return hp;

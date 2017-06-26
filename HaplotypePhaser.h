@@ -52,13 +52,15 @@ public:
 	float ** transition_probs;
 
 
-	// remove
-	float ** forward;
-	float ** backward;
 	double ** s_backward;
-
 	double ** s_forward;
 	double * normalizers;
+
+
+//	double ** s_backward2;
+//	double ** s_forward2;
+//	double * normalizers2;
+
 
 	void AllocateMemory();
 	void DeAllocateMemory();

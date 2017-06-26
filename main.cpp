@@ -26,23 +26,26 @@ int main(int argc, char ** argv){
 
 //	String dir = "../../Data/1KGData/vcfs/chrom20/";
 	string data_id = "4";
-	string subset_id = "B";
 	string individual = "NA12890";
+
+	string subset_id = "B";
 	string ref_set = "CEU_50";
 
+//	string subset_id = "A";
+//	string ref_set = "CEU_25";
 
 
 	double error = 0.001;
 //	vector<double> coverages = {0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
 //	vector<double> coverages = {0.0, 0.02, 0.04, 0.06, 0.08, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-//	vector<double> coverages = {0.0, 0.02, 0.04, 0.06, 0.08, 0.1, 0.3, 0.5, 0.7, 0.8, 1.0};
+	vector<double> coverages = {0.0, 0.02, 0.04, 0.06, 0.08, 0.1, 0.3, 0.5, 0.7, 0.8, 1.0};
 //	vector<double> coverages = {0.0, 0.02, 0.04, 0.06, 0.08, 0.1};
 
 //	vector<double> coverages = {0.3, 0.7, 1.0};
 
 	//	vector<double> coverages = {0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
 //	vector<double> coverages = {0.04, 0.1, 0.5, 0.8};
-	vector<double> coverages = {0.01, 0.09, 0.3};
+//	vector<double> coverages = {0.01, 0.09, 0.3};
 //	vector<double> coverages = {};
 
 
@@ -52,7 +55,7 @@ int main(int argc, char ** argv){
 		parameters.push_back("_" + to_string(c) + "_" + to_string(error));
 	}
 
-//	parameters.push_back("");
+	parameters.push_back("");
 
 
 
@@ -88,7 +91,7 @@ int main(int argc, char ** argv){
 		file_name_in = string(dir) + subset_id + "/" + data_id + "_" + subset_id + "_" + individual + "_snps" + par + ".vcf" ;
 //
 //		////////////////////////////////////////
-		distance_code = "5";
+		distance_code = "6";
 		phaser.setDistanceCode(atoi(distance_code.c_str()));
 		printf("Distance code %d \n", phaser.distance_code);
 
@@ -114,6 +117,7 @@ int main(int argc, char ** argv){
 			ml_states[i] = stats[i][39];
 		}
 		HaplotypePair mine_haps1 = phaser.PrintHaplotypesToFile(ml_states, file_name_out.c_str());
+		mine_haps1.print();
 		HaplotypePair mine_haps2 = phaser.PrintReferenceHaplotypes(ml_states,(file_name_out+"_ref_haps").c_str());
 		printf("Equal haps= %d \n", mine_haps1.isEqual(mine_haps2));
 

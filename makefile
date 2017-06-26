@@ -2,6 +2,10 @@
 CC = g++
 CFLAGS = -std=c++14 -static -O3 -g3 -Wall -c -fopenmp 
 LFLAGS = -static -static-libgcc -static-libstdc++ -fopenmp -g -o 
+#CFLAGS = -std=c++14  -O3 -g3 -Wall -c -fopenmp 
+#LFLAGS =  -fopenmp -g -o 
+
+
 SOURCES=$(wildcard *.cpp)
 OBJECTS=$(SOURCES:.cpp=.o)
 TARGET=phase
