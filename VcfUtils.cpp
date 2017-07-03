@@ -306,44 +306,36 @@ void LoadGeneticMap(const char *file_name, const Pedigree &ped, vector<double> &
 	int map_pos;
 	double dist;
 	double prev_dist;
-	int c = 0;
 	char marker_name [256];
 	int result;
 	//TODO dont hardcode Ne
-	double pop_const = 4*11418;
+//	double pop_const = 4*11418;
 	FILE * mapstream = fopen(file_name, "r");
 
-	result = fscanf(mapstream, "%255s %d %lf", marker_name, &map_pos, &prev_dist);
+	map_pos = -1;
+	prev_dist = 0.0;
+	result = 3;
 
-	for (int i = 1; i < Pedigree::markerCount && result == 3; i++) {
+	for (int i = 0; i < Pedigree::markerCount && result == 3; i++) {
 		ped_pos = GetMarkerPos(i);
 		while(map_pos < ped_pos && result == 3) {
 			result = fscanf(mapstream, "%255s %d %lf", marker_name, &map_pos, &dist);
-			c +=1;
 		}
 		if(map_pos == ped_pos) {
-
-			//TODO what should it be set to if it is zero??
 //			distances[i] = (dist - prev_dist > 0.00000001) ? (dist - prev_dist) * pop_const : 0.001 * pop_const;
-			distances[i] = (dist - prev_dist > 0.00000001) ? (dist - prev_dist) * 5 : 0.01;
-
-			double this_dist = dist - prev_dist;
+//			distances[i] = (dist - prev_dist > 0.00000001) ? (dist - prev_dist) * 5 : 0.01;
+			distances[i] = (dist - prev_dist > 0.0000000000001) ? (dist - prev_dist) : 0.01;
 			prev_dist = dist;
 
 		}
 		else{
 			distances[i] = distances[i-1];
-			//	TODO throw warning
 			printf("WARNING: Marker %d is not present in crossover file. \n", GetMarkerPos(i));
 			continue;
 		}
 	}
 
-//		for (int i = 0; i < Pedigree::markerCount; i++) {
-//			printf("Marker : %d, Theta: %f \n", GetMarkerPos(i), distances[i]);
-//		}
-//		printf("%d lines read from map \n", c);
-
+	distances[0] = 0.01;
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

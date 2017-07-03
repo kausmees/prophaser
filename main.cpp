@@ -38,7 +38,7 @@ int main(int argc, char ** argv){
 	double error = 0.001;
 //	vector<double> coverages = {0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
 //	vector<double> coverages = {0.0, 0.02, 0.04, 0.06, 0.08, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-	vector<double> coverages = {0.0, 0.02, 0.04, 0.06, 0.08, 0.1, 0.3, 0.5, 0.7, 0.8, 1.0};
+//	vector<double> coverages = {0.0, 0.02, 0.04, 0.06, 0.08, 0.1, 0.3, 0.5, 0.7, 0.8, 1.0};
 //	vector<double> coverages = {0.0, 0.02, 0.04, 0.06, 0.08, 0.1};
 
 //	vector<double> coverages = {0.3, 0.7, 1.0};
@@ -46,7 +46,7 @@ int main(int argc, char ** argv){
 	//	vector<double> coverages = {0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
 //	vector<double> coverages = {0.04, 0.1, 0.5, 0.8};
 //	vector<double> coverages = {0.01, 0.09, 0.3};
-//	vector<double> coverages = {};
+	vector<double> coverages = {};
 
 
 	vector<string> parameters = {};
@@ -89,7 +89,12 @@ int main(int argc, char ** argv){
 	chrono::steady_clock::time_point end;
 	for(auto par : parameters) {
 		file_name_in = string(dir) + subset_id + "/" + data_id + "_" + subset_id + "_" + individual + "_snps" + par + ".vcf" ;
-//
+
+
+		phaser.LoadData(ref_file.c_str(), file_name_in.c_str(), 0);
+		writeVectorToCSV(("./Results/" + subset_id+ "/"+ ref_set + "/distances").c_str(), phaser.distances, "w");
+
+
 //		////////////////////////////////////////
 		distance_code = "6";
 		phaser.setDistanceCode(atoi(distance_code.c_str()));
