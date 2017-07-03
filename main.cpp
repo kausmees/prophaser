@@ -91,8 +91,8 @@ int main(int argc, char ** argv){
 		file_name_in = string(dir) + subset_id + "/" + data_id + "_" + subset_id + "_" + individual + "_snps" + par + ".vcf" ;
 
 
-		phaser.LoadData(ref_file.c_str(), file_name_in.c_str(), 0);
-		writeVectorToCSV(("./Results/" + subset_id+ "/"+ ref_set + "/distances").c_str(), phaser.distances, "w");
+//		phaser.LoadData(ref_file.c_str(), file_name_in.c_str(), 0);
+//		writeVectorToCSV(("./Results/" + subset_id+ "/"+ ref_set + "/distances").c_str(), phaser.distances, "w");
 
 
 //		////////////////////////////////////////

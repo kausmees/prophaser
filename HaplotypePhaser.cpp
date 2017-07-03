@@ -77,8 +77,8 @@ void HaplotypePhaser::LoadData(const String &ref_file, const String &sample_file
 	VcfUtils::LoadHaplotypes(ref_file, ped, haplotypes);
 
 	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls, sample_index);
-	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
-	//	VcfUtils::LoadGeneticMap("data/chr20.OMNI.interpolated_genetic_map", ped, distances);
+//	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
+	VcfUtils::LoadGeneticMap("data/chr20.OMNI.interpolated_genetic_map", ped, distances);
 
 
 };
@@ -93,8 +93,8 @@ void HaplotypePhaser::LoadReferenceData(const String &ref_file, const String &sa
 	AllocateMemory();
 	VcfUtils::LoadHaplotypes(ref_file, ped, haplotypes);
 
-	//	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, genotypes, sample_index);
-	//	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
+//		VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, genotypes, sample_index);
+//		VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
 };
 
 /**
@@ -108,8 +108,8 @@ void HaplotypePhaser::LoadSampleData(const String &ref_file, const String &sampl
 	//	VcfUtils::LoadHaplotypes(ref_file, ped, haplotypes);
 
 	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls, sample_index);
-	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
-	//	VcfUtils::LoadGeneticMap("data/chr20.OMNI.interpolated_genetic_map", ped, distances);
+//	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
+	VcfUtils::LoadGeneticMap("data/chr20.OMNI.interpolated_genetic_map", ped, distances);
 
 };
 
@@ -138,80 +138,11 @@ void HaplotypePhaser::CalcEmissionProbs(int marker, double * probs) {
 
 
 	// OPT1
-	//	for (int state = 0; state < num_states; state++) {
-	//
-	//		// First reference hapotype at state (0: REF 1: ALT)
-	//		h1 = haplotypes[state / num_h][marker];
-	//		// Second reference hapotype at state (0: REF 1: ALT)
-	//		h2 = haplotypes[state % num_h][marker];
-	//
-	//		sum = 0.0;
-	//
-	//
-	//		//	printf(" GetEmissionProb: state = %d marker = %d \n", state, marker);
-	//		//	int ph1 = (unsigned char) genotypes[num_inds-1][marker * 3];
-	//		//	int ph2 = (unsigned char) genotypes[num_inds-1][marker * 3 + 1];
-	//		//	int ph3 = (unsigned char) genotypes[num_inds-1][marker * 3 + 2];
-	//		//
-	//		//	printf("indices : %d %d %d \n", ph1, ph2, ph3);
-	//
-	//
-	//		// case1: g = 0
-	//
-	//		if(h1 == 0 and h2 == 0){
-	//			sum += case_3 *  sample_gls[marker * 3];
-	//			//				printf("adding = %f \n", pow(1 - errors[marker], 2) * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3]]);
-	//		}
-	//		else {
-	//			if((h1 == 0 and h2 == 1) or (h1 == 1 and h2 == 0)){
-	//
-	//				sum += case_4 * sample_gls[marker * 3];
-	//				//						printf("adding = %f \n", (1 - errors[marker]) * error * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3]]);
-	//
-	//			}
-	//			else{
-	//				sum +=  case_5 *  sample_gls[marker * 3];
-	//				//						printf("adding = %f \n", errors[marker] * 2 * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3]]);
-	//
-	//			}
-	//		}
-	//
-	//		// case2: g = 1
-	//		if((h1 == 0 and h2 == 1) or (h1 == 1 and h2 == 0)){
-	//			sum += case_1 *  sample_gls[marker * 3 + 1];
-	//			//				printf("adding1 = %f \n", (pow(1 - errors[marker], 2) + pow(errors[marker], 2)) * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3 + 1]]);
-	//
-	//		}
-	//		else{
-	//			sum +=case_2 * sample_gls[marker * 3 + 1];
-	//			//				printf("adding2 = %f \n", 2 * (1 - errors[marker]) * errors[marker] * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3 + 1]]);
-	//
-	//		}
-	//
-	//		// case3: g = 2
-	//		if(h1 == 1 and h2 == 1){
-	//			sum += case_3 * sample_gls[marker * 3 + 2];
-	//			//				printf("adding = %f \n", pow(1 - errors[marker], 2) * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3 + 2]]);
-	//
-	//		} else{
-	//			if((h1 == 0 and h2 == 1) or (h1 == 1 and h2 == 0)){
-	//				sum += case_4 * sample_gls[marker * 3 + 2];
-	//				//						printf("adding = %f \n", (1 - errors[marker]) * error * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3 + 2]]);
-	//
-	//			}
-	//			else{
-	//				sum += case_5 * sample_gls[marker * 3 + 2];
-	//				//						printf("adding = %f \n", pow(errors[marker],2) * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3 + 2]]);
-	//
-	//			}
-	//		}
-	//		probs[state] = sum;
-	//	}
-
-	// ORIGINAL
 	for (int state = 0; state < num_states; state++) {
 
+		// First reference hapotype at state (0: REF 1: ALT)
 		h1 = haplotypes[state / num_h][marker];
+		// Second reference hapotype at state (0: REF 1: ALT)
 		h2 = haplotypes[state % num_h][marker];
 
 		sum = 0.0;
@@ -226,19 +157,20 @@ void HaplotypePhaser::CalcEmissionProbs(int marker, double * probs) {
 
 
 		// case1: g = 0
+
 		if(h1 == 0 and h2 == 0){
-			sum += pow(1 - errors[marker], 2) *  sample_gls[marker * 3];
+			sum += case_3 *  sample_gls[marker * 3];
 			//				printf("adding = %f \n", pow(1 - errors[marker], 2) * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3]]);
 		}
 		else {
 			if((h1 == 0 and h2 == 1) or (h1 == 1 and h2 == 0)){
 
-				sum += (1 - errors[marker]) * error * sample_gls[marker * 3];
+				sum += case_4 * sample_gls[marker * 3];
 				//						printf("adding = %f \n", (1 - errors[marker]) * error * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3]]);
 
 			}
 			else{
-				sum +=  pow(errors[marker],2) *  sample_gls[marker * 3];
+				sum +=  case_5 *  sample_gls[marker * 3];
 				//						printf("adding = %f \n", errors[marker] * 2 * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3]]);
 
 			}
@@ -246,35 +178,107 @@ void HaplotypePhaser::CalcEmissionProbs(int marker, double * probs) {
 
 		// case2: g = 1
 		if((h1 == 0 and h2 == 1) or (h1 == 1 and h2 == 0)){
-			sum += (pow(1 - errors[marker], 2) + pow(errors[marker], 2)) *  sample_gls[marker * 3 + 1];
+			sum += case_1 *  sample_gls[marker * 3 + 1];
 			//				printf("adding1 = %f \n", (pow(1 - errors[marker], 2) + pow(errors[marker], 2)) * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3 + 1]]);
 
 		}
 		else{
-			sum += 2 * (1 - errors[marker]) * errors[marker] * sample_gls[marker * 3 + 1];
+			sum +=case_2 * sample_gls[marker * 3 + 1];
 			//				printf("adding2 = %f \n", 2 * (1 - errors[marker]) * errors[marker] * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3 + 1]]);
 
 		}
 
 		// case3: g = 2
 		if(h1 == 1 and h2 == 1){
-			sum += pow(1 - errors[marker], 2) * sample_gls[marker * 3 + 2];
+			sum += case_3 * sample_gls[marker * 3 + 2];
 			//				printf("adding = %f \n", pow(1 - errors[marker], 2) * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3 + 2]]);
 
 		} else{
 			if((h1 == 0 and h2 == 1) or (h1 == 1 and h2 == 0)){
-				sum += (1 - errors[marker]) * error * sample_gls[marker * 3 + 2];
+				sum += case_4 * sample_gls[marker * 3 + 2];
 				//						printf("adding = %f \n", (1 - errors[marker]) * error * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3 + 2]]);
 
 			}
 			else{
-				sum += pow(errors[marker],2) * sample_gls[marker * 3 + 2];
+				sum += case_5 * sample_gls[marker * 3 + 2];
 				//						printf("adding = %f \n", pow(errors[marker],2) * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3 + 2]]);
 
 			}
 		}
 		probs[state] = sum;
 	}
+
+	//	// ORIGINAL
+	//	for (int state = 0; state < num_states; state++) {
+	//
+	//		h1 = haplotypes[state / num_h][marker];
+	//		h2 = haplotypes[state % num_h][marker];
+	//
+	//		sum = 0.0;
+	//
+	//
+	//		//	printf(" GetEmissionProb: state = %d marker = %d \n", state, marker);
+	//		//	int ph1 = (unsigned char) genotypes[num_inds-1][marker * 3];
+	//		//	int ph2 = (unsigned char) genotypes[num_inds-1][marker * 3 + 1];
+	//		//	int ph3 = (unsigned char) genotypes[num_inds-1][marker * 3 + 2];
+	//		//
+	//		//	printf("indices : %d %d %d \n", ph1, ph2, ph3);
+	//
+	//
+	//		// case1: g = 0
+	//		if(h1 == 0 and h2 == 0){
+	//			sum += pow(1 - errors[marker], 2) *  sample_gls[marker * 3];
+	//			//				printf("adding = %f \n", pow(1 - errors[marker], 2) * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3]]);
+	//		}
+	//		else {
+	//			if((h1 == 0 and h2 == 1) or (h1 == 1 and h2 == 0)){
+	//
+	//				sum += (1 - errors[marker]) * error * sample_gls[marker * 3];
+	//				//						printf("adding = %f \n", (1 - errors[marker]) * error * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3]]);
+	//
+	//			}
+	//			else{
+	//				sum +=  pow(errors[marker],2) *  sample_gls[marker * 3];
+	//				//						printf("adding = %f \n", errors[marker] * 2 * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3]]);
+	//
+	//			}
+	//		}
+	//
+	//		// case2: g = 1
+	//		if((h1 == 0 and h2 == 1) or (h1 == 1 and h2 == 0)){
+	//			sum += (pow(1 - errors[marker], 2) + pow(errors[marker], 2)) *  sample_gls[marker * 3 + 1];
+	//			//				printf("adding1 = %f \n", (pow(1 - errors[marker], 2) + pow(errors[marker], 2)) * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3 + 1]]);
+	//
+	//		}
+	//		else{
+	//			sum += 2 * (1 - errors[marker]) * errors[marker] * sample_gls[marker * 3 + 1];
+	//			//				printf("adding2 = %f \n", 2 * (1 - errors[marker]) * errors[marker] * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3 + 1]]);
+	//
+	//		}
+	//
+	//		// case3: g = 2
+	//		if(h1 == 1 and h2 == 1){
+	//			sum += pow(1 - errors[marker], 2) * sample_gls[marker * 3 + 2];
+	//			//				printf("adding = %f \n", pow(1 - errors[marker], 2) * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3 + 2]]);
+	//
+	//		} else{
+	//			if((h1 == 0 and h2 == 1) or (h1 == 1 and h2 == 0)){
+	//				sum += (1 - errors[marker]) * error * sample_gls[marker * 3 + 2];
+	//				//						printf("adding = %f \n", (1 - errors[marker]) * error * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3 + 2]]);
+	//
+	//			}
+	//			else{
+	//				sum += pow(errors[marker],2) * sample_gls[marker * 3 + 2];
+	//				//						printf("adding = %f \n", pow(errors[marker],2) * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3 + 2]]);
+	//
+	//			}
+	//		}
+	//		probs[state] = sum;
+	//	}
+	//
+	//
+
+
 
 }
 
@@ -323,11 +327,105 @@ void HaplotypePhaser::CalcTransitionProbs(int marker, double ** probs){
 
 
 
-	// OPT 1
-	//	double no_switch = pow(1 - scaled_dist, 2) + ((2 * (1 - scaled_dist) * scaled_dist) / num_h) + (pow(scaled_dist,2) / pow(num_h,2));
-	//	double both_switch = pow(scaled_dist/num_h, 2);
-	//	double one_switch = (((1 - scaled_dist) * scaled_dist) / num_h) + pow(scaled_dist/num_h, 2);
+	//	// OPT 1
+	//		double no_switch = pow(1 - scaled_dist, 2) + ((2 * (1 - scaled_dist) * scaled_dist) / num_h) + (pow(scaled_dist,2) / pow(num_h,2));
+	//		double both_switch = pow(scaled_dist/num_h, 2);
+	//		double one_switch = (((1 - scaled_dist) * scaled_dist) / num_h) + pow(scaled_dist/num_h, 2);
 	//
+	//	#pragma omp parallel for
+	//		for(int marker_state = 0; marker_state < num_states; marker_state++) {
+	//
+	//			int marker_c1 = marker_state / num_h;
+	//			int marker_c2 = marker_state % num_h;
+	//
+	//	#pragma GCC ivdep
+	//			for(int i = 0; i < num_states; i++){
+	//				int other_c1 = i / num_h;
+	//				int other_c2 = i % num_h;
+	//
+	//				//no switch
+	//				if(other_c1 - marker_c1 == 0 and other_c2 - marker_c2 == 0) {
+	//					probs[marker_state][i] = no_switch;
+	//				}
+	//				else {
+	//					// both switch
+	//					if(other_c1-marker_c1 != 0 and other_c2 - marker_c2 != 0) {
+	//						probs[marker_state][i] = both_switch;
+	//
+	//					}
+	//					// one switch
+	//					else{
+	//						probs[marker_state][i] = one_switch;
+	//
+	//					}
+	//				}
+	//			}
+	//		}
+
+
+
+	// OPT 2
+
+	double tprobs[3];
+
+	//both_switch
+	tprobs[0] = pow(scaled_dist/num_h, 2);
+
+	//one switch
+	tprobs[1] =  (((1 - scaled_dist) * scaled_dist) / num_h) + pow(scaled_dist/num_h, 2);
+
+	// no switch
+	tprobs[2] = pow(1 - scaled_dist, 2) + ((2 * (1 - scaled_dist) * scaled_dist) / num_h) + (pow(scaled_dist,2) / pow(num_h,2));
+
+	//		double no_switch = pow(1 - scaled_dist, 2) + ((2 * (1 - scaled_dist) * scaled_dist) / num_h) + (pow(scaled_dist,2) / pow(num_h,2));
+	//		double both_switch = pow(scaled_dist/num_h, 2);
+	//		double one_switch = (((1 - scaled_dist) * scaled_dist) / num_h) + pow(scaled_dist/num_h, 2);
+
+#pragma omp parallel for
+	for(int marker_state = 0; marker_state < num_states; marker_state++) {
+
+		int marker_c1 = marker_state / num_h;
+		int marker_c2 = marker_state % num_h;
+
+#pragma GCC ivdep
+		for(int i = 0; i < num_states; i++){
+
+			int other_c1 = i / num_h;
+			int other_c2 = i % num_h;
+
+//			int b = (marker_state-i+num_h) % num_h;
+//			int a = (marker_state-i-b) / num_h;
+
+			int b = marker_c2-other_c2;
+			int a = marker_c1-other_c1;
+
+//			if(other_c1 - marker_c1 == 0 and other_c2 - marker_c2 == 0) {
+//				if(!a+!b != 2 ) {
+//					printf("NOT 2: % d and %d \n", marker_state, i);
+//				}			}
+//			else {
+//				// both switch
+//				if(other_c1-marker_c1 != 0 and other_c2 - marker_c2 != 0) {
+//					if(!a != 0) {
+//						printf("NOT 0: % d and %d : %d = %d + %d    ( %d , %d) ( %d , %d) a = %d b = %d\n", marker_state, i,!a+!b, !a, !b,marker_c1, marker_c2, other_c1, other_c2, a, b);
+//					}
+//				}
+//				// one switch
+//				else{
+//					if(!a+!b != 1 ) {
+//						printf("NOT 1 top = %d : % d and %d : %d = %d + %d    ( %d , %d) ( %d , %d) a = %d b = %d\n",marker_state-i-b, marker_state, i,!a+!b, !a, !b,marker_c1, marker_c2, other_c1, other_c2, a, b);
+//					}
+//				}
+//			}
+
+
+			probs[marker_state][i] = tprobs[!a+!b];
+		}
+	}
+
+
+
+	// ORIGINAL
 	//#pragma omp parallel for
 	//	for(int marker_state = 0; marker_state < num_states; marker_state++) {
 	//
@@ -341,58 +439,22 @@ void HaplotypePhaser::CalcTransitionProbs(int marker, double ** probs){
 	//
 	//			//no switch
 	//			if(other_c1 - marker_c1 == 0 and other_c2 - marker_c2 == 0) {
-	//				probs[marker_state][i] = no_switch;
+	//				probs[marker_state][i] = pow(1 - scaled_dist, 2) + ((2 * (1 - scaled_dist) * scaled_dist) / num_h) + (pow(scaled_dist,2) / pow(num_h,2));
 	//			}
 	//			else {
 	//				// both switch
 	//				if(other_c1-marker_c1 != 0 and other_c2 - marker_c2 != 0) {
-	//					probs[marker_state][i] = both_switch;
+	//					probs[marker_state][i] = pow(scaled_dist/num_h, 2);
 	//
 	//				}
 	//				// one switch
 	//				else{
-	//					probs[marker_state][i] = one_switch;
+	//					probs[marker_state][i] = (((1 - scaled_dist) * scaled_dist) / num_h) + pow(scaled_dist/num_h, 2);
 	//
 	//				}
 	//			}
 	//		}
 	//	}
-
-
-
-
-
-
-	// ORIGINAL
-#pragma omp parallel for
-	for(int marker_state = 0; marker_state < num_states; marker_state++) {
-
-		int marker_c1 = marker_state / num_h;
-		int marker_c2 = marker_state % num_h;
-
-#pragma GCC ivdep
-		for(int i = 0; i < num_states; i++){
-			int other_c1 = i / num_h;
-			int other_c2 = i % num_h;
-
-			//no switch
-			if(other_c1 - marker_c1 == 0 and other_c2 - marker_c2 == 0) {
-				probs[marker_state][i] = pow(1 - scaled_dist, 2) + ((2 * (1 - scaled_dist) * scaled_dist) / num_h) + (pow(scaled_dist,2) / pow(num_h,2));
-			}
-			else {
-				// both switch
-				if(other_c1-marker_c1 != 0 and other_c2 - marker_c2 != 0) {
-					probs[marker_state][i] = pow(scaled_dist/num_h, 2);
-
-				}
-				// one switch
-				else{
-					probs[marker_state][i] = (((1 - scaled_dist) * scaled_dist) / num_h) + pow(scaled_dist/num_h, 2);
-
-				}
-			}
-		}
-	}
 
 
 
@@ -550,6 +612,7 @@ void HaplotypePhaser::CalcScaledForward(){
 
 		//		scaled_dist = 1-exp(-(distances[m]*4*11418)/(num_h*100));
 		scaled_dist = 1-exp(-(distances[m] * pop_const)/num_h);
+//		scaled_dist = 1-exp(-(distances[m]*4*11418)/(num_h*100));
 
 		//both_switch
 		probs[0] = pow(scaled_dist/num_h, 2);
@@ -564,12 +627,35 @@ void HaplotypePhaser::CalcScaledForward(){
 #pragma omp parallel for schedule(dynamic,32)
 		for(int s = 0; s < num_states; s++){
 			double sum = 0.0;
+			int marker_c1 = s / num_h;
+			int marker_c2 = s % num_h;
 
 #pragma GCC ivdep
 			for(int j = 0; j < num_states; j++){
 
-				int b = (s-j) % num_h;
-				int a = (s-j-b) / num_h;
+//				int b = (s-j) % num_h;
+//				int a = (s-j-b) / num_h;
+
+				int other_c1 = j / num_h;
+				int other_c2 = j % num_h;
+
+				int b = marker_c2-other_c2;
+				int a = marker_c1-other_c1;
+
+//				int diff = s-j;
+//				int newa = diff / num_h;
+//				int newb = diff-newa*num_h;
+//
+//				if(a!=newa or b!= newb){
+//					int diff = j-s;
+//					int newa = diff / num_h;
+//					int newb = diff-newa*num_h;
+//				}
+//
+//				if(a!=newa or b!= newb){
+//					printf("NOT SAME \n");
+//				}
+
 
 				sum += s_forward[m-1][j] * probs[!a+!b];
 			}
@@ -583,13 +669,10 @@ void HaplotypePhaser::CalcScaledForward(){
 
 		normalizers[m] = 1.0/c;
 
-
-
 		for(int s = 0; s < num_states; s++){
 			//			s_forward[m][s] = s_forward[m][s] / normalizers[m];
 			//			s_forward2[m][s] = s_forward2[m][s] * normalizers2[m];
 			s_forward[m][s] = s_forward[m][s] * normalizers[m];
-
 
 		}
 	}
@@ -598,7 +681,7 @@ void HaplotypePhaser::CalcScaledForward(){
 
 }
 
-// NEW OPTIMIZED
+//// NEW OPTIMIZED
 void HaplotypePhaser::CalcScaledBackward(){
 	double * emission_probs = new double[num_states];
 	int num_h = 2*num_inds - 2;
@@ -608,10 +691,10 @@ void HaplotypePhaser::CalcScaledBackward(){
 
 	InitPriorScaledBackward();
 
-
 	for(int m = num_markers-2; m >= 0; m--){
 		//		scaled_dist = 1-exp(-(distances[m]*4*11418)/(num_h*100));
 		scaled_dist = 1-exp(-(distances[m] * pop_const)/num_h);
+//		scaled_dist = 1-exp(-(distances[m+1]*4*11418)/(num_h*100));
 
 		//both_switch
 		probs[0] = pow(scaled_dist/num_h, 2);
@@ -627,18 +710,26 @@ void HaplotypePhaser::CalcScaledBackward(){
 #pragma omp parallel for
 		for(int s = 0; s < num_states; s++){
 			double sum = 0.0;
+			int marker_c1 = s / num_h;
+			int marker_c2 = s % num_h;
 
 #pragma GCC ivdep
 			for(int j = 0; j < num_states; j++){
-				int b = (s-j) % num_h;
-				int a = (s-j-b) / num_h;
-				sum += s_backward[m+1][j] * probs[!a+!b] * emission_probs[j];
+//				int b = (s-j) % num_h;
+//				int a = (s-j-b) / num_h;
+//
+				int other_c1 = j / num_h;
+				int other_c2 = j % num_h;
 
+				int b = marker_c2-other_c2;
+				int a = marker_c1-other_c1;
+
+
+				sum += s_backward[m+1][j] * probs[!a + !b] * emission_probs[j];
 			}
 			s_backward[m][s] = sum * normalizers[m];
 		}
 	}
-
 	delete [] emission_probs;
 }
 
@@ -682,14 +773,14 @@ void HaplotypePhaser::CalcScaledBackward(){
 //			c+= s_forward[m][s];
 //		}
 //
-////#pragma omp parallel for ordered reduction(+:c2)
-////		for(int s = 0; s < num_states; s++){
-////			c2+= s_forward[m][s];
-////		}
-////
-////		if(c != c2) {
-////			printf("DIFF C %e at %d \n", abs(c-c2), m);
-////		}
+//		//#pragma omp parallel for ordered reduction(+:c2)
+//		//		for(int s = 0; s < num_states; s++){
+//		//			c2+= s_forward[m][s];
+//		//		}
+//		//
+//		//		if(c != c2) {
+//		//			printf("DIFF C %e at %d \n", abs(c-c2), m);
+//		//		}
 //
 //
 //		//		normalizers[m] = c;
@@ -712,11 +803,11 @@ void HaplotypePhaser::CalcScaledBackward(){
 //	delete [] emission_probs;
 //
 //}
-
-
-
-
-// ORIGINAL
+//
+//
+//
+//
+//// ORIGINAL
 //void HaplotypePhaser::CalcScaledBackward(){
 //	double * emission_probs = new double[num_states];
 //	//	double * transition_probs = new double[num_states];
