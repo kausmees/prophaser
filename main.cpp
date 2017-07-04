@@ -37,17 +37,22 @@ int main(int argc, char ** argv){
 
 	double error = 0.001;
 //	vector<double> coverages = {0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
-//	vector<double> coverages = {0.0, 0.02, 0.04, 0.06, 0.08, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0};
-//	vector<double> coverages = {0.0, 0.02, 0.04, 0.06, 0.08, 0.1, 0.3, 0.5, 0.7, 0.8, 1.0};
-//	vector<double> coverages = {0.0, 0.02, 0.04, 0.06, 0.08, 0.1};
 
-//	vector<double> coverages = {0.3, 0.7, 1.0};
 
-	//	vector<double> coverages = {0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
-//	vector<double> coverages = {0.04, 0.1, 0.5, 0.8};
-//	vector<double> coverages = {0.01, 0.09, 0.3};
+////// did 6 new with (with m in calc scaled backward) + ""
+//	vector<double> coverages = {0.1, 0.3, 0.5, 1.0};
+
+
+////// doing 6 new with (with m+1 in calc scaled backward) on milou
+//	vector<double> coverages = {0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.2, 0.4, 0.6}; DOING
+//	vector<double> coverages = {0.8}; DONE
+
+////// doing 6 new with (with m+1 in calc scaled backward) on mine
+//		vector<double> coverages = {0.9}; DONE
+//		vector<double> coverages = {0.7}; //DONE but WRONG, didnt load genetic stupid map
+
+
 	vector<double> coverages = {};
-
 
 	vector<string> parameters = {};
 
@@ -55,7 +60,7 @@ int main(int argc, char ** argv){
 		parameters.push_back("_" + to_string(c) + "_" + to_string(error));
 	}
 
-	parameters.push_back("");
+//	parameters.push_back("");
 
 
 
@@ -95,11 +100,7 @@ int main(int argc, char ** argv){
 //		writeVectorToCSV(("./Results/" + subset_id+ "/"+ ref_set + "/distances").c_str(), phaser.distances, "w");
 
 
-//		////////////////////////////////////////
-		distance_code = "6";
-		phaser.setDistanceCode(atoi(distance_code.c_str()));
-		printf("Distance code %d \n", phaser.distance_code);
-
+		distance_code = "6_new";
 
 		file_name_out ="./Results/" + subset_id+ "/"+ ref_set + "/" + data_id + "_" + subset_id + "_" + individual + "_snps" + par + ".phased_"+ distance_code;
 		phaser.LoadSampleData(ref_file.c_str(), file_name_in.c_str(), 0);
@@ -132,50 +133,6 @@ int main(int argc, char ** argv){
 		end= std::chrono::steady_clock::now();
 		cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
 		cout << "Total: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin1).count() << " millisec" <<endl<<endl<<endl;
-
-		///////////////////////////////////////////////
-//
-//		distance_code = "3";
-//		phaser.setDistanceCode(atoi(distance_code.c_str()));
-//		printf("Distance code %d \n", phaser.distance_code);
-//
-//
-//		file_name_out ="./Results/" + subset_id+ "/"+ ref_set + "/" + data_id + "_" + subset_id + "_" + individual + "_snps" + par + ".phased_"+ distance_code;
-////		phaser.LoadSampleData(ref_file.c_str(), file_name_in.c_str(), 0);
-////		begin1 = chrono::steady_clock::now();
-////		begin = chrono::steady_clock::now();
-////		cout << "Starting Forward \n";
-////		phaser.CalcScaledForward();
-////		end= std::chrono::steady_clock::now();
-////		cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
-////		begin = chrono::steady_clock::now();
-////		cout << "Starting Backward \n";
-////		phaser.CalcScaledBackward();
-////		end= std::chrono::steady_clock::now();
-////		cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
-////		begin = chrono::steady_clock::now();
-////		cout << "Starting Stats \n";
-////
-////		vector<vector<double>> stats2 = phaser.GetPosteriorStats((file_name_out+"_stats").c_str());
-//
-//		vector<vector<double>> stats2 = phaser.ReadPosteriorStats((file_name_out+"_stats").c_str());
-//
-//
-//		int * ml_states2 = new int[phaser.num_markers];
-//		for (int i = 0; i < phaser.num_markers; i++) {
-//			ml_states2[i] = stats2[i][39];
-//		}
-//		HaplotypePair mine_haps3 = phaser.PrintHaplotypesToFile(ml_states2, file_name_out.c_str());
-//		HaplotypePair mine_haps4 = phaser.PrintReferenceHaplotypes(ml_states2,(file_name_out+"_ref_haps").c_str());
-//		printf("Equal = %d \n", mine_haps3.isEqual(mine_haps4));
-//
-//
-////		printf("???Equal???? = %d \n", mine_haps1.isEqual(mine_haps4));
-//
-//
-//		end= std::chrono::steady_clock::now();
-//		cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
-//		cout << "Total: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin1).count() << " millisec" <<endl<<endl<<endl;
 
 	}
 }

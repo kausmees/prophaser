@@ -32,7 +32,7 @@ void HaplotypePhaser::AllocateMemory(){
 
 
 	distances.resize(num_markers,0.01);
-	errors.resize(num_markers,0.01);
+//	errors.resize(num_markers,0.01);
 
 	phred_probs = new float[256];
 
@@ -42,7 +42,6 @@ void HaplotypePhaser::AllocateMemory(){
 
 	haplotypes = AllocateCharMatrix(num_inds*2, num_markers);
 	sample_gls.resize(num_markers*3);
-	//	genotypes = AllocateCharMatrix(num_inds, num_markers*3);
 
 
 	s_forward = AllocateDoubleMatrix(num_markers, num_states);
@@ -58,7 +57,6 @@ void HaplotypePhaser::AllocateMemory(){
 
 void HaplotypePhaser::DeAllocateMemory(){
 	FreeCharMatrix(haplotypes, ped.count*2);
-	//	FreeCharMatrix(genotypes, ped.count);
 };
 void HaplotypePhaser::setDistanceCode(int c) {
 	distance_code = c;
@@ -77,9 +75,8 @@ void HaplotypePhaser::LoadData(const String &ref_file, const String &sample_file
 	VcfUtils::LoadHaplotypes(ref_file, ped, haplotypes);
 
 	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls, sample_index);
-//	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
+	//	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
 	VcfUtils::LoadGeneticMap("data/chr20.OMNI.interpolated_genetic_map", ped, distances);
-
 
 };
 
@@ -92,9 +89,6 @@ void HaplotypePhaser::LoadReferenceData(const String &ref_file, const String &sa
 	VcfUtils::LoadIndividuals(ped,ref_file, sample_file, sample_index);
 	AllocateMemory();
 	VcfUtils::LoadHaplotypes(ref_file, ped, haplotypes);
-
-//		VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, genotypes, sample_index);
-//		VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
 };
 
 /**
@@ -102,14 +96,9 @@ void HaplotypePhaser::LoadReferenceData(const String &ref_file, const String &sa
  *
  */
 void HaplotypePhaser::LoadSampleData(const String &ref_file, const String &sample_file, int sample_index){
-	//	VcfUtils::LoadReferenceMarkers(ref_file);
-	//	VcfUtils::LoadIndividuals(ped,ref_file, sample_file, sample_index);
-	//	AllocateMemory();
-	//	VcfUtils::LoadHaplotypes(ref_file, ped, haplotypes);
-
 	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls, sample_index);
 //	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
-	VcfUtils::LoadGeneticMap("data/chr20.OMNI.interpolated_genetic_map", ped, distances);
+//	VcfUtils::LoadGeneticMap("data/chr20.OMNI.interpolated_genetic_map", ped, distances);
 
 };
 
@@ -129,11 +118,11 @@ void HaplotypePhaser::CalcEmissionProbs(int marker, double * probs) {
 	int h2;
 	double sum;
 
-	double case_1 = (pow(1 - errors[marker], 2) + pow(errors[marker], 2));
-	double case_2 = 2 * (1 - errors[marker]) * errors[marker];
-	double case_3 = pow(1 - errors[marker], 2);
-	double case_4 = (1 - errors[marker]) * error;
-	double case_5 = pow(errors[marker],2);
+	double case_1 = (pow(1 - error, 2) + pow(error, 2));
+	double case_2 = 2 * (1 - error) * error;
+	double case_3 = pow(1 - error, 2);
+	double case_4 = (1 - error) * error;
+	double case_5 = pow(error,2);
 
 
 
@@ -146,16 +135,6 @@ void HaplotypePhaser::CalcEmissionProbs(int marker, double * probs) {
 		h2 = haplotypes[state % num_h][marker];
 
 		sum = 0.0;
-
-
-		//	printf(" GetEmissionProb: state = %d marker = %d \n", state, marker);
-		//	int ph1 = (unsigned char) genotypes[num_inds-1][marker * 3];
-		//	int ph2 = (unsigned char) genotypes[num_inds-1][marker * 3 + 1];
-		//	int ph3 = (unsigned char) genotypes[num_inds-1][marker * 3 + 2];
-		//
-		//	printf("indices : %d %d %d \n", ph1, ph2, ph3);
-
-
 		// case1: g = 0
 
 		if(h1 == 0 and h2 == 0){
@@ -295,250 +274,131 @@ void HaplotypePhaser::CalcEmissionProbs(int marker, double * probs) {
  *
  *
  */
-void HaplotypePhaser::CalcTransitionProbs(int marker, double ** probs){
-	int num_h = 2*num_inds - 2;
-
-	double scaled_dist;
-	//
-	//	if(distance_code == 1) {
-	//		scaled_dist = 1-exp(-distances[marker]);
-	//	}
-	//
-	//	if(distance_code == 2) {
-	//		scaled_dist = 1-exp(-distances[marker]/num_h);
-	//	}
-	//
-	//	if(distance_code == 3) {
-	//		scaled_dist = 1-exp(-(distances[marker]*4*11000)/num_h);
-	//	}
-	//
-	//	if(distance_code == 4) {
-	//		scaled_dist = 0.01;
-	//	}
-	//
-	//	if(distance_code == 5) {
-	//		scaled_dist = 1-exp(-distances[marker]/(num_h*100));
-	//	}
-	//
-	//	if(distance_code == 6) {
-	scaled_dist = 1-exp(-(distances[marker]*4*11418)/(num_h*100));
-	//	}
-
-
-
-
-	//	// OPT 1
-	//		double no_switch = pow(1 - scaled_dist, 2) + ((2 * (1 - scaled_dist) * scaled_dist) / num_h) + (pow(scaled_dist,2) / pow(num_h,2));
-	//		double both_switch = pow(scaled_dist/num_h, 2);
-	//		double one_switch = (((1 - scaled_dist) * scaled_dist) / num_h) + pow(scaled_dist/num_h, 2);
-	//
-	//	#pragma omp parallel for
-	//		for(int marker_state = 0; marker_state < num_states; marker_state++) {
-	//
-	//			int marker_c1 = marker_state / num_h;
-	//			int marker_c2 = marker_state % num_h;
-	//
-	//	#pragma GCC ivdep
-	//			for(int i = 0; i < num_states; i++){
-	//				int other_c1 = i / num_h;
-	//				int other_c2 = i % num_h;
-	//
-	//				//no switch
-	//				if(other_c1 - marker_c1 == 0 and other_c2 - marker_c2 == 0) {
-	//					probs[marker_state][i] = no_switch;
-	//				}
-	//				else {
-	//					// both switch
-	//					if(other_c1-marker_c1 != 0 and other_c2 - marker_c2 != 0) {
-	//						probs[marker_state][i] = both_switch;
-	//
-	//					}
-	//					// one switch
-	//					else{
-	//						probs[marker_state][i] = one_switch;
-	//
-	//					}
-	//				}
-	//			}
-	//		}
-
-
-
-	// OPT 2
-
-	double tprobs[3];
-
-	//both_switch
-	tprobs[0] = pow(scaled_dist/num_h, 2);
-
-	//one switch
-	tprobs[1] =  (((1 - scaled_dist) * scaled_dist) / num_h) + pow(scaled_dist/num_h, 2);
-
-	// no switch
-	tprobs[2] = pow(1 - scaled_dist, 2) + ((2 * (1 - scaled_dist) * scaled_dist) / num_h) + (pow(scaled_dist,2) / pow(num_h,2));
-
-	//		double no_switch = pow(1 - scaled_dist, 2) + ((2 * (1 - scaled_dist) * scaled_dist) / num_h) + (pow(scaled_dist,2) / pow(num_h,2));
-	//		double both_switch = pow(scaled_dist/num_h, 2);
-	//		double one_switch = (((1 - scaled_dist) * scaled_dist) / num_h) + pow(scaled_dist/num_h, 2);
-
-#pragma omp parallel for
-	for(int marker_state = 0; marker_state < num_states; marker_state++) {
-
-		int marker_c1 = marker_state / num_h;
-		int marker_c2 = marker_state % num_h;
-
-#pragma GCC ivdep
-		for(int i = 0; i < num_states; i++){
-
-			int other_c1 = i / num_h;
-			int other_c2 = i % num_h;
-
-//			int b = (marker_state-i+num_h) % num_h;
-//			int a = (marker_state-i-b) / num_h;
-
-			int b = marker_c2-other_c2;
-			int a = marker_c1-other_c1;
-
-//			if(other_c1 - marker_c1 == 0 and other_c2 - marker_c2 == 0) {
-//				if(!a+!b != 2 ) {
-//					printf("NOT 2: % d and %d \n", marker_state, i);
-//				}			}
-//			else {
-//				// both switch
-//				if(other_c1-marker_c1 != 0 and other_c2 - marker_c2 != 0) {
-//					if(!a != 0) {
-//						printf("NOT 0: % d and %d : %d = %d + %d    ( %d , %d) ( %d , %d) a = %d b = %d\n", marker_state, i,!a+!b, !a, !b,marker_c1, marker_c2, other_c1, other_c2, a, b);
-//					}
-//				}
-//				// one switch
-//				else{
-//					if(!a+!b != 1 ) {
-//						printf("NOT 1 top = %d : % d and %d : %d = %d + %d    ( %d , %d) ( %d , %d) a = %d b = %d\n",marker_state-i-b, marker_state, i,!a+!b, !a, !b,marker_c1, marker_c2, other_c1, other_c2, a, b);
-//					}
-//				}
-//			}
-
-
-			probs[marker_state][i] = tprobs[!a+!b];
-		}
-	}
-
-
-
-	// ORIGINAL
-	//#pragma omp parallel for
-	//	for(int marker_state = 0; marker_state < num_states; marker_state++) {
-	//
-	//		int marker_c1 = marker_state / num_h;
-	//		int marker_c2 = marker_state % num_h;
-	//
-	//#pragma GCC ivdep
-	//		for(int i = 0; i < num_states; i++){
-	//			int other_c1 = i / num_h;
-	//			int other_c2 = i % num_h;
-	//
-	//			//no switch
-	//			if(other_c1 - marker_c1 == 0 and other_c2 - marker_c2 == 0) {
-	//				probs[marker_state][i] = pow(1 - scaled_dist, 2) + ((2 * (1 - scaled_dist) * scaled_dist) / num_h) + (pow(scaled_dist,2) / pow(num_h,2));
-	//			}
-	//			else {
-	//				// both switch
-	//				if(other_c1-marker_c1 != 0 and other_c2 - marker_c2 != 0) {
-	//					probs[marker_state][i] = pow(scaled_dist/num_h, 2);
-	//
-	//				}
-	//				// one switch
-	//				else{
-	//					probs[marker_state][i] = (((1 - scaled_dist) * scaled_dist) / num_h) + pow(scaled_dist/num_h, 2);
-	//
-	//				}
-	//			}
-	//		}
-	//	}
-
-
-
-
-
-
-}
-
-
-
-
-/**
- * Calculate transition probabilities.
- * Array probs is given values:
- *
- * P(S_marker = marker_state | S_marker-1 = x) for x in {0...num_states-1}
- *
- * <=>
- *
- * P(S_marker = x | S_marker-1 = marker_state) for x in {0...num_states-1}
- *
- *
- *
- */
-//void HaplotypePhaser::CalcTransitionProbs(int marker, int marker_state, double * probs){
+//void HaplotypePhaser::CalcTransitionProbs(int marker, double ** probs){
 //	int num_h = 2*num_inds - 2;
 //
-//	int marker_c1 = marker_state / num_h;
-//	int marker_c2 = marker_state % num_h;
-//	int other_c1;
-//	int other_c2;
+//	double scaled_dist;
 //
-////	double scaled_dist = 1-exp(-distances[marker]/num_h);
-////	double scaled_dist = 1-exp(-distances[marker]);
-//	double scaled_dist = 0.01;
+//		if(distance_code == 1) {
+//			scaled_dist = 1-exp(-distances[marker]);
+//		}
 //
-//	double prob_sum = 0;
-//	double max = 0;
-//	double min = 100;
+//		if(distance_code == 2) {
+//			scaled_dist = 1-exp(-distances[marker]/num_h);
+//		}
+//
+//		if(distance_code == 3) {
+//			scaled_dist = 1-exp(-(distances[marker]*4*11000)/num_h);
+//		}
+//
+//		if(distance_code == 4) {
+//			scaled_dist = 0.01;
+//		}
+//
+//		if(distance_code == 5) {
+//			scaled_dist = 1-exp(-distances[marker]/(num_h*100));
+//		}
+//
+//		if(distance_code == 6) {
+//	scaled_dist = 1-exp(-(distances[marker]*4*11418)/(num_h*100));
+//		}
+//
+//
+//	// OPT 2
+//
+//	double tprobs[3];
+//
+//	//both_switch
+//	tprobs[0] = pow(scaled_dist/num_h, 2);
+//
+//	//one switch
+//	tprobs[1] =  (((1 - scaled_dist) * scaled_dist) / num_h) + pow(scaled_dist/num_h, 2);
+//
+//	// no switch
+//	tprobs[2] = pow(1 - scaled_dist, 2) + ((2 * (1 - scaled_dist) * scaled_dist) / num_h) + (pow(scaled_dist,2) / pow(num_h,2));
+//
+//	//		double no_switch = pow(1 - scaled_dist, 2) + ((2 * (1 - scaled_dist) * scaled_dist) / num_h) + (pow(scaled_dist,2) / pow(num_h,2));
+//	//		double both_switch = pow(scaled_dist/num_h, 2);
+//	//		double one_switch = (((1 - scaled_dist) * scaled_dist) / num_h) + pow(scaled_dist/num_h, 2);
 //
 //#pragma omp parallel for
-//	for(int i = 0; i < num_states; i++){
-//		other_c1 = i / num_h;
-//		other_c2 = i % num_h;
+//	for(int marker_state = 0; marker_state < num_states; marker_state++) {
 //
-//		//no switch
-//		if(other_c1 - marker_c1 == 0 and other_c2 - marker_c2 == 0) {
-//			probs[i] = pow(1 - scaled_dist, 2) + ((2 * (1 - scaled_dist) * scaled_dist) / num_h) + (pow(scaled_dist,2) / pow(num_h,2));
-//			prob_sum += probs[i];
-//			//						printf("case 3 : %e \n", probs[i]);
-//			//
-//			//						occurrences_counter_p3 ++;
+//		int marker_c1 = marker_state / num_h;
+//		int marker_c2 = marker_state % num_h;
+//
+//#pragma GCC ivdep
+//		for(int i = 0; i < num_states; i++){
+//
+//			int other_c1 = i / num_h;
+//			int other_c2 = i % num_h;
+//
+//
+//			int b = marker_c2-other_c2;
+//			int a = marker_c1-other_c1;
+//
+//
+//			probs[marker_state][i] = tprobs[!a+!b];
+//
+////			int b = (marker_state-i+num_h) % num_h;
+////			int a = (marker_state-i-b) / num_h;
+////			if(other_c1 - marker_c1 == 0 and other_c2 - marker_c2 == 0) {
+////				if(!a+!b != 2 ) {
+////					printf("NOT 2: % d and %d \n", marker_state, i);
+////				}			}
+////			else {
+////				// both switch
+////				if(other_c1-marker_c1 != 0 and other_c2 - marker_c2 != 0) {
+////					if(!a != 0) {
+////						printf("NOT 0: % d and %d : %d = %d + %d    ( %d , %d) ( %d , %d) a = %d b = %d\n", marker_state, i,!a+!b, !a, !b,marker_c1, marker_c2, other_c1, other_c2, a, b);
+////					}
+////				}
+////				// one switch
+////				else{
+////					if(!a+!b != 1 ) {
+////						printf("NOT 1 top = %d : % d and %d : %d = %d + %d    ( %d , %d) ( %d , %d) a = %d b = %d\n",marker_state-i-b, marker_state, i,!a+!b, !a, !b,marker_c1, marker_c2, other_c1, other_c2, a, b);
+////					}
+////				}
+////			}
+//
+//
+//
 //		}
-//		else {
-//			// both switch
-//			if(other_c1-marker_c1 != 0 and other_c2 - marker_c2 != 0) {
-//				probs[i] = pow(scaled_dist/num_h, 2);
-//				//								occurrences_counter_p1 ++;
-//				prob_sum += probs[i];
-//				//								printf("case 1 : %e \n", probs[i]);
-//
-//			}
-//			// one switch
-//			else{
-//				probs[i] = (((1 - scaled_dist) * scaled_dist) / num_h) + pow(scaled_dist/num_h, 2);
-//				//								occurrences_counter_p2 ++;
-//				prob_sum += probs[i];
-//				//								printf("case 2 : %e \n", probs[i]);
-//
-//			}
-//		}
-//
-////		if(probs[i] > max) {
-////			max = probs[i];
-////		}
-////		if(probs[i] < min) {
-////			min = probs[i];
-////		}
-//
-//
-//
 //	}
 //
+//	// ORIGINAL
+//	//#pragma omp parallel for
+//	//	for(int marker_state = 0; marker_state < num_states; marker_state++) {
+//	//
+//	//		int marker_c1 = marker_state / num_h;
+//	//		int marker_c2 = marker_state % num_h;
+//	//
+//	//#pragma GCC ivdep
+//	//		for(int i = 0; i < num_states; i++){
+//	//			int other_c1 = i / num_h;
+//	//			int other_c2 = i % num_h;
+//	//
+//	//			//no switch
+//	//			if(other_c1 - marker_c1 == 0 and other_c2 - marker_c2 == 0) {
+//	//				probs[marker_state][i] = pow(1 - scaled_dist, 2) + ((2 * (1 - scaled_dist) * scaled_dist) / num_h) + (pow(scaled_dist,2) / pow(num_h,2));
+//	//			}
+//	//			else {
+//	//				// both switch
+//	//				if(other_c1-marker_c1 != 0 and other_c2 - marker_c2 != 0) {
+//	//					probs[marker_state][i] = pow(scaled_dist/num_h, 2);
+//	//
+//	//				}
+//	//				// one switch
+//	//				else{
+//	//					probs[marker_state][i] = (((1 - scaled_dist) * scaled_dist) / num_h) + pow(scaled_dist/num_h, 2);
+//	//
+//	//				}
+//	//			}
+//	//		}
+//	//	}
+//
 //}
+
 
 
 void HaplotypePhaser::InitPriorScaledForward(){
@@ -549,30 +409,15 @@ void HaplotypePhaser::InitPriorScaledForward(){
 
 	CalcEmissionProbs(0, emission_probs);
 
-
-
-
 	for(int s = 0; s < num_states; s++){
 		c1 += emission_probs[s];
 	};
 
-	//	normalizers[0] = prior*c1;
-	//	normalizers2[0] = 1/(prior*c1);
 	normalizers[0] = 1.0/(prior*c1);
-
-
-
-
 	//	printf("First Normalizer = %e Prior = %e c1 = %e \n", normalizers[0], prior, c1);
 
 	for(int s = 0; s < num_states; s++){
-
-		//		s_forward[0][s] = (prior*emission_probs[s]) / normalizers[0];
-		//		s_forward2[0][s] = (prior*emission_probs[s]) * normalizers2[0];
 		s_forward[0][s] = (prior*emission_probs[s]) * normalizers[0];
-
-
-
 	};
 
 	delete [] emission_probs;
@@ -581,48 +426,33 @@ void HaplotypePhaser::InitPriorScaledForward(){
 void HaplotypePhaser::InitPriorScaledBackward(){
 
 	for(int s = 0; s < num_states; s++){
-
-		//		s_backward[num_markers-1][s] = 1.0 / normalizers[num_markers-1];
-		//		s_backward2[num_markers-1][s] = normalizers2[num_markers-1];
 		s_backward[num_markers-1][s] = normalizers[num_markers-1];
-
-
-
 	};
 };
 
 
-// NEW OPTIMIZED
 void HaplotypePhaser::CalcScaledForward(){
-
-
 	double * emission_probs = new double[num_states];
-	int num_h = 2*num_inds - 2;
+	int num_h = 2 * num_inds - 2;
 	double c;
-
-
-	InitPriorScaledForward();
 	double probs[3];
 	double scaled_dist;
 	double pop_const = (4.0 * 11418.0) / 100.0;
+
+	InitPriorScaledForward();
 
 	for(int m = 1; m < num_markers; m++){
 		CalcEmissionProbs(m, emission_probs);
 		c = 0.0;
 
-		//		scaled_dist = 1-exp(-(distances[m]*4*11418)/(num_h*100));
 		scaled_dist = 1-exp(-(distances[m] * pop_const)/num_h);
-//		scaled_dist = 1-exp(-(distances[m]*4*11418)/(num_h*100));
 
 		//both_switch
 		probs[0] = pow(scaled_dist/num_h, 2);
-
 		//one switch
 		probs[1] =  (((1 - scaled_dist) * scaled_dist) / num_h) + pow(scaled_dist/num_h, 2);
-
 		// no switch
 		probs[2] = pow(1 - scaled_dist, 2) + ((2 * (1 - scaled_dist) * scaled_dist) / num_h) + (pow(scaled_dist,2) / pow(num_h,2));
-
 
 #pragma omp parallel for schedule(dynamic,32)
 		for(int s = 0; s < num_states; s++){
@@ -633,47 +463,39 @@ void HaplotypePhaser::CalcScaledForward(){
 #pragma GCC ivdep
 			for(int j = 0; j < num_states; j++){
 
-//				int b = (s-j) % num_h;
-//				int a = (s-j-b) / num_h;
-
 				int other_c1 = j / num_h;
 				int other_c2 = j % num_h;
 
 				int b = marker_c2-other_c2;
 				int a = marker_c1-other_c1;
 
-//				int diff = s-j;
-//				int newa = diff / num_h;
-//				int newb = diff-newa*num_h;
-//
-//				if(a!=newa or b!= newb){
-//					int diff = j-s;
-//					int newa = diff / num_h;
-//					int newb = diff-newa*num_h;
-//				}
-//
-//				if(a!=newa or b!= newb){
-//					printf("NOT SAME \n");
-//				}
-
-
 				sum += s_forward[m-1][j] * probs[!a+!b];
-			}
 
+				//				int diff = s-j;
+				//				int newa = diff / num_h;
+				//				int newb = diff-newa*num_h;
+				//
+				//				if(a!=newa or b!= newb){
+				//					int diff = j-s;
+				//					int newa = diff / num_h;
+				//					int newb = diff-newa*num_h;
+				//				}
+				//
+				//				if(a!=newa or b!= newb){
+				//					printf("NOT SAME \n");
+				//				}
+
+			}
 			s_forward[m][s] =  emission_probs[s] * sum;
 		}
 
 		for(int s = 0; s < num_states; s++){
 			c+= s_forward[m][s];
 		}
-
 		normalizers[m] = 1.0/c;
 
 		for(int s = 0; s < num_states; s++){
-			//			s_forward[m][s] = s_forward[m][s] / normalizers[m];
-			//			s_forward2[m][s] = s_forward2[m][s] * normalizers2[m];
 			s_forward[m][s] = s_forward[m][s] * normalizers[m];
-
 		}
 	}
 
@@ -681,7 +503,6 @@ void HaplotypePhaser::CalcScaledForward(){
 
 }
 
-//// NEW OPTIMIZED
 void HaplotypePhaser::CalcScaledBackward(){
 	double * emission_probs = new double[num_states];
 	int num_h = 2*num_inds - 2;
@@ -692,16 +513,12 @@ void HaplotypePhaser::CalcScaledBackward(){
 	InitPriorScaledBackward();
 
 	for(int m = num_markers-2; m >= 0; m--){
-		//		scaled_dist = 1-exp(-(distances[m]*4*11418)/(num_h*100));
-		scaled_dist = 1-exp(-(distances[m] * pop_const)/num_h);
-//		scaled_dist = 1-exp(-(distances[m+1]*4*11418)/(num_h*100));
+		scaled_dist = 1-exp(-(distances[m+1] * pop_const)/num_h);
 
 		//both_switch
 		probs[0] = pow(scaled_dist/num_h, 2);
-
 		//one switch
 		probs[1] =  (((1 - scaled_dist) * scaled_dist) / num_h) + pow(scaled_dist/num_h, 2);
-
 		// no switch
 		probs[2] = pow(1 - scaled_dist, 2) + ((2 * (1 - scaled_dist) * scaled_dist) / num_h) + (pow(scaled_dist,2) / pow(num_h,2));
 
@@ -715,15 +532,12 @@ void HaplotypePhaser::CalcScaledBackward(){
 
 #pragma GCC ivdep
 			for(int j = 0; j < num_states; j++){
-//				int b = (s-j) % num_h;
-//				int a = (s-j-b) / num_h;
-//
+
 				int other_c1 = j / num_h;
 				int other_c2 = j % num_h;
 
 				int b = marker_c2-other_c2;
 				int a = marker_c1-other_c1;
-
 
 				sum += s_backward[m+1][j] * probs[!a + !b] * emission_probs[j];
 			}
@@ -807,6 +621,8 @@ void HaplotypePhaser::CalcScaledBackward(){
 //
 //
 //
+
+
 //// ORIGINAL
 //void HaplotypePhaser::CalcScaledBackward(){
 //	double * emission_probs = new double[num_states];
@@ -968,7 +784,7 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 			int ref_hap2 = s % num_h;
 
 
-			// CT
+			// AGCT allele
 			String allele1 = Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap1][m]+1);
 			String allele2 = Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap2][m]+1);
 
@@ -987,11 +803,6 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 
 			geno_probs[m][geno_code] += posteriors[s];
 
-
-			//			if(m==4) {
-			//				printf("At marker %d : When ref haps are: (%d,%d) then hapcode is %d%d and alleles are %s%s and geno code is %d \n", m, ref_hap1, ref_hap2, hapcode1, hapcode2, allele1.c_str(), allele2.c_str(), geno_code);
-			//			}
-
 		}
 
 		float check_sum = 0.0;
@@ -1001,8 +812,6 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 		if(abs(check_sum - 1.0) > 0.000001 ) {
 			printf("!!!!!!!!!!!!!!!!!!!!!!!!!Sum of all geno probs is %f at marker %d !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1\n ", check_sum, m);
 		}
-
-
 
 
 		vector<size_t> res = sort_indexes(posteriors);
@@ -1028,15 +837,12 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 
 
 	}
-
-
-
 	writeVectorToCSV(filename, stats, "w");
 	return stats;
 }
 
 /**
- * Read stats from filena,e
+ * Read stats from filename
  */
 vector<vector<double>>  HaplotypePhaser::ReadPosteriorStats(const char * filename){
 

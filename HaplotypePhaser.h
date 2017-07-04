@@ -23,7 +23,6 @@ public:
 	float error;
 	int Ne;
 
-	std::vector<double> errors;
 	std::vector<double> distances;
 
 	int distance_code;
@@ -48,9 +47,6 @@ public:
 
 	//TODO
 	int num_inds;
-
-	float ** transition_probs;
-
 
 	double ** s_backward;
 	double ** s_forward;
