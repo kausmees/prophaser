@@ -26,44 +26,33 @@ int main(int argc, char ** argv){
 
 //	String dir = "../../Data/1KGData/vcfs/chrom20/";
 	string data_id = "4";
-	string individual = "NA12890";
+//	string individual = "NA12890";
+	string individual = "NA12717";
+//	string individual = "NA12812";
 
 	string subset_id = "B";
-	string ref_set = "CEU_50";
-
 //	string subset_id = "A";
+
+
+//	string ref_set = "CEU_10";
 //	string ref_set = "CEU_25";
+//	string ref_set = "CEU_50";
+	string ref_set = "CEU_ALL_"+individual;
+
+
 
 
 	double error = 0.001;
 //	vector<double> coverages = {0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
-
-
-////// did 6 new with (with m in calc scaled backward) + ""
-//	vector<double> coverages = {0.1, 0.3, 0.5, 1.0};
-
-
-////// doing 6 new with (with m+1 in calc scaled backward) on milou
-//	vector<double> coverages = {0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.2, 0.4, 0.6}; DOING
-//	vector<double> coverages = {0.8}; DONE
-
-////// doing 6 new with (with m+1 in calc scaled backward) on mine
-//		vector<double> coverages = {0.9}; DONE
-//		vector<double> coverages = {0.7}; //DONE but WRONG, didnt load genetic stupid map
-
-
-	vector<double> coverages = {};
+	vector<double> coverages = {0.01, 0.2, 0.7};
+//	vector<double> coverages = {};
 
 	vector<string> parameters = {};
-
 	for (auto c : coverages) {
 		parameters.push_back("_" + to_string(c) + "_" + to_string(error));
 	}
 
-//	parameters.push_back("");
-
-
-
+	parameters.push_back("");
 
 
 	string file_name_in;
