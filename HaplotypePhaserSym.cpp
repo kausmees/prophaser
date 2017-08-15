@@ -3,11 +3,13 @@
 #include <string.h>
 #include <omp.h>
 
-#include "HaplotypePhaser.h"
+#include "HaplotypePhaserSym.h"
 #include "MemoryAllocators.h"
 
 
-HaplotypePhaser::~HaplotypePhaser(){
+
+
+HaplotypePhaserSym::~HaplotypePhaserSym(){
 	FreeCharMatrix(haplotypes, ped.count*2);
 	//	FreeCharMatrix(genotypes, ped.count);
 	delete [] phred_probs;
@@ -19,10 +21,18 @@ HaplotypePhaser::~HaplotypePhaser(){
 }
 
 
-void HaplotypePhaser::AllocateMemory(){
+void HaplotypePhaserSym::AllocateMemory(){
 	String::caseSensitive = false;
 
-	num_states = pow((ped.count-1)*2,2);
+	num_haps = (ped.count-1)*2;
+	num_states = ((num_haps)*(num_haps+1)) / 2;
+
+	for(int i = 0; i < num_haps; i++) {
+		for(int j = i; j < num_haps; j++) {
+			states.push_back(ChromosomePair(i,j));
+		}
+	}
+
 	num_markers = Pedigree::markerCount;
 	num_inds = ped.count;
 
@@ -32,7 +42,7 @@ void HaplotypePhaser::AllocateMemory(){
 
 
 	distances.resize(num_markers,0.01);
-//	errors.resize(num_markers,0.01);
+	//	errors.resize(num_markers,0.01);
 
 	phred_probs = new float[256];
 
@@ -55,10 +65,10 @@ void HaplotypePhaser::AllocateMemory(){
 
 };
 
-void HaplotypePhaser::DeAllocateMemory(){
+void HaplotypePhaserSym::DeAllocateMemory(){
 	FreeCharMatrix(haplotypes, ped.count*2);
 };
-void HaplotypePhaser::setDistanceCode(int c) {
+void HaplotypePhaserSym::setDistanceCode(int c) {
 	distance_code = c;
 };
 
@@ -68,7 +78,7 @@ void HaplotypePhaser::setDistanceCode(int c) {
  * Unphased sample is loaded from sample_file, the individual with sample_index.
  *
  */
-void HaplotypePhaser::LoadData(const String &ref_file, const String &sample_file, int sample_index){
+void HaplotypePhaserSym::LoadData(const String &ref_file, const String &sample_file, int sample_index){
 	VcfUtils::LoadReferenceMarkers(ref_file);
 	VcfUtils::LoadIndividuals(ped,ref_file, sample_file, sample_index);
 	AllocateMemory();
@@ -76,7 +86,7 @@ void HaplotypePhaser::LoadData(const String &ref_file, const String &sample_file
 
 	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls, sample_index);
 	//	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
-//	VcfUtils::LoadGeneticMap("data/chr20.OMNI.interpolated_genetic_map", ped, distances);
+	//	VcfUtils::LoadGeneticMap("data/chr20.OMNI.interpolated_genetic_map", ped, distances);
 
 };
 
@@ -84,7 +94,7 @@ void HaplotypePhaser::LoadData(const String &ref_file, const String &sample_file
  * Load vcf data from files. Only reference data.
  *
  */
-void HaplotypePhaser::LoadReferenceData(const String &ref_file, const String &sample_file, int sample_index){
+void HaplotypePhaserSym::LoadReferenceData(const String &ref_file, const String &sample_file, int sample_index){
 	VcfUtils::LoadReferenceMarkers(ref_file);
 	VcfUtils::LoadIndividuals(ped,ref_file, sample_file, sample_index);
 	AllocateMemory();
@@ -95,11 +105,11 @@ void HaplotypePhaser::LoadReferenceData(const String &ref_file, const String &sa
  * Load vcf data from files. Only reference data.
  *
  */
-void HaplotypePhaser::LoadSampleData(const String &ref_file, const String &sample_file, int sample_index){
+void HaplotypePhaserSym::LoadSampleData(const String &ref_file, const String &sample_file, int sample_index){
 	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls, sample_index);
-//	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
-	VcfUtils::LoadGeneticMap("data/chr20.OMNI.interpolated_genetic_map", ped, distances);
-//
+	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
+//		VcfUtils::LoadGeneticMap("data/chr20.OMNI.interpolated_genetic_map", ped, distances);
+
 };
 
 
@@ -112,7 +122,7 @@ void HaplotypePhaser::LoadSampleData(const String &ref_file, const String &sampl
  *
  */
 
-void HaplotypePhaser::CalcEmissionProbs(int marker, double * probs) {
+void HaplotypePhaserSym::CalcEmissionProbs(int marker, double * probs) {
 	int num_h = 2*num_inds - 2;
 	int h1;
 	int h2;
@@ -128,11 +138,14 @@ void HaplotypePhaser::CalcEmissionProbs(int marker, double * probs) {
 
 	// OPT1
 	for (int state = 0; state < num_states; state++) {
+		//	for (ChromosomePair state  : states) {
+
+		ChromosomePair chrom_state = states[state];
 
 		// First reference hapotype at state (0: REF 1: ALT)
-		h1 = haplotypes[state / num_h][marker];
+		h1 = haplotypes[chrom_state.first][marker];
 		// Second reference hapotype at state (0: REF 1: ALT)
-		h2 = haplotypes[state % num_h][marker];
+		h2 = haplotypes[chrom_state.second][marker];
 
 		sum = 0.0;
 		// case1: g = 0
@@ -274,7 +287,7 @@ void HaplotypePhaser::CalcEmissionProbs(int marker, double * probs) {
  *
  *
  */
-//void HaplotypePhaser::CalcTransitionProbs(int marker, double ** probs){
+//void HaplotypePhaserSym::CalcTransitionProbs(int marker, double ** probs){
 //	int num_h = 2*num_inds - 2;
 //
 //	double scaled_dist;
@@ -401,7 +414,7 @@ void HaplotypePhaser::CalcEmissionProbs(int marker, double * probs) {
 
 
 
-void HaplotypePhaser::InitPriorScaledForward(){
+void HaplotypePhaserSym::InitPriorScaledForward(){
 	double * emission_probs = new double[num_states];
 	double prior = 1.0 / num_states;
 	double c1 = 0.0;
@@ -423,7 +436,7 @@ void HaplotypePhaser::InitPriorScaledForward(){
 	delete [] emission_probs;
 };
 
-void HaplotypePhaser::InitPriorScaledBackward(){
+void HaplotypePhaserSym::InitPriorScaledBackward(){
 
 	for(int s = 0; s < num_states; s++){
 		s_backward[num_markers-1][s] = normalizers[num_markers-1];
@@ -431,7 +444,7 @@ void HaplotypePhaser::InitPriorScaledBackward(){
 };
 
 
-void HaplotypePhaser::CalcScaledForward(){
+void HaplotypePhaserSym::CalcScaledForward(){
 	double * emission_probs = new double[num_states];
 	int num_h = 2 * num_inds - 2;
 	double c;
@@ -457,33 +470,29 @@ void HaplotypePhaser::CalcScaledForward(){
 #pragma omp parallel for schedule(dynamic,32)
 		for(int s = 0; s < num_states; s++){
 			double sum = 0.0;
-			int marker_c1 = s / num_h;
-			int marker_c2 = s % num_h;
+			//			int marker_c1 = s / num_h;
+			//			int marker_c2 = s % num_h;
 
 #pragma GCC ivdep
 			for(int j = 0; j < num_states; j++){
 
-				int other_c1 = j / num_h;
-				int other_c2 = j % num_h;
-
-				int b = marker_c2-other_c2;
-				int a = marker_c1-other_c1;
-
-				sum += s_forward[m-1][j] * probs[!a+!b];
-
-				//				int diff = s-j;
-				//				int newa = diff / num_h;
-				//				int newb = diff-newa*num_h;
+				//				int other_c1 = j / num_h;
+				//				int other_c2 = j % num_h;
 				//
-				//				if(a!=newa or b!= newb){
-				//					int diff = j-s;
-				//					int newa = diff / num_h;
-				//					int newb = diff-newa*num_h;
-				//				}
-				//
-				//				if(a!=newa or b!= newb){
-				//					printf("NOT SAME \n");
-				//				}
+				//				int b = marker_c2-other_c2;
+				//				int a = marker_c1-other_c1;
+
+				//!! when chrom_case =1 it actually represents 2 cases: 1 switch or 2 switch
+				int chrom_case = (states[s]).NumEquals(states[j]);
+
+
+
+				//				sum += s_forward[m-1][j] * probs[!a+!b];
+
+				// This sum is the prob of ending up in s: summing up over all states I could come from (j)
+				// Here I should be able to add the terms im missing my symmetry reduction, to get exactly the same
+				// number as in original version
+				sum += s_forward[m-1][j] * probs[chrom_case];
 
 			}
 			s_forward[m][s] =  emission_probs[s] * sum;
@@ -503,7 +512,7 @@ void HaplotypePhaser::CalcScaledForward(){
 
 }
 
-void HaplotypePhaser::CalcScaledBackward(){
+void HaplotypePhaserSym::CalcScaledBackward(){
 	double * emission_probs = new double[num_states];
 	int num_h = 2*num_inds - 2;
 	double probs[3];
@@ -527,19 +536,22 @@ void HaplotypePhaser::CalcScaledBackward(){
 #pragma omp parallel for
 		for(int s = 0; s < num_states; s++){
 			double sum = 0.0;
-			int marker_c1 = s / num_h;
-			int marker_c2 = s % num_h;
+			//			int marker_c1 = s / num_h;
+			//			int marker_c2 = s % num_h;
 
 #pragma GCC ivdep
 			for(int j = 0; j < num_states; j++){
 
-				int other_c1 = j / num_h;
-				int other_c2 = j % num_h;
+				//				int other_c1 = j / num_h;
+				//				int other_c2 = j % num_h;
+				//
+				//				int b = marker_c2-other_c2;
+				//				int a = marker_c1-other_c1;
 
-				int b = marker_c2-other_c2;
-				int a = marker_c1-other_c1;
+				int chrom_case = (states[s]).NumEquals(states[j]);
 
-				sum += s_backward[m+1][j] * probs[!a + !b] * emission_probs[j];
+
+				sum += s_backward[m+1][j] * probs[chrom_case] * emission_probs[j];
 			}
 			s_backward[m][s] = sum * normalizers[m];
 		}
@@ -549,7 +561,7 @@ void HaplotypePhaser::CalcScaledBackward(){
 
 
 // ORIGINAL
-//void HaplotypePhaser::CalcScaledForward(){
+//void HaplotypePhaserSym::CalcScaledForward(){
 //
 //	double * emission_probs = new double[num_states];
 //	double ** transition_probs = AllocateDoubleMatrix(num_states, num_states);
@@ -624,7 +636,7 @@ void HaplotypePhaser::CalcScaledBackward(){
 
 
 //// ORIGINAL
-//void HaplotypePhaser::CalcScaledBackward(){
+//void HaplotypePhaserSym::CalcScaledBackward(){
 //	double * emission_probs = new double[num_states];
 //	//	double * transition_probs = new double[num_states];
 //	double ** transition_probs = AllocateDoubleMatrix(num_states, num_states);
@@ -673,7 +685,7 @@ void HaplotypePhaser::CalcScaledBackward(){
  * for m in {0 ... num_markers-1}
  *
  */
-void HaplotypePhaser::GetMLHaplotypes(int * ml_states){
+void HaplotypePhaserSym::GetMLHaplotypes(int * ml_states){
 
 
 #pragma omp parallel for
@@ -712,45 +724,10 @@ void HaplotypePhaser::GetMLHaplotypes(int * ml_states){
  * for m in {0 ... num_markers-1}
  *
  */
-vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename){
+vector<vector<double>>  HaplotypePhaserSym::GetPosteriorStats(const char * filename){
 	int num_h = 2*num_inds - 2;
 	vector<vector<double>> stats;
-
-	// geno_probs[m][0] is probability that genotype at marker m is 0
-	// geno_probs[m][1] is probability that genotype at marker m is 1
-	// geno_probs[m][2] is probability that genotype at marker m is 2
-
-
-
-
-
-	////////////////////
-	//	for(int m = 0; m < num_markers; m++) {
-	//		if(abs(normalizers[m] - normalizers2[m]) >= std::numeric_limits<double>::epsilon() ) {
-	//			printf("Normalizers diff = %e  at %d \n", abs(normalizers[m] - normalizers2[m]), m);
-	//		}
-	//
-	//		for(int s = 0; s < num_states; s++) {
-	//			if(abs(s_forward[m][s] - s_forward2[m][s]) >= std::numeric_limits<double>::epsilon() ) {
-	//				printf("Scaled forward diff = %e  at %d %d\n",abs(s_forward[m][s] - s_forward2[m][s]), m,s);
-	//			}
-	//
-	//			if(abs(s_backward[m][s] - s_backward2[m][s]) >= std::numeric_limits<double>::epsilon() ) {
-	//				printf("Scaled backward diff = %e  at %d %d\n", abs(s_backward[m][s] - s_backward2[m][s]), m,s);
-	//			}
-	//
-	//		}
-	//	}
-
-
-
-	///////////////////
-
-
-
-
 	vector<vector<double>> geno_probs;
-
 
 
 	for(int m = 0; m < num_markers; m++) {
@@ -780,13 +757,13 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 
 
 			//////////genotype probability/////////////////
-			int ref_hap1 = s / num_h;
-			int ref_hap2 = s % num_h;
+			int ref_hap1 = states[s].first;
+			int ref_hap2 = states[s].second;
 
 
 			// AGCT allele
-			String allele1 = Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap1][m]+1);
-			String allele2 = Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap2][m]+1);
+//			String allele1 = Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap1][m]+1);
+//			String allele2 = Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap2][m]+1);
 
 			// 00, 01, 10, 11
 			int hapcode1 = haplotypes[ref_hap1][m];
@@ -844,7 +821,7 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 /**
  * Read stats from filename
  */
-vector<vector<double>>  HaplotypePhaser::ReadPosteriorStats(const char * filename){
+vector<vector<double>>  HaplotypePhaserSym::ReadPosteriorStats(const char * filename){
 
 	vector<vector<double>> stats;
 
@@ -972,7 +949,7 @@ vector<vector<double>>  HaplotypePhaser::ReadPosteriorStats(const char * filenam
  * Haplotypes printed to out_file and returned.
  *
  */
-HaplotypePair HaplotypePhaser::PrintGenotypesToFile(vector<vector<double>> & stats, const char * out_file){
+HaplotypePair HaplotypePhaserSym::PrintGenotypesToFile(vector<vector<double>> & stats, const char * out_file){
 	std::vector<String> h1;
 	std::vector<String> h2;
 
@@ -1024,26 +1001,82 @@ HaplotypePair HaplotypePhaser::PrintGenotypesToFile(vector<vector<double>> & sta
  * Haplotypes printed to out_file and returned.
  *
  */
-HaplotypePair HaplotypePhaser::PrintHaplotypesToFile(int * ml_states, const char * out_file){
+HaplotypePair HaplotypePhaserSym::PrintHaplotypesToFile(int * ml_states, const char * out_file){
 	std::vector<String> h1;
 	std::vector<String> h2;
 
-	int num_h = 2*num_inds - 2;
 	int ref_hap1;
 	int ref_hap2;
-
-	int tester1 =  ml_states[0];
-	int tester2 =  ml_states[1];
-	int tester3 =  ml_states[2];
+	int prev_ref_hap1;
+	int prev_ref_hap2;
 
 
-	for(int m = 0; m < num_markers; m++) {
-		ref_hap1 = ml_states[m] / num_h;
-		ref_hap2 = ml_states[m] % num_h;
+
+
+	// First marker. order does not matter
+	ref_hap1 = states[ml_states[0]].first;
+	ref_hap2 = states[ml_states[0]].second;
+
+	h1.push_back(Pedigree::GetMarkerInfo(0)->GetAlleleLabel(haplotypes[ref_hap1][0]+1));
+	h2.push_back(Pedigree::GetMarkerInfo(0)->GetAlleleLabel(haplotypes[ref_hap2][0]+1));
+
+	prev_ref_hap1 = ref_hap1;
+	prev_ref_hap2 = ref_hap2;
+
+	for(int m = 1; m < num_markers; m++) {
+
+
+		int first = states[ml_states[m]].first;
+		int second = states[ml_states[m]].second;
+
+		// No switch
+		if(states[ml_states[m]].NumEquals(states[ml_states[m-1]]) == 2) {
+			ref_hap1 = prev_ref_hap1;
+			ref_hap2 = prev_ref_hap2;
+		}
+		else {
+			// One switch
+			if(states[ml_states[m]].NumEquals(states[ml_states[m-1]]) == 1) {
+
+				if(first == prev_ref_hap1) {
+					ref_hap1 = first;
+					ref_hap2 = second;
+
+				}
+				else {
+					if(first == prev_ref_hap2) {
+						ref_hap1 = second;
+						ref_hap2 = first;
+
+					}
+					else {
+						if(second == prev_ref_hap1) {
+							ref_hap1 = second;
+							ref_hap2 = first;
+
+						}
+						// here we know s == prev_ref_hap2
+						else {
+							ref_hap1 = first;
+							ref_hap2 = second;
+
+						}
+					}
+				}
+			}
+			// if we have two switches then we can use the original order - should not matter?
+			else {
+				ref_hap1 = first;
+				ref_hap2 = second;
+			}
+
+		}
+
+		prev_ref_hap1 = ref_hap1;
+		prev_ref_hap2 = ref_hap2;
 
 		h1.push_back(Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap1][m]+1));
 		h2.push_back(Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap2][m]+1));
-
 	}
 
 	HaplotypePair hp(h1,h2);
@@ -1060,7 +1093,7 @@ HaplotypePair HaplotypePhaser::PrintHaplotypesToFile(int * ml_states, const char
  * Reference haplotypes at each position printed to stdout.
  *
  */
-HaplotypePair HaplotypePhaser::PrintReferenceHaplotypes(int * ml_states, const char * out_file){
+HaplotypePair HaplotypePhaserSym::PrintReferenceHaplotypes(int * ml_states, const char * out_file){
 
 
 	std::vector<String> h1;
@@ -1073,6 +1106,8 @@ HaplotypePair HaplotypePhaser::PrintReferenceHaplotypes(int * ml_states, const c
 	int num_h = 2*num_inds - 2;
 	int ref_hap1;
 	int ref_hap2;
+	int prev_ref_hap1;
+	int prev_ref_hap2;
 
 
 	std::vector<char> codes;
@@ -1081,14 +1116,68 @@ HaplotypePair HaplotypePhaser::PrintReferenceHaplotypes(int * ml_states, const c
 		codes.push_back(i);
 	}
 
+	ref_hap1 = states[ml_states[0]].first;
+	ref_hap2 = states[ml_states[0]].second;
 
-	for(int m = 0; m < num_markers; m++) {
-		ref_hap1 = ml_states[m] / num_h;
-		ref_hap2 = ml_states[m] % num_h;
+	h1.push_back(Pedigree::GetMarkerInfo(0)->GetAlleleLabel(haplotypes[ref_hap1][0]+1));
+	h2.push_back(Pedigree::GetMarkerInfo(0)->GetAlleleLabel(haplotypes[ref_hap2][0]+1));
+
+	prev_ref_hap1 = ref_hap1;
+	prev_ref_hap2 = ref_hap2;
+	ref1.push_back(ref_hap1);
+	ref2.push_back(ref_hap2);
+	for(int m = 1; m < num_markers; m++) {
+
+		int first = states[ml_states[m]].first;
+		int second = states[ml_states[m]].second;
+
+		// No switch
+		if(states[ml_states[m]].NumEquals(states[ml_states[m-1]]) == 2) {
+			ref_hap1 = prev_ref_hap1;
+			ref_hap2 = prev_ref_hap2;
+		}
+		else {
+			// One switch
+			if(states[ml_states[m]].NumEquals(states[ml_states[m-1]]) == 1) {
+
+				if(first == prev_ref_hap1) {
+					ref_hap1 = first;
+					ref_hap2 = second;
+
+				}
+				else {
+					if(first == prev_ref_hap2) {
+						ref_hap1 = second;
+						ref_hap2 = first;
+
+					}
+					else {
+						if(second == prev_ref_hap1) {
+							ref_hap1 = second;
+							ref_hap2 = first;
+
+						}
+						// here we know s == prev_ref_hap2
+						else {
+							ref_hap1 = first;
+							ref_hap2 = second;
+
+						}
+					}
+				}
+			}
+			// if we have two switches then we can use the original order - should not matter?
+			else {
+				ref_hap1 = first;
+				ref_hap2 = second;
+			}
+
+		}
+		prev_ref_hap1 = ref_hap1;
+		prev_ref_hap2 = ref_hap2;
 
 		ref1.push_back(ref_hap1);
 		ref2.push_back(ref_hap2);
-
 
 		h1.push_back(Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap1][m]+1));
 		h2.push_back(Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap2][m]+1));
