@@ -33,7 +33,7 @@ int main(int argc, char ** argv){
 
 
 
-
+//	string subset_id = "C";
 	string subset_id = "B";
 //	string subset_id = "A";
 
@@ -48,10 +48,14 @@ int main(int argc, char ** argv){
 
 	double error = 0.001;
 //	vector<double> coverages = {0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
-	vector<double> coverages = {0.0, 0.03, 0.05, 0.08, 0.09, 0.4, 0.5, 0.8, 1.0};
+	//first
+	vector<double> coverages = {0.01, 0.2, 0.7};
+	//second
+//	vector<double> coverages = {0.0, 0.03, 0.05, 0.08, 0.09, 0.4, 0.5, 0.8, 1.0};
+	//third -- not done, maybe wont do
+//	vector<double> coverages = {0.02, 0.04, 0.06, 0.07, 0.1};
 
-//	vector<double> coverages = {0.01, 0.2, 0.7};
-//	vector<double> coverages = {0.7};
+
 //	vector<double> coverages = {};
 
 	vector<string> parameters = {};
@@ -59,7 +63,7 @@ int main(int argc, char ** argv){
 		parameters.push_back("_" + to_string(c) + "_" + to_string(error));
 	}
 
-//	parameters.push_back("");
+	parameters.push_back("");
 
 
 
@@ -78,13 +82,13 @@ int main(int argc, char ** argv){
 	string distance_code;
 
 ////
-	HaplotypePhaserSym phaser;
-	distance_code = "new_sym";
+//	HaplotypePhaserSym phaser;
+//	distance_code = "new_sym";
 
 
 
-//	HaplotypePhaser phaser;
-//	distance_code = "6_new";
+	HaplotypePhaser phaser;
+	distance_code = "6_new";
 
 
 
