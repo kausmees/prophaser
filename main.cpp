@@ -82,13 +82,13 @@ int main(int argc, char ** argv){
 	string distance_code;
 
 ////
-//	HaplotypePhaserSym phaser;
-//	distance_code = "new_sym";
+	HaplotypePhaserSym phaser;
+	distance_code = "new_sym_x15";
 
 
 
-	HaplotypePhaser phaser;
-	distance_code = "6_new";
+//	HaplotypePhaser phaser;
+//	distance_code = "6_new";
 
 
 

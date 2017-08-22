@@ -450,7 +450,17 @@ void HaplotypePhaserSym::CalcScaledForward(){
 	double c;
 	double probs[3];
 	double scaled_dist;
-	double pop_const = (4.0 * 11418.0) / 100.0;
+
+	// original
+//	double pop_const = (4.0 * 11418.0) / 100.0;
+
+	// times 1.5
+	double pop_const = (4.0 * 11418.0 * 1.5) / 100.0;
+
+
+	// div by 1.5
+//	double pop_const = (4.0 * 11418.0) / 150.0;
+
 
 	InitPriorScaledForward();
 
