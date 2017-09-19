@@ -114,17 +114,18 @@ void LoadIndividuals(Pedigree &ped, const String &ref_file, const String &sample
  */
 void LoadHaplotypes(const String &file_name, const Pedigree &ped, char** haplotypes) {
 
-	printf("Loading haplotypes from file %s \n", file_name.c_str());
-
+	printf("Loading haplotypes into phasing engine from file %s \n", file_name.c_str());
 	VcfFileReader reader;
 	VcfHeader header;
 	reader.open(file_name, header);
 
 	const char * marker_name;
 	VcfRecord record;
+
 	while(reader.readRecord(record)){
 		std::stringstream ss;
 		ss << record.getChromStr() << ":" << record.get1BasedPosition();
+
 		marker_name = ss.str().c_str();
 		int marker_id = Pedigree::LookupMarker(marker_name);
 		if(marker_id >= 0){

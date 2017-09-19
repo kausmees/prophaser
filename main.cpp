@@ -27,9 +27,9 @@ int main(int argc, char ** argv){
 
 //	String dir = "../../Data/1KGData/vcfs/chrom20/";
 	string data_id = "4";
-//	string individual = "NA12890";
+	string individual = "NA12890";
 //	string individual = "NA12717";
-	string individual = "NA12812";
+//	string individual = "NA12812";
 
 
 
@@ -43,18 +43,17 @@ int main(int argc, char ** argv){
 //	string ref_set = "CEU_50";
 	string ref_set = "CEU_ALL_"+individual;
 
+//	string ref_set = "YRI_ALL";
+
+
 
 
 
 	double error = 0.001;
 //	vector<double> coverages = {0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
-	//first
-	vector<double> coverages = {0.01, 0.2, 0.7};
-	//second
-//	vector<double> coverages = {0.0, 0.03, 0.05, 0.08, 0.09, 0.4, 0.5, 0.8, 1.0};
-	//third -- not done, maybe wont do
-//	vector<double> coverages = {0.02, 0.04, 0.06, 0.07, 0.1};
 
+// new standard
+	vector<double> coverages = {0.0, 0.02, 0.05, 0.08, 0.1, 0.4, 0.7, 1.0};
 
 //	vector<double> coverages = {};
 
@@ -66,7 +65,7 @@ int main(int argc, char ** argv){
 	parameters.push_back("");
 
 
-
+	string fileend = "_s.vcf";
 
 	string file_name_in;
 	string file_name_out;
@@ -74,21 +73,25 @@ int main(int argc, char ** argv){
 //	String sample_file = dir+subset_id+"/" + data_id +"_" + subset_id + "_snps.vcf";
 //	int sample_ind = ???;
 
-	string sample_file = string(dir) + subset_id+"/" + data_id +"_" + subset_id + "_" + individual + "_snps.vcf";
 	int sample_ind = 0;
-
-	string ref_file = string(dir) + subset_id+"/" + data_id +"_" + subset_id + "_" + ref_set + "_snps.vcf";
+	string sample_file = string(dir) + subset_id+"/" + data_id +"_" + subset_id + "_" + individual + fileend;
+	string true_file = string(dir) + subset_id+"/" + data_id +"_" + subset_id + "_" + individual + "_snps.vcf";
+	string ref_file = string(dir) + subset_id+"/" + data_id +"_" + subset_id + "_" + ref_set + fileend;
 
 	string distance_code;
 
 ////
 	HaplotypePhaserSym phaser;
-	distance_code = "new_sym_x15";
+	// distance code new_sym_t20 has Ne 11418
+	distance_code = "new_sym_t20_Ne10x6";
+    phaser.Ne = 1000000.0;
 
 
 
 //	HaplotypePhaser phaser;
-//	distance_code = "6_new";
+	// distance code 6_new has Ne 11418
+	//distance_code = "6_Ne10x6";
+	//phaser.Ne = 1000000.0;
 
 
 
@@ -96,24 +99,27 @@ int main(int argc, char ** argv){
 //
 	phaser.LoadReferenceData(ref_file.c_str(), sample_file.c_str(), sample_ind);
 
-	HaplotypePair true_haps = loadHaplotypesFromVCF(sample_file.c_str(), sample_ind);
+	printf("Loading true haps from %s \n", true_file.c_str());
+	HaplotypePair true_haps = loadHaplotypesFromVCF(true_file.c_str(), sample_ind);
 
 
 	//////////////////////////////////////////// phasing start //////////////////////////////////////////////////////////////
+	printf("start \n");
 
 	chrono::steady_clock::time_point begin1;
 	chrono::steady_clock::time_point begin;
 	chrono::steady_clock::time_point end;
+
 	for(auto par : parameters) {
-		file_name_in = string(dir) + subset_id + "/" + data_id + "_" + subset_id + "_" + individual + "_snps" + par + ".vcf" ;
+		file_name_in = string(dir) + subset_id + "/" + data_id + "_" + subset_id + "_" + individual + "_s" + par + ".vcf" ;
 
-
-//		phaser.LoadData(ref_file.c_str(), file_name_in.c_str(), 0);
-		writeVectorToCSV(("./Results/" + subset_id+ "/"+ ref_set + "/distances").c_str(), phaser.distances, "w");
-
+		printf("Phasing file : %s \n", file_name_in.c_str());
+		printf("Reference file : %s \n", ref_file.c_str());
 
 
 		file_name_out ="./Results/" + subset_id+ "/"+ ref_set + "/" + data_id + "_" + subset_id + "_" + individual + "_snps" + par + ".phased_"+ distance_code;
+		printf("Writing to to file : %s \n", file_name_out.c_str());
+
 		phaser.LoadSampleData(ref_file.c_str(), file_name_in.c_str(), 0);
 		begin1 = chrono::steady_clock::now();
 		begin = chrono::steady_clock::now();
@@ -128,6 +134,7 @@ int main(int argc, char ** argv){
 		cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
 		begin = chrono::steady_clock::now();
 		cout << "Starting Stats \n";
+
 		vector<vector<double>> stats = phaser.GetPosteriorStats((file_name_out+"_stats").c_str());
 		int * ml_states = new int[phaser.num_markers];
 		for (int i = 0; i < phaser.num_markers; i++) {

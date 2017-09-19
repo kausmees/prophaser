@@ -38,8 +38,6 @@ void HaplotypePhaserSym::AllocateMemory(){
 
 	error = 0.01;
 	theta = 0.01;
-	Ne = 11418;
-
 
 	distances.resize(num_markers,0.01);
 	//	errors.resize(num_markers,0.01);
@@ -106,9 +104,11 @@ void HaplotypePhaserSym::LoadReferenceData(const String &ref_file, const String 
  *
  */
 void HaplotypePhaserSym::LoadSampleData(const String &ref_file, const String &sample_file, int sample_index){
+	printf("Before lodaing GLs \n ");
 	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls, sample_index);
-	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
-//		VcfUtils::LoadGeneticMap("data/chr20.OMNI.interpolated_genetic_map", ped, distances);
+	printf("After lodaing GLs \n ");
+//	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
+		VcfUtils::LoadGeneticMap("data/chr20.OMNI.interpolated_genetic_map", ped, distances);
 
 };
 
@@ -454,12 +454,16 @@ void HaplotypePhaserSym::CalcScaledForward(){
 	// original
 //	double pop_const = (4.0 * 11418.0) / 100.0;
 
-	// times 1.5
-	double pop_const = (4.0 * 11418.0 * 1.5) / 100.0;
+//	// times 1.5
+//	double pop_const = (4.0 * 11418.0 * 1.5) / 100.0;
 
 
 	// div by 1.5
 //	double pop_const = (4.0 * 11418.0) / 150.0;
+
+	// times 2.0
+	double pop_const = (4.0 * Ne * 2.0) / 100.0;
+
 
 
 	InitPriorScaledForward();
@@ -527,7 +531,13 @@ void HaplotypePhaserSym::CalcScaledBackward(){
 	int num_h = 2*num_inds - 2;
 	double probs[3];
 	double scaled_dist;
-	double pop_const = (4.0 * 11418.0) / 100.0;
+//	double pop_const = (4.0 * 11418.0) / 100.0;
+
+	// times 1.5
+//	double pop_const = (4.0 * 11418.0 * 1.5) / 100.0;
+
+	// times 2.0
+	double pop_const = (4.0 * Ne * 2.0) / 100.0;
 
 	InitPriorScaledBackward();
 

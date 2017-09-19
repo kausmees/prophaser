@@ -21,7 +21,7 @@ public:
 	Pedigree ped;
 	float theta;
 	float error;
-	int Ne;
+	float Ne;
 
 	std::vector<double> distances;
 
