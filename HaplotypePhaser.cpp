@@ -78,7 +78,6 @@ void HaplotypePhaser::LoadData(const String &ref_file, const String &sample_file
 //	VcfUtils::LoadGeneticMap("data/chr20.OMNI.interpolated_genetic_map", ped, distances);
 
 };
-
 /**
  * Load vcf data from files. Only reference data.
  *
@@ -96,8 +95,8 @@ void HaplotypePhaser::LoadReferenceData(const String &ref_file, const String &sa
  */
 void HaplotypePhaser::LoadSampleData(const String &ref_file, const String &sample_file, int sample_index){
 	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls, sample_index);
-	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
-//	VcfUtils::LoadGeneticMap("data/chr20.OMNI.interpolated_genetic_map", ped, distances);
+//	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
+	VcfUtils::LoadGeneticMap("data/chr20.OMNI.interpolated_genetic_map", ped, distances);
 //
 };
 

@@ -53,7 +53,8 @@ int main(int argc, char ** argv){
 //	vector<double> coverages = {0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
 
 // new standard
-	vector<double> coverages = {0.0, 0.02, 0.05, 0.08, 0.1, 0.4, 0.7, 1.0};
+//	vector<double> coverages = {0.0, 0.02, 0.05, 0.08, 0.1, 0.4, 0.7, 1.0};
+	vector<double> coverages = {1.0};
 
 //	vector<double> coverages = {};
 
@@ -66,6 +67,8 @@ int main(int argc, char ** argv){
 
 
 	string fileend = "_s.vcf";
+	string filetype = "_s";
+
 
 	string file_name_in;
 	string file_name_out;
@@ -80,18 +83,30 @@ int main(int argc, char ** argv){
 
 	string distance_code;
 
-////
-	HaplotypePhaserSym phaser;
-	// distance code new_sym_t20 has Ne 11418
-	distance_code = "new_sym_t20_Ne10x6";
-    phaser.Ne = 1000000.0;
+//
+//	HaplotypePhaserSym phaser;
+////	 distance code new_sym_t20 has Ne 11418
+//	distance_code = "new_sym_t20_Ne10x6";
+//    phaser.Ne = 1000000.0;
+
+
+//	HaplotypePhaserSym phaser;
+////	 distance code new_sym_t20 has Ne 11418
+//	distance_code = "new_sym_t20_Ne11418";
+//    phaser.Ne = 11418.0;
 
 
 
 //	HaplotypePhaser phaser;
-	// distance code 6_new has Ne 11418
-	//distance_code = "6_Ne10x6";
-	//phaser.Ne = 1000000.0;
+////	 distance code 6_new has Ne 11418
+//	distance_code = "6_Ne10x6";
+//	phaser.Ne = 1000000.0;
+
+	HaplotypePhaser phaser;
+//	 distance code 6_new has Ne 11418
+	distance_code = "6_Ne11418";
+	phaser.Ne = 11418.0;
+
 
 
 
@@ -111,13 +126,13 @@ int main(int argc, char ** argv){
 	chrono::steady_clock::time_point end;
 
 	for(auto par : parameters) {
-		file_name_in = string(dir) + subset_id + "/" + data_id + "_" + subset_id + "_" + individual + "_s" + par + ".vcf" ;
+		file_name_in = string(dir) + subset_id + "/" + data_id + "_" + subset_id + "_" + individual + filetype + par + ".vcf" ;
 
 		printf("Phasing file : %s \n", file_name_in.c_str());
 		printf("Reference file : %s \n", ref_file.c_str());
 
 
-		file_name_out ="./Results/" + subset_id+ "/"+ ref_set + "/" + data_id + "_" + subset_id + "_" + individual + "_snps" + par + ".phased_"+ distance_code;
+		file_name_out ="./Results/" + subset_id+ "/"+ ref_set + "/" + data_id + "_" + subset_id + "_" + individual + filetype + par + ".phased_"+ distance_code;
 		printf("Writing to to file : %s \n", file_name_out.c_str());
 
 		phaser.LoadSampleData(ref_file.c_str(), file_name_in.c_str(), 0);

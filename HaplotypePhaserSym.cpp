@@ -107,8 +107,8 @@ void HaplotypePhaserSym::LoadSampleData(const String &ref_file, const String &sa
 	printf("Before lodaing GLs \n ");
 	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls, sample_index);
 	printf("After lodaing GLs \n ");
-//	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
-		VcfUtils::LoadGeneticMap("data/chr20.OMNI.interpolated_genetic_map", ped, distances);
+	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
+//		VcfUtils::LoadGeneticMap("data/chr20.OMNI.interpolated_genetic_map", ped, distances);
 
 };
 
