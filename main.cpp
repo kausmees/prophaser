@@ -27,10 +27,18 @@ int main(int argc, char ** argv){
 
 //	String dir = "../../Data/1KGData/vcfs/chrom20/";
 	string data_id = "4";
+
+	//home: do for all 3:
+
 	string individual = "NA12890";
 //	string individual = "NA12717";
 //	string individual = "NA12812";
 
+	//big computer
+//	string individual = "NA11931";
+//	string individual = "NA12872";
+//	string individual = "NA12272";
+//	string individual = "NA12751";
 
 
 //	string subset_id = "C";
@@ -40,8 +48,8 @@ int main(int argc, char ** argv){
 
 //	string ref_set = "CEU_10";
 //	string ref_set = "CEU_25";
-//	string ref_set = "CEU_50";
-	string ref_set = "CEU_ALL_"+individual;
+	string ref_set = "CEU_50";
+//	string ref_set = "CEU_ALL_"+individual;
 
 //	string ref_set = "YRI_ALL";
 
@@ -53,10 +61,11 @@ int main(int argc, char ** argv){
 //	vector<double> coverages = {0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
 
 // new standard
-//	vector<double> coverages = {0.0, 0.02, 0.05, 0.08, 0.1, 0.4, 0.7, 1.0};
-	vector<double> coverages = {1.0};
+	vector<double> coverages = {0.0, 0.02, 0.05, 0.08, 0.1, 0.4, 0.7, 1.0};
+//	vector<double> coverages = {1.0};
 
 //	vector<double> coverages = {};
+
 
 	vector<string> parameters = {};
 	for (auto c : coverages) {
@@ -96,16 +105,26 @@ int main(int argc, char ** argv){
 //    phaser.Ne = 11418.0;
 
 
+//	HaplotypePhaserSym phaser;
+//	distance_code = "new_sym_pdf_t20_Ne11418";
+//    phaser.Ne = 11418.0;
+
+
+	HaplotypePhaserSym phaser;
+	distance_code = "new_sym_pdf_Ne11418";
+    phaser.Ne = 11418.0;
+
+
 
 //	HaplotypePhaser phaser;
 ////	 distance code 6_new has Ne 11418
 //	distance_code = "6_Ne10x6";
 //	phaser.Ne = 1000000.0;
 
-	HaplotypePhaser phaser;
-//	 distance code 6_new has Ne 11418
-	distance_code = "6_Ne11418";
-	phaser.Ne = 11418.0;
+//	HaplotypePhaser phaser;
+////	 distance code 6_new has Ne 11418
+//	distance_code = "6_Ne11418";
+//	phaser.Ne = 11418.0;
 
 
 

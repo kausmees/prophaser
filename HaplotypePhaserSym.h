@@ -13,46 +13,70 @@
  *
  */
 struct ChromosomePair {
-    int first;
-    int second;
+	int first;
+	int second;
 
-    ChromosomePair(int a, int b) {
-    	first = std::min(a,b);
-    	second = std::max(a,b);
-    }
+	ChromosomePair(int a, int b) {
+		first = std::min(a,b);
+		second = std::max(a,b);
+	}
 
-    int NumEquals(ChromosomePair other) {
-    	if (first == other.first ) {
-    		 if (second == other.second) {
-    			 return 2;
-    		 }
-    		 else {
-    			 return 1;
-    		 }
-    	}
-    	else {
-    		if(first == other.second) {
-    			return 1;
-    		}
-    		if(second == other.first) {
-    			return 1;
-    		}
-    		return 0;
-    	}
+	int NumEquals(ChromosomePair other) {
 
-    }
+		int num = 0;
+
+		if(first == second) {
+			if(first == other.first) {
+				num += 1;
+			}
+			if(first == other.second) {
+				num += 1;
+			}
+			return num;
+		}
+
+		else {
+			if (first == other.first) {
+				num += 1;
+
+			}
+			else {
+				if(first == other.second) {
+					num += 1;
+				}
+			}
+			if (second == other.first) {
+				num += 1;
+
+			}
+			else {
+				if(second == other.second) {
+					num += 1;
+				}
+			}
+
+
+		}
+
+
+
+		return num;
+	}
+
+
+
 };
 
 /**
 
 Main haplotype phasing and imputation functionality.
 
-*/
+ */
 class HaplotypePhaserSym {
 
 public:
 	char ** haplotypes;
-//	char ** genotypes;
+	//	char ** genotypes;
 	vector <double> sample_gls;
 	Pedigree ped;
 	float theta;
@@ -78,7 +102,7 @@ public:
 
 
 
-//private:
+	//private:
 
 	int num_states;
 	int num_markers;
@@ -91,9 +115,9 @@ public:
 	double * normalizers;
 
 
-//	double ** s_backward2;
-//	double ** s_forward2;
-//	double * normalizers2;
+	//	double ** s_backward2;
+	//	double ** s_forward2;
+	//	double * normalizers2;
 
 
 	void AllocateMemory();

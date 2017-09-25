@@ -95,8 +95,8 @@ void HaplotypePhaser::LoadReferenceData(const String &ref_file, const String &sa
  */
 void HaplotypePhaser::LoadSampleData(const String &ref_file, const String &sample_file, int sample_index){
 	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls, sample_index);
-//	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
-	VcfUtils::LoadGeneticMap("data/chr20.OMNI.interpolated_genetic_map", ped, distances);
+	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
+//	VcfUtils::LoadGeneticMap("data/chr20.OMNI.interpolated_genetic_map", ped, distances);
 //
 };
 
@@ -458,6 +458,8 @@ void HaplotypePhaser::CalcScaledForward(){
 			int marker_c1 = s / num_h;
 			int marker_c2 = s % num_h;
 
+
+			double prob_test = 0.0;
 #pragma GCC ivdep
 			for(int j = 0; j < num_states; j++){
 
@@ -467,7 +469,10 @@ void HaplotypePhaser::CalcScaledForward(){
 				int b = marker_c2-other_c2;
 				int a = marker_c1-other_c1;
 
+				// probs[!a + !b] is p_trans j->s
 				sum += s_forward[m-1][j] * probs[!a+!b];
+
+				prob_test += probs[!a+!b];
 
 				//				int diff = s-j;
 				//				int newa = diff / num_h;
@@ -485,6 +490,9 @@ void HaplotypePhaser::CalcScaledForward(){
 
 			}
 			s_forward[m][s] =  emission_probs[s] * sum;
+//			if(abs(prob_test-1.0) > 0.0001) {
+				printf("!! Probtest = %f !! \n", prob_test);
+//			}
 		}
 
 		for(int s = 0; s < num_states; s++){
