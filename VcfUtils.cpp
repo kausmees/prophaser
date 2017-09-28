@@ -74,7 +74,7 @@ void LoadReferenceMarkers(const String &file_name){
 
 /**
  * Add individuals from ref_file to the pedigree ped.
- * Also individual sample_indeix from sample_file.
+ * Also individual sample_index from sample_file.
  *
  * TODO possibly no need to have individuals in pedigree.
  */

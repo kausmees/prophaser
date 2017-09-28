@@ -54,12 +54,39 @@ struct ChromosomePair {
 					num += 1;
 				}
 			}
-
-
 		}
 
+		return num;
+	};
 
+	int NumEquals2(ChromosomePair other) {
 
+		int num = 0;
+
+		if(! (first == second)) {
+
+			if (first == other.first) {
+				num += 1;
+
+			}
+			else {
+				num += first == other.second;
+
+			}
+
+			if (second == other.first) {
+				num += 1;
+
+			}
+			else {
+				num += second == other.second;
+
+			}
+		}
+
+		else{
+			return (first == other.first) + (first == other.second);
+		}
 		return num;
 	}
 
@@ -94,7 +121,7 @@ public:
 	float * phred_probs;
 
 	~HaplotypePhaserSym();
-	void LoadData(const String &ref_file, const String &sample_file, int sample_index);
+	void LoadData(const String &ref_file, const String &sample_file, int sample_index, const String &map_file);
 	void LoadReferenceData(const String &ref_file, const String &sample_file, int sample_index);
 	void LoadSampleData(const String &ref_file, const String &sample_file, int sample_index);
 	void setDistanceCode(int c);

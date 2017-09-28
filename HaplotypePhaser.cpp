@@ -26,8 +26,8 @@ void HaplotypePhaser::AllocateMemory(){
 	num_markers = Pedigree::markerCount;
 	num_inds = ped.count;
 
-	error = 0.01;
-	theta = 0.01;
+//	error = 0.01;
+//	theta = 0.01;
 
 
 	distances.resize(num_markers,0.01);
@@ -67,15 +67,13 @@ void HaplotypePhaser::setDistanceCode(int c) {
  * Unphased sample is loaded from sample_file, the individual with sample_index.
  *
  */
-void HaplotypePhaser::LoadData(const String &ref_file, const String &sample_file, int sample_index){
+void HaplotypePhaser::LoadData(const String &ref_file, const String &sample_file, int sample_index, const String &map_file){
 	VcfUtils::LoadReferenceMarkers(ref_file);
-	VcfUtils::LoadIndividuals(ped,ref_file, sample_file, sample_index);
+	VcfUtils::LoadIndividuals(ped, ref_file, sample_file, sample_index);
 	AllocateMemory();
 	VcfUtils::LoadHaplotypes(ref_file, ped, haplotypes);
-
 	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls, sample_index);
-	//	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
-//	VcfUtils::LoadGeneticMap("data/chr20.OMNI.interpolated_genetic_map", ped, distances);
+	VcfUtils::LoadGeneticMap(map_file, ped, distances);
 
 };
 /**

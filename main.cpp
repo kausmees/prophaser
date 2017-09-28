@@ -10,189 +10,119 @@ int main(int argc, char ** argv){
 //	String sample_file;
 //	String ref_file;
 	String dir;
-
+	String subset_id;
+	String individual;
+	String ref_set;
+	String map_file;
+	double cov;
+	double Ne;
+	double error;
 
 	ParameterList parameter_list;
 	LongParamContainer long_parameters;
 	long_parameters.addGroup("Input files");
-//	long_parameters.addString("sampleVCF", &sample_file);
-//	long_parameters.addString("referenceVCF", &ref_file);
 	long_parameters.addString("directory", &dir);
+	long_parameters.addString("subset", &subset_id);
+	long_parameters.addString("individual", &individual);
+	long_parameters.addString("reference", &ref_set);
+	long_parameters.addDouble("cov", &cov);
+	long_parameters.addString("map", &map_file);
+	long_parameters.addGroup("Parameters");
+	long_parameters.addDouble("Ne", &Ne);
+	long_parameters.addDouble("error", &error);
 
 
 	parameter_list.Add(new LongParameters("Options",long_parameters.getLongParameterList()));
 	parameter_list.Read(argc, argv);
 	parameter_list.Status();
 
+	// Defaults
+	Ne = Ne ? Ne : 11418.0;
+	error = error ? error : 0.01;
+	dir = !dir.IsEmpty() ? dir : "../../Data/1KGData/vcfs/chrom20/";
+	map_file = !map_file.IsEmpty() ? map_file : "../../Data/1KGData/vcfs/chrom20/maps/chr20.OMNI.interpolated_genetic_map";
+	subset_id = !subset_id.IsEmpty() ? subset_id : "B";
+	individual = !individual.IsEmpty() ? individual : "NA12890";
+	ref_set = !ref_set.IsEmpty() ? ref_set : "CEU_10";
+	std::stringstream ss;
+	ss << std::fixed << std::setprecision(2) << Ne;
 
-//	String dir = "../../Data/1KGData/vcfs/chrom20/";
+////////// Fixed parameters and settings ////////////////
+
 	string data_id = "4";
-
-	//home: do for all 3:
-
-	string individual = "NA12890";
-//	string individual = "NA12717";
-//	string individual = "NA12812";
-
-	//big computer
-//	string individual = "NA11931";
-//	string individual = "NA12872";
-//	string individual = "NA12272";
-//	string individual = "NA12751";
-
-
-//	string subset_id = "C";
-	string subset_id = "B";
-//	string subset_id = "A";
-
-
-//	string ref_set = "CEU_10";
-//	string ref_set = "CEU_25";
-	string ref_set = "CEU_50";
-//	string ref_set = "CEU_ALL_"+individual;
-
-//	string ref_set = "YRI_ALL";
-
-
-
-
-
-	double error = 0.001;
-//	vector<double> coverages = {0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
-
-// new standard
-	vector<double> coverages = {0.0, 0.02, 0.05, 0.08, 0.1, 0.4, 0.7, 1.0};
-//	vector<double> coverages = {1.0};
-
-//	vector<double> coverages = {};
-
-
-	vector<string> parameters = {};
-	for (auto c : coverages) {
-		parameters.push_back("_" + to_string(c) + "_" + to_string(error));
-	}
-
-	parameters.push_back("");
-
-
-	string fileend = "_s.vcf";
 	string filetype = "_s";
 
-
-	string file_name_in;
-	string file_name_out;
-
-//	String sample_file = dir+subset_id+"/" + data_id +"_" + subset_id + "_snps.vcf";
-//	int sample_ind = ???;
-
-	int sample_ind = 0;
-	string sample_file = string(dir) + subset_id+"/" + data_id +"_" + subset_id + "_" + individual + fileend;
-	string true_file = string(dir) + subset_id+"/" + data_id +"_" + subset_id + "_" + individual + "_snps.vcf";
-	string ref_file = string(dir) + subset_id+"/" + data_id +"_" + subset_id + "_" + ref_set + fileend;
-
-	string distance_code;
-
-//
-//	HaplotypePhaserSym phaser;
-////	 distance code new_sym_t20 has Ne 11418
-//	distance_code = "new_sym_t20_Ne10x6";
-//    phaser.Ne = 1000000.0;
-
-
-//	HaplotypePhaserSym phaser;
-////	 distance code new_sym_t20 has Ne 11418
-//	distance_code = "new_sym_t20_Ne11418";
-//    phaser.Ne = 11418.0;
-
-
-//	HaplotypePhaserSym phaser;
-//	distance_code = "new_sym_pdf_t20_Ne11418";
-//    phaser.Ne = 11418.0;
-
+	string par = cov ? "_" + to_string(cov) + "_" + to_string(0.001) : "";
 
 	HaplotypePhaserSym phaser;
-	distance_code = "new_sym_pdf_Ne11418";
-    phaser.Ne = 11418.0;
-
-
+	string distance_code = "sym_Ne"+ss.str();
 
 //	HaplotypePhaser phaser;
-////	 distance code 6_new has Ne 11418
-//	distance_code = "6_Ne10x6";
-//	phaser.Ne = 1000000.0;
+//	string distance_code = "orig_Ne"+ss.str();
 
-//	HaplotypePhaser phaser;
-////	 distance code 6_new has Ne 11418
-//	distance_code = "6_Ne11418";
-//	phaser.Ne = 11418.0;
+//////////////////// Setup //////////////////////////////
 
+	phaser.Ne = Ne;
+	phaser.error = error;
 
+	string sample_file=string(dir) + string(subset_id)+"/" + string(data_id) +"_" + string(subset_id) + "_" + string(individual) + string(filetype) + par +".vcf";
+	string true_file = string(dir) + string(subset_id)+"/" + string(data_id) +"_" + string(subset_id) + "_" + string(individual) + "_snps.vcf";
+	string ref_file =  string(dir) + string(subset_id)+"/" + string(data_id) +"_" + string(subset_id) + "_" + string(ref_set) + string(filetype) + ".vcf";
 
+	string result_file ="./Results/" + string(subset_id)+ "/"+ string(ref_set) + "/" + string(data_id) + "_" + string(subset_id) + "_" + string(individual) +
+			string(filetype) + par + ".phased_"+ distance_code;
 
-//	phaser.setDistanceCode(atoi(distance_code.c_str()));
-//
-	phaser.LoadReferenceData(ref_file.c_str(), sample_file.c_str(), sample_ind);
+	printf("Phasing file : %s \n", sample_file.c_str());
+	printf("Reference file : %s \n", ref_file.c_str());
+	printf("Writing to : %s \n", result_file.c_str());
 
-	printf("Loading true haps from %s \n", true_file.c_str());
-	HaplotypePair true_haps = loadHaplotypesFromVCF(true_file.c_str(), sample_ind);
+	printf("With: \nNe %f \n", phaser.Ne);
+	printf("error %f \n", phaser.error);
 
+	////////////////////////////////////////// phasing start //////////////////////////////////////////////////////////////
 
-	//////////////////////////////////////////// phasing start //////////////////////////////////////////////////////////////
-	printf("start \n");
+	phaser.LoadData(ref_file.c_str(), sample_file.c_str(), 0, map_file.c_str());
 
 	chrono::steady_clock::time_point begin1;
 	chrono::steady_clock::time_point begin;
 	chrono::steady_clock::time_point end;
 
-	for(auto par : parameters) {
-		file_name_in = string(dir) + subset_id + "/" + data_id + "_" + subset_id + "_" + individual + filetype + par + ".vcf" ;
 
-		printf("Phasing file : %s \n", file_name_in.c_str());
-		printf("Reference file : %s \n", ref_file.c_str());
+	begin1 = chrono::steady_clock::now();
+	begin = chrono::steady_clock::now();
+	cout << "Starting Forward \n";
+	phaser.CalcScaledForward();
+	end= std::chrono::steady_clock::now();
+	cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
+	begin = chrono::steady_clock::now();
+	cout << "Starting Backward \n";
+	phaser.CalcScaledBackward();
+	end= std::chrono::steady_clock::now();
+	cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
+	begin = chrono::steady_clock::now();
+	cout << "Starting Stats \n";
 
-
-		file_name_out ="./Results/" + subset_id+ "/"+ ref_set + "/" + data_id + "_" + subset_id + "_" + individual + filetype + par + ".phased_"+ distance_code;
-		printf("Writing to to file : %s \n", file_name_out.c_str());
-
-		phaser.LoadSampleData(ref_file.c_str(), file_name_in.c_str(), 0);
-		begin1 = chrono::steady_clock::now();
-		begin = chrono::steady_clock::now();
-		cout << "Starting Forward \n";
-		phaser.CalcScaledForward();
-		end= std::chrono::steady_clock::now();
-		cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
-		begin = chrono::steady_clock::now();
-		cout << "Starting Backward \n";
-		phaser.CalcScaledBackward();
-		end= std::chrono::steady_clock::now();
-		cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
-		begin = chrono::steady_clock::now();
-		cout << "Starting Stats \n";
-
-		vector<vector<double>> stats = phaser.GetPosteriorStats((file_name_out+"_stats").c_str());
-		int * ml_states = new int[phaser.num_markers];
-		for (int i = 0; i < phaser.num_markers; i++) {
-			ml_states[i] = stats[i][39];
-		}
-
-		FILE * mout = fopen((file_name_out+"_mlstates").c_str(), "w");
-
-		for(int i = 0; i<phaser.num_markers; i++) {
-			fprintf(mout,"%d\n", ml_states[i]);
-		}
-
-		HaplotypePair mine_haps1 = phaser.PrintHaplotypesToFile(ml_states, file_name_out.c_str());
-		mine_haps1.print();
-		HaplotypePair mine_haps2 = phaser.PrintReferenceHaplotypes(ml_states,(file_name_out+"_ref_haps").c_str());
-		printf("Equal haps= %d \n", mine_haps1.isEqual(mine_haps2));
-
-		HaplotypePair mine_genos = phaser.PrintGenotypesToFile(stats, (file_name_out+"_genos").c_str());
-		printf("Equal hap geno= %d \n", mine_haps1.isEqual(mine_genos));
-
-		end= std::chrono::steady_clock::now();
-		cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
-		cout << "Total: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin1).count() << " millisec" <<endl<<endl<<endl;
-
+	vector<vector<double>> stats = phaser.GetPosteriorStats((result_file+"_stats").c_str());
+	int * ml_states = new int[phaser.num_markers];
+	for (int i = 0; i < phaser.num_markers; i++) {
+		ml_states[i] = stats[i][39];
 	}
 
+//	FILE * mout = fopen((result_file+"_mlstates").c_str(), "w");
+//	for(int i = 0; i<phaser.num_markers; i++) {
+//		fprintf(mout,"%d\n", ml_states[i]);
+//	}
+
+	HaplotypePair mine_haps1 = phaser.PrintHaplotypesToFile(ml_states, result_file.c_str());
+	HaplotypePair mine_haps2 = phaser.PrintReferenceHaplotypes(ml_states,(result_file+"_ref_haps").c_str());
+	HaplotypePair mine_genos = phaser.PrintGenotypesToFile(stats, (result_file+"_genos").c_str());
+
+	if(!mine_haps1.isEqual(mine_haps2)){
+		printf("Haps not equal \n");
+	}
+	end= std::chrono::steady_clock::now();
+	cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
+	cout << "Total: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin1).count() << " millisec" <<endl<<endl<<endl;
+
 }
+

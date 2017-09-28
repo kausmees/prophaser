@@ -36,8 +36,8 @@ void HaplotypePhaserSym::AllocateMemory(){
 	num_markers = Pedigree::markerCount;
 	num_inds = ped.count;
 
-	error = 0.01;
-	theta = 0.01;
+	//	error = 0.01;
+	//	theta = 0.01;
 
 	distances.resize(num_markers,0.01);
 	//	errors.resize(num_markers,0.01);
@@ -76,15 +76,13 @@ void HaplotypePhaserSym::setDistanceCode(int c) {
  * Unphased sample is loaded from sample_file, the individual with sample_index.
  *
  */
-void HaplotypePhaserSym::LoadData(const String &ref_file, const String &sample_file, int sample_index){
+void HaplotypePhaserSym::LoadData(const String &ref_file, const String &sample_file, int sample_index, const String &map_file){
 	VcfUtils::LoadReferenceMarkers(ref_file);
-	VcfUtils::LoadIndividuals(ped,ref_file, sample_file, sample_index);
+	VcfUtils::LoadIndividuals(ped, ref_file, sample_file, sample_index);
 	AllocateMemory();
 	VcfUtils::LoadHaplotypes(ref_file, ped, haplotypes);
-
 	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls, sample_index);
-	//	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
-	//	VcfUtils::LoadGeneticMap("data/chr20.OMNI.interpolated_genetic_map", ped, distances);
+	VcfUtils::LoadGeneticMap(map_file, ped, distances);
 
 };
 
@@ -104,9 +102,7 @@ void HaplotypePhaserSym::LoadReferenceData(const String &ref_file, const String 
  *
  */
 void HaplotypePhaserSym::LoadSampleData(const String &ref_file, const String &sample_file, int sample_index){
-	printf("Before lodaing GLs \n ");
 	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls, sample_index);
-	printf("After lodaing GLs \n ");
 	VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
 	//		VcfUtils::LoadGeneticMap("data/chr20.OMNI.interpolated_genetic_map", ped, distances);
 
@@ -123,7 +119,6 @@ void HaplotypePhaserSym::LoadSampleData(const String &ref_file, const String &sa
  */
 
 void HaplotypePhaserSym::CalcEmissionProbs(int marker, double * probs) {
-	int num_h = 2*num_inds - 2;
 	int h1;
 	int h2;
 	double sum;
@@ -453,18 +448,12 @@ void HaplotypePhaserSym::CalcScaledForward(){
 	double probs_same[3];
 
 	double scaled_dist;
+	double c1,c2;
 
-	printf("Num h = %d \n", num_h);
 	printf("Num states = %d \n", num_states);
-	//	for(auto s : states) {
-	//		for (auto j : states) {
-	//			int casee = (s).NumEquals(j);
-	//			printf("%d %d --- %d %d -> %d \n", s.first, s.second, j.first, j.second, casee);
-	//		}
-	//	}
 
 	// original
-		double pop_const = (4.0 * Ne) / 100.0;
+	double pop_const = (4.0 * Ne) / 100.0;
 
 	//	// times 1.5
 	//	double pop_const = (4.0 * 11418.0 * 1.5) / 100.0;
@@ -474,11 +463,8 @@ void HaplotypePhaserSym::CalcScaledForward(){
 	//	double pop_const = (4.0 * 11418.0) / 150.0;
 
 	// times 2.0
-//	double pop_const = (4.0 * Ne * 2.0) / 100.0;
+	//	double pop_const = (4.0 * Ne * 2.0) / 100.0;
 
-
-
-	double norm_const;
 
 	InitPriorScaledForward();
 
@@ -488,19 +474,19 @@ void HaplotypePhaserSym::CalcScaledForward(){
 
 		scaled_dist = 1-exp(-(distances[m] * pop_const)/num_h);
 
-		//both_switch
-		probs[0] = pow(scaled_dist/num_h, 2);
-		//one switch
-		probs[1] =  (((1 - scaled_dist) * scaled_dist) / num_h) + pow(scaled_dist/num_h, 2);
-		// no switch
-		probs[2] = pow(1 - scaled_dist, 2) + ((2 * (1 - scaled_dist) * scaled_dist) / num_h) + (pow(scaled_dist,2) / pow(num_h,2));
+		c1 = scaled_dist/num_h;
+		c2 = 1 - scaled_dist;
 
+		//both_switch
+		probs[0] = pow(c1, 2);
+		//one switch
+		probs[1] =  (c2*c1) + pow(c1, 2);
+		// no switch
+		probs[2] = pow(c2, 2) + (2*c2*c1) + pow(c1, 2);
 
 
 		double norm_const_case_diff = ((num_h-1) * (num_h-2) /2)*(probs[0]) + (2*(num_h-1)) * probs[1] + probs[2];
 		double norm_const_case_same = (num_h*(num_h-1)/2) * (probs[0]) + (num_h-1) * probs[1] + probs[2];
-
-
 
 		probs_diff[0] = probs[0] / norm_const_case_diff;
 		//one switch
@@ -516,44 +502,27 @@ void HaplotypePhaserSym::CalcScaledForward(){
 		probs_same[2] = probs[2] / norm_const_case_same;
 
 
-		double prob_test = 0.0;
 
-
-
-		//#pragma omp parallel for schedule(dynamic,32)
+#pragma omp parallel for schedule(dynamic,32)
 		for(int s = 0; s < num_states; s++){
 			double sum = 0.0;
 			//			int marker_c1 = s / num_h;
 			//			int marker_c2 = s % num_h;
 
 
-			int case_counter[3];
-			case_counter[0] = 0;
-			case_counter[1] = 0;
-			case_counter[2] = 0;
+			//			int case_counter[3];
+			//			case_counter[0] = 0;
+			//			case_counter[1] = 0;
+			//			case_counter[2] = 0;
 
-			//#pragma GCC ivdep
+#pragma GCC ivdep
 			for(int j = 0; j < num_states; j++){
 
-				//				int other_c1 = j / num_h;
-				//				int other_c2 = j % num_h;
-				//
-				//				int b = marker_c2-other_c2;
-				//				int a = marker_c1-other_c1;
+				int chrom_case = (states[s]).NumEquals2(states[j]);
 
-				//!! when chrom_case =1 it actually represents 2 cases: 1 switch or 2 switch
-				int chrom_case = (states[s]).NumEquals(states[j]);
-
-//
-//				if((s==0 || s==1 ) && m==65) {
-//					printf("s= %d %d j= %d %d cc = %d \n", states[s].first, states[s].second, states[j].first, states[j].second, chrom_case);
-//				}
-				case_counter[chrom_case] += 1;
-
-				//				sum += s_forward[m-1][j] * probs[!a+!b];
 
 				// original haplotyper sym
-//				sum += s_forward[m-1][j] * probs[chrom_case];
+				//				sum += s_forward[m-1][j] * probs[chrom_case];
 
 
 				// haplotyper_sym pdf - decide which pdf we are using
@@ -564,30 +533,30 @@ void HaplotypePhaserSym::CalcScaledForward(){
 					sum += s_forward[m-1][j] * probs_diff[chrom_case];
 				}
 
-
+				//				case_counter[chrom_case] += 1;
 
 				// prob here is p_trans j -> s
 				// conditioning on j
-				if (j==100) {
-					if(states[j].first == states[j].second) {
-						prob_test += probs_same[chrom_case];
-					}
-					else{
-						prob_test += probs_diff[chrom_case];
-					}
-				}
+				//				if (j==100) {
+				//					if(states[j].first == states[j].second) {
+				//						prob_test += probs_same[chrom_case];
+				//					}
+				//					else{
+				//						prob_test += probs_diff[chrom_case];
+				//					}
+				//				}
 
 			}
 			s_forward[m][s] =  emission_probs[s] * sum;
-//			if(s<=40 && m==65) {
-//			printf("s= %d : (%d,%d) case counts: 0:%d 1:%d 2:%d \n", s, states[s].first, states[s].second,case_counter[0], case_counter[1], case_counter[2]);
-//
-//			}
+			//			if(s<=40 && m==65) {
+			//			printf("s= %d : (%d,%d) case counts: 0:%d 1:%d 2:%d \n", s, states[s].first, states[s].second,case_counter[0], case_counter[1], case_counter[2]);
+			//
+			//			}
 		}
 
-//				if(abs(prob_test-1.0) > 0.0001 && m < 100) {
-//					printf(" m = % d !! Probtest = %f !! \n", m, prob_test);
-//				}
+		//				if(abs(prob_test-1.0) > 0.0001 && m < 100) {
+		//					printf(" m = % d !! Probtest = %f !! \n", m, prob_test);
+		//				}
 
 		for(int s = 0; s < num_states; s++){
 			c+= s_forward[m][s];
@@ -610,6 +579,8 @@ void HaplotypePhaserSym::CalcScaledBackward(){
 	double probs_diff[3];
 	double probs_same[3];
 	double scaled_dist;
+	double c1;
+	double c2;
 
 	//original
 	double pop_const = (4.0 * Ne) / 100.0;
@@ -618,22 +589,24 @@ void HaplotypePhaserSym::CalcScaledBackward(){
 	//	double pop_const = (4.0 * 11418.0 * 1.5) / 100.0;
 
 	// times 2.0
-//	double pop_const = (4.0 * Ne * 2.0) / 100.0;
+	//	double pop_const = (4.0 * Ne * 2.0) / 100.0;
 
-
-	double norm_const;
 
 	InitPriorScaledBackward();
 
 	for(int m = num_markers-2; m >= 0; m--){
-		scaled_dist = 1.0 -exp(-(distances[m+1] * pop_const)/num_h);
+		scaled_dist = 1.0 - exp(-(distances[m+1] * pop_const)/num_h);
+
+		c1 = scaled_dist/num_h;
+		c2 = 1 - scaled_dist;
 
 		//both_switch
-		probs[0] = pow(scaled_dist/num_h, 2);
+		probs[0] = pow(c1, 2);
 		//one switch
-		probs[1] =  (((1 - scaled_dist) * scaled_dist) / num_h) + pow(scaled_dist/num_h, 2);
+		probs[1] =  (c2*c1) + pow(c1, 2);
 		// no switch
-		probs[2] = pow(1 - scaled_dist, 2) + ((2 * (1 - scaled_dist) * scaled_dist) / num_h) + (pow(scaled_dist,2) / pow(num_h,2));
+		probs[2] = pow(c2, 2) + (2*c2*c1) + pow(c1, 2);
+
 
 		double norm_const_case_diff = ((num_h-1) * (num_h-2) /2)*(probs[0]) + (2*(num_h-1)) * probs[1] + probs[2];
 		double norm_const_case_same = (num_h*(num_h-1)/2) * (probs[0]) + (num_h-1) * probs[1] + probs[2];
@@ -663,12 +636,6 @@ void HaplotypePhaserSym::CalcScaledBackward(){
 #pragma GCC ivdep
 			for(int j = 0; j < num_states; j++){
 
-				//				int other_c1 = j / num_h;
-				//				int other_c2 = j % num_h;
-				//
-				//				int b = marker_c2-other_c2;
-				//				int a = marker_c1-other_c1;
-
 				int chrom_case = (states[s]).NumEquals(states[j]);
 
 				// haplotyper sym orig
@@ -681,8 +648,6 @@ void HaplotypePhaserSym::CalcScaledBackward(){
 				else{
 					sum += s_backward[m+1][j] * probs_diff[chrom_case] * emission_probs[j];
 				}
-
-
 
 			}
 			s_backward[m][s] = sum * normalizers[m];

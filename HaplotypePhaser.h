@@ -32,7 +32,7 @@ public:
 	float * phred_probs;
 
 	~HaplotypePhaser();
-	void LoadData(const String &ref_file, const String &sample_file, int sample_index);
+	void LoadData(const String &ref_file, const String &sample_file, int sample_index, const String &map_file);
 	void LoadReferenceData(const String &ref_file, const String &sample_file, int sample_index);
 	void LoadSampleData(const String &ref_file, const String &sample_file, int sample_index);
 	void setDistanceCode(int c);
