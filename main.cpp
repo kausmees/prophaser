@@ -34,7 +34,7 @@ int main(int argc, char ** argv){
 
 	parameter_list.Add(new LongParameters("Options",long_parameters.getLongParameterList()));
 	parameter_list.Read(argc, argv);
-	parameter_list.Status();
+//	parameter_list.Status();
 
 	// Defaults
 	Ne = Ne ? Ne : 11418.0;
@@ -75,9 +75,9 @@ int main(int argc, char ** argv){
 	printf("Phasing file : %s \n", sample_file.c_str());
 	printf("Reference file : %s \n", ref_file.c_str());
 	printf("Writing to : %s \n", result_file.c_str());
-
+//
 	printf("With: \nNe %f \n", phaser.Ne);
-	printf("error %f \n", phaser.error);
+//	printf("error %f \n", phaser.error);
 
 	////////////////////////////////////////// phasing start //////////////////////////////////////////////////////////////
 

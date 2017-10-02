@@ -20,7 +20,7 @@ namespace VcfUtils{
  */
 void LoadReferenceMarkers(const String &file_name){
 
-	printf("Loading markers from file %s \n", file_name.c_str());
+//	printf("Loading markers from file %s \n", file_name.c_str());
 
 	VcfFileReader reader;
 	VcfHeader header;
@@ -85,11 +85,11 @@ void LoadIndividuals(Pedigree &ped, const String &ref_file, const String &sample
 	reader.open(ref_file, header);
 
 	int num_samples = header.getNumSamples();
-	printf("Num reference inds : %d \n", num_samples);
+//	printf("Num reference inds : %d \n", num_samples);
 
 	if(num_samples == 0) {
 		//TODO add exceptions
-		printf("ERROR: No reference individuals in file");
+//		printf("ERROR: No reference individuals in file");
 	}
 
 	for(int i = 0; i < num_samples; i++) {
@@ -97,7 +97,7 @@ void LoadIndividuals(Pedigree &ped, const String &ref_file, const String &sample
 	}
 
 	reader.close();
-	printf("Num reference inds in ped: %d \n", ped.count);
+//	printf("Num reference inds in ped: %d \n", ped.count);
 
 	reader.open(sample_file, header);
 	ped.AddPerson(header.getSampleName(sample_index), header.getSampleName(sample_index), "0", "0", 0, 1);
@@ -114,7 +114,7 @@ void LoadIndividuals(Pedigree &ped, const String &ref_file, const String &sample
  */
 void LoadHaplotypes(const String &file_name, const Pedigree &ped, char** haplotypes) {
 
-	printf("Loading haplotypes into phasing engine from file %s \n", file_name.c_str());
+//	printf("Loading haplotypes into phasing engine from file %s \n", file_name.c_str());
 	VcfFileReader reader;
 	VcfHeader header;
 	reader.open(file_name, header);
@@ -140,7 +140,7 @@ void LoadHaplotypes(const String &file_name, const Pedigree &ped, char** haploty
 		}
 	}
 	reader.close();
-	printf("Done \n");
+//	printf("Done \n");
 };
 
 
@@ -152,7 +152,7 @@ void LoadHaplotypes(const String &file_name, const Pedigree &ped, char** haploty
  * temproary: fill all other genotypes with 0
  */
 void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, vector<double> & sample_gls, int sample_index_file) {
-	printf("Loading genotype likelihoods from file %s \n", file_name.c_str());
+//	printf("Loading genotype likelihoods from file %s \n", file_name.c_str());
 
 //	int sample_index_ped = ped.count-1;
 //	std::string lformat;

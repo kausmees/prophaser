@@ -450,7 +450,7 @@ void HaplotypePhaserSym::CalcScaledForward(){
 	double scaled_dist;
 	double c1,c2;
 
-	printf("Num states = %d \n", num_states);
+//	printf("Num states = %d \n", num_states);
 
 	// original
 	double pop_const = (4.0 * Ne) / 100.0;
