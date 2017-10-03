@@ -505,6 +505,7 @@ void HaplotypePhaserSym::CalcScaledForward(){
 
 #pragma omp parallel for schedule(dynamic,32)
 		for(int s = 0; s < num_states; s++){
+
 			double sum = 0.0;
 			//			int marker_c1 = s / num_h;
 			//			int marker_c2 = s % num_h;

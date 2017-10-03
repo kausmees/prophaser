@@ -14,7 +14,7 @@ int main(int argc, char ** argv){
 	String individual;
 	String ref_set;
 	String map_file;
-	double cov;
+	String coverage;
 	double Ne;
 	double error;
 
@@ -25,7 +25,7 @@ int main(int argc, char ** argv){
 	long_parameters.addString("subset", &subset_id);
 	long_parameters.addString("individual", &individual);
 	long_parameters.addString("reference", &ref_set);
-	long_parameters.addDouble("cov", &cov);
+	long_parameters.addString("cov", &coverage);
 	long_parameters.addString("map", &map_file);
 	long_parameters.addGroup("Parameters");
 	long_parameters.addDouble("Ne", &Ne);
@@ -52,8 +52,13 @@ int main(int argc, char ** argv){
 	string data_id = "4";
 	string filetype = "_s";
 
-	string par = cov ? "_" + to_string(cov) + "_" + to_string(0.001) : "";
-
+	string par;
+	if(coverage.IsEmpty()) {
+		par = "";
+	}
+	else{
+		par = "_" + string(coverage.c_str()) + "_" + to_string(0.001);
+	}
 	HaplotypePhaserSym phaser;
 	string distance_code = "sym_Ne"+ss.str();
 
