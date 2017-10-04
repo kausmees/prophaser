@@ -17,6 +17,7 @@ int main(int argc, char ** argv){
 	String coverage;
 	double Ne;
 	double error;
+	double seq_error;
 
 	ParameterList parameter_list;
 	LongParamContainer long_parameters;
@@ -26,6 +27,7 @@ int main(int argc, char ** argv){
 	long_parameters.addString("individual", &individual);
 	long_parameters.addString("reference", &ref_set);
 	long_parameters.addString("cov", &coverage);
+	long_parameters.addDouble("seq_error", &seq_error);
 	long_parameters.addString("map", &map_file);
 	long_parameters.addGroup("Parameters");
 	long_parameters.addDouble("Ne", &Ne);
@@ -38,6 +40,7 @@ int main(int argc, char ** argv){
 
 	// Defaults
 	Ne = Ne ? Ne : 11418.0;
+	seq_error = seq_error ? seq_error : 0.001;
 	error = error ? error : 0.01;
 	dir = !dir.IsEmpty() ? dir : "../../Data/1KGData/vcfs/chrom20/";
 	map_file = !map_file.IsEmpty() ? map_file : "../../Data/1KGData/vcfs/chrom20/maps/chr20.OMNI.interpolated_genetic_map";
@@ -57,7 +60,7 @@ int main(int argc, char ** argv){
 		par = "";
 	}
 	else{
-		par = "_" + string(coverage.c_str()) + "_" + to_string(0.001);
+		par = "_" + string(coverage.c_str()) + "_" + to_string(seq_error);
 	}
 	HaplotypePhaserSym phaser;
 	string distance_code = "sym_Ne"+ss.str();
