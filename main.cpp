@@ -36,14 +36,14 @@ int main(int argc, char ** argv){
 
 	parameter_list.Add(new LongParameters("Options",long_parameters.getLongParameterList()));
 	parameter_list.Read(argc, argv);
-//	parameter_list.Status();
+	parameter_list.Status();
 
 	// Defaults
 	Ne = Ne ? Ne : 11418.0;
 	seq_error = seq_error ? seq_error : 0.001;
 	error = error ? error : 0.01;
 	dir = !dir.IsEmpty() ? dir : "../../Data/1KGData/vcfs/chrom20/";
-	map_file = !map_file.IsEmpty() ? map_file : "../../Data/1KGData/vcfs/chrom20/maps/chr20.OMNI.interpolated_genetic_map";
+	map_file = !map_file.IsEmpty() ? map_file : "../../Data/1KGData/vcfs/chrom20/maps/5_snps_interpolated_HapMap2_map_20";
 	subset_id = !subset_id.IsEmpty() ? subset_id : "B";
 	individual = !individual.IsEmpty() ? individual : "NA12890";
 	ref_set = !ref_set.IsEmpty() ? ref_set : "CEU_10";
@@ -52,7 +52,7 @@ int main(int argc, char ** argv){
 
 ////////// Fixed parameters and settings ////////////////
 
-	string data_id = "4";
+	string data_id = "5";
 	string filetype = "_s";
 
 	string par;
@@ -73,12 +73,12 @@ int main(int argc, char ** argv){
 	phaser.Ne = Ne;
 	phaser.error = error;
 
-	string sample_file=string(dir) + string(subset_id)+"/" + string(data_id) +"_" + string(subset_id) + "_" + string(individual) + string(filetype) + par +".vcf";
-	string true_file = string(dir) + string(subset_id)+"/" + string(data_id) +"_" + string(subset_id) + "_" + string(individual) + "_snps.vcf";
-	string ref_file =  string(dir) + string(subset_id)+"/" + string(data_id) +"_" + string(subset_id) + "_" + string(ref_set) + string(filetype) + ".vcf";
+	string sample_file=string(dir) + string(subset_id)+"/" + string(data_id) +"_" + string(subset_id) + "_" + string(individual) + par+ string(filetype) +".vcf.gz";
+	string true_file = string(dir) + string(subset_id)+"/" + string(data_id) +"_" + string(subset_id) + "_" + string(individual) + "_snps.vcf.gz";
+	string ref_file =  string(dir) + string(subset_id)+"/" + string(data_id) +"_" + string(subset_id) + "_" + string(ref_set)  + "_snps.vcf.gz";
 
-	string result_file ="./Results/" + string(subset_id)+ "/"+ string(ref_set) + "/" + string(data_id) + "_" + string(subset_id) + "_" + string(individual) +
-			string(filetype) + par + ".phased_"+ distance_code;
+	string result_file ="./Results/" + string(subset_id)+ "/"+ string(ref_set) + "/" + string(data_id) + "_" + string(subset_id) + "_" + string(individual) + par  +
+			string(filetype)+ ".phased_"+ distance_code;
 
 	printf("Phasing file : %s \n", sample_file.c_str());
 	printf("Reference file : %s \n", ref_file.c_str());
