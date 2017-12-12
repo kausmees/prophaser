@@ -6,6 +6,8 @@
 #include "GenoUtils.h"
 
 
+// eg ./phase --Ne 30000 --individual NA12717 --reference CEU_10 --cov 0.900000
+
 int main(int argc, char ** argv){
 //	String sample_file;
 //	String ref_file;
