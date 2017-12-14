@@ -6,8 +6,19 @@
 #include <vector>
 #include <chrono>
 #include <algorithm>
+#include <Eigen/Dense>
+
+using Eigen::MatrixXd;
+using Eigen::MatrixXi;
+using Eigen::RowMajor;
+using Eigen::Dynamic;
+using Eigen::Matrix;
 
 
+
+typedef Eigen::Matrix<int, Dynamic,Dynamic, RowMajor> rowmajdyn;
+
+//using namespace Eigen;
 /**
  * Represents the reference haplotypes at a loci as an unordered pair.
  *
@@ -122,6 +133,11 @@ public:
 	int num_haps;
 	vector<ChromosomePair> states;
 
+	MatrixXi pdf_cases;
+	rowmajdyn pdf_cases_rowmaj;
+
+//	Matrix<float, 3, 3, RowMajor> test;
+
 
 	// phred_probs[i] contains linear-scale genotype likelihood
 	float * phred_probs;
@@ -159,6 +175,7 @@ public:
 	void CalcTransitionProbs(int marker, int marker_state, double * probs);
 	void CalcTransitionProbs(int marker, double ** probs);
 	void CalcEmissionProbs(int marker, double * probs);
+	void CalcCases();
 
 	void InitPriorScaledForward();
 	void InitPriorScaledBackward();

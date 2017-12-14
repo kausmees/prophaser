@@ -4,34 +4,11 @@
 #include "Parameters.h"
 #include "Pedigree.h"
 #include "GenoUtils.h"
-#include <Eigen/Dense>
 
 // eg ./phase --Ne 30000 --individual NA12717 --reference CEU_10 --cov 0.900000
 
-using Eigen::MatrixXd;
 
 int main(int argc, char ** argv){
-
-
-
-	  MatrixXd m(2,2);
-	  m(0,0) = 3;
-	  m(1,0) = 2.5;
-	  m(0,1) = -1;
-	  m(1,1) = m(1,0) + m(0,1);
-	  std::cout << m << std::endl;
-
-	  return 0;
-
-
-
-
-
-
-
-
-
-
 
 //	String sample_file;
 //	String ref_file;
@@ -124,6 +101,8 @@ int main(int argc, char ** argv){
 
 	phaser.LoadData(ref_file.c_str(), sample_file.c_str(), 0, map_file.c_str());
 
+//	return 0;
+
 	chrono::steady_clock::time_point begin1;
 	chrono::steady_clock::time_point begin;
 	chrono::steady_clock::time_point end;
@@ -144,10 +123,12 @@ int main(int argc, char ** argv){
 	cout << "Starting Stats \n";
 
 	vector<vector<double>> stats = phaser.GetPosteriorStats((result_file+"_stats").c_str());
+	cout << "Done Stats \n";
 	int * ml_states = new int[phaser.num_markers];
 	for (int i = 0; i < phaser.num_markers; i++) {
 		ml_states[i] = stats[i][39];
 	}
+	cout << "Done ml states \n";
 
 //	FILE * mout = fopen((result_file+"_mlstates").c_str(), "w");
 //	for(int i = 0; i<phaser.num_markers; i++) {
@@ -157,6 +138,8 @@ int main(int argc, char ** argv){
 	HaplotypePair mine_haps1 = phaser.PrintHaplotypesToFile(ml_states, result_file.c_str());
 	HaplotypePair mine_haps2 = phaser.PrintReferenceHaplotypes(ml_states,(result_file+"_ref_haps").c_str());
 	HaplotypePair mine_genos = phaser.PrintGenotypesToFile(stats, (result_file+"_genos").c_str());
+
+	cout << "Done Haps \n";
 
 	if(!mine_haps1.isEqual(mine_haps2)){
 		printf("Haps not equal \n");
