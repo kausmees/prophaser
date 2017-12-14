@@ -17,11 +17,11 @@ $(TARGET): $(OBJECTS)
 	$(CC) $(LFLAGS) $@ $^ ../../haplotyperProject/genoUtils/GenoUtils.o -L../../haplotyperProject/libStatGen -lStatGen -lz 
 #	$(CC) $(LFLAGS) $@ $^ ../../haplotyperProject/genoUtils/GenoUtils.o -L../../haplotyperProject/libStatGen -lStatGen_debug -lz 
 %.o: %.cpp %.h
-	$(CC) $(CFLAGS) -g $< -I ../../haplotyperProject/libStatGen/include/ -I ../../haplotyperProject/genoUtils/ 
+	$(CC) $(CFLAGS) -g $< -I ../../haplotyperProject/libStatGen/include/ -I ../../haplotyperProject/genoUtils/ -I ../../../Programs/eigen-eigen-5a0156e40feb/
 	
 	
 %.o: %.cpp
-	 $(CC) $(CFLAGS) $< -I ../../haplotyperProject/libStatGen/include/ -I ../../haplotyperProject/genoUtils/ 
+	 $(CC) $(CFLAGS) $< -I ../../haplotyperProject/libStatGen/include/ -I ../../haplotyperProject/genoUtils/ -I ../../../Programs/eigen-eigen-5a0156e40feb/
 
 
 clean:

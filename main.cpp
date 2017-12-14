@@ -4,11 +4,35 @@
 #include "Parameters.h"
 #include "Pedigree.h"
 #include "GenoUtils.h"
-
+#include <Eigen/Dense>
 
 // eg ./phase --Ne 30000 --individual NA12717 --reference CEU_10 --cov 0.900000
 
+using Eigen::MatrixXd;
+
 int main(int argc, char ** argv){
+
+
+
+	  MatrixXd m(2,2);
+	  m(0,0) = 3;
+	  m(1,0) = 2.5;
+	  m(0,1) = -1;
+	  m(1,1) = m(1,0) + m(0,1);
+	  std::cout << m << std::endl;
+
+	  return 0;
+
+
+
+
+
+
+
+
+
+
+
 //	String sample_file;
 //	String ref_file;
 	String dir;
