@@ -90,8 +90,14 @@ struct ChromosomePair {
 		return num;
 	}
 
+	//
+	// About 2 times longer time than NumEquals2
+	int NumEquals3(ChromosomePair other) {
 
 
+		return (first==second) * ((first==other.first) + (first == other.second)) +
+			   (first!=second) * ((first==other.first) + ((first!=other.first)*(first==other.second)) + (second==other.first) + ((second!=other.first)*(second==other.second)));
+	};
 };
 
 /**

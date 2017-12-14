@@ -52,6 +52,13 @@ int main(int argc, char ** argv){
 	std::stringstream ss;
 	ss << std::fixed << std::setprecision(2) << Ne;
 
+
+//	ChromosomePair a(1, 2);
+//	ChromosomePair b(3, 4);
+
+
+//	return 0;
+
 ////////// Fixed parameters and settings ////////////////
 
 	string data_id = "5";
