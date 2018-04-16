@@ -925,7 +925,7 @@ HaplotypePair HaplotypePhaserSym::PrintGenotypesToFile(vector<vector<double>> & 
 			printf("ERROR IN WRITING TO VCF %s \n", GTstring.c_str());
 		}
 		else {
-			printf("Wrote %s \n", GTstring.c_str());
+//			printf("Wrote %s \n", GTstring.c_str());
 			writer.writeRecord(record_template);
 		}
 
@@ -1025,7 +1025,7 @@ HaplotypePair HaplotypePhaserSym::PrintHaplotypesToFile(int * ml_states, const c
 		printf("ERROR IN WRITING TO VCF %s \n", GTstring.c_str());
 	}
 	else {
-		printf("Wrote %s \n", GTstring.c_str());
+//		printf("Wrote %s \n", GTstring.c_str());
 		writer.writeRecord(record_template);
 	}
 

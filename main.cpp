@@ -142,7 +142,7 @@ int main(int argc, char ** argv){
 	phaser.PrintReferenceHaplotypes(ml_states,(result_file+"_ref_haps").c_str());
 	HaplotypePair mine_genos = phaser.PrintGenotypesToFile(stats, (result_file+"_genos").c_str(), sample_file.c_str());
 
-	mine_haps1.print();
+//	mine_haps1.print();
 
 	cout << "Done Haps \n";
 
