@@ -65,6 +65,8 @@ void HaplotypePhaserSym::AllocateMemory(){
 	pdf_cases = MatrixXi::Zero(num_states, num_states);
 	pdf_cases_rowmaj = rowmajdyn::Zero(num_states,num_states);
 
+	prob_matrix = rowmajdyn::Zero(num_states,num_states);
+
 	//	s_forward2 = AllocateDoubleMatrix(num_markers, num_states);
 	//	s_backward2 = AllocateDoubleMatrix(num_markers, num_states);
 	//	normalizers2 = new double[num_markers];
@@ -88,10 +90,10 @@ void HaplotypePhaserSym::LoadData(const String &ref_file, const String &sample_f
 	VcfUtils::LoadReferenceMarkers(ref_file);
 	VcfUtils::LoadIndividuals(ped, ref_file, sample_file, sample_index);
 	AllocateMemory();
-	CalcCases();
-	VcfUtils::LoadHaplotypes(ref_file, ped, haplotypes);
-	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls, sample_index);
-	VcfUtils::LoadGeneticMap(map_file, ped, distances);
+//	CalcCases();
+//	VcfUtils::LoadHaplotypes(ref_file, ped, haplotypes);
+//	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls, sample_index);
+//	VcfUtils::LoadGeneticMap(map_file, ped, distances);
 
 };
 
@@ -118,6 +120,9 @@ void HaplotypePhaserSym::LoadSampleData(const String &ref_file, const String &sa
 };
 
 
+/**
+ * Initiailize the pdf cases matrix.
+ */
 void HaplotypePhaserSym::CalcCases(){
 	for(int j = 0; j < num_states; j ++) {
 		for(int s = 0; s < num_states; s ++) {
@@ -131,7 +136,31 @@ void HaplotypePhaserSym::CalcCases(){
 
 	pdf_cases_rowmaj = pdf_cases;
 
-//	std::cout << "Pdf cases: m:\n" << pdf_cases << std::endl;
+	std::cout << "Pdf cases: m:\n" << pdf_cases << std::endl;
+
+};
+
+
+/**
+ *
+ * Calculate the probabilities in the probability matrix a for a given m.
+ *
+ *
+ */
+void HaplotypePhaserSym::CalcProbs(){
+	for(int j = 0; j < num_states; j ++) {
+		for(int s = 0; s < num_states; s ++) {
+			int chrom_case = (states[s]).NumEquals2(states[j]);
+			if(states[j].first == states[j].second) {
+				chrom_case += 3;
+			}
+			pdf_cases(j,s) = chrom_case;
+		}
+	}
+
+	pdf_cases_rowmaj = pdf_cases;
+
+	std::cout << "Pdf cases: m:\n" << pdf_cases << std::endl;
 
 };
 
@@ -467,6 +496,8 @@ void HaplotypePhaserSym::CalcScaledBackward(){
 		probs[5] = case_probs[2] / norm_const_case_same;
 
 		CalcEmissionProbs(m+1, emission_probs);
+
+
 
 
 
@@ -962,6 +993,10 @@ HaplotypePair HaplotypePhaserSym::PrintHaplotypesToFile(int * ml_states, const c
 
 		h1.push_back(Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap1][m]+1));
 		h2.push_back(Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap2][m]+1));
+
+
+
+
 	}
 
 	HaplotypePair hp(h1,h2);

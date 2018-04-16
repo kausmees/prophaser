@@ -136,6 +136,9 @@ public:
 	MatrixXi pdf_cases;
 	rowmajdyn pdf_cases_rowmaj;
 
+	// matrix a
+	rowmajdyn prob_matrix;
+
 //	Matrix<float, 3, 3, RowMajor> test;
 
 
@@ -148,7 +151,7 @@ public:
 	void LoadSampleData(const String &ref_file, const String &sample_file, int sample_index);
 	void setDistanceCode(int c);
 
-
+	void CalcProbs();
 
 
 	//private:

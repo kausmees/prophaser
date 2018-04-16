@@ -63,7 +63,8 @@ int main(int argc, char ** argv){
 ////////// Fixed parameters and settings ////////////////
 
 	string data_id = "5";
-	string filetype = "_s";
+//	string filetype = "_s";
+	string filetype = "_snps";
 
 	string par;
 	if(coverage.IsEmpty()) {
@@ -101,7 +102,35 @@ int main(int argc, char ** argv){
 
 	phaser.LoadData(ref_file.c_str(), sample_file.c_str(), 0, map_file.c_str());
 
-//	return 0;
+
+
+	MarkerInfo* m1 = Pedigree::GetMarkerInfo(0);
+	std::string marker_name = m1->name.c_str();
+	std::size_t delim = marker_name.find(":");
+	string chrom =  marker_name.substr(0,delim);
+	int pos =  std::stoi(marker_name.substr(delim+1));
+
+	printf("%s %d %s \n", chrom.c_str(), pos, (m1->name).c_str());
+
+
+
+	m1 = Pedigree::GetMarkerInfo(1);
+	marker_name = m1->name.c_str();
+	delim = marker_name.find(":");
+	chrom =  marker_name.substr(0,delim);
+	pos =  std::stoi(marker_name.substr(delim+1));
+	printf("%s %d %s \n", chrom.c_str(), pos, (m1->name).c_str());
+
+	m1 = Pedigree::GetMarkerInfo(2);
+	marker_name = m1->name.c_str();
+		delim = marker_name.find(":");
+		chrom =  marker_name.substr(0,delim);
+		pos =  std::stoi(marker_name.substr(delim+1));
+
+		printf("%s %d %s \n", chrom.c_str(), pos, (m1->name).c_str());
+
+
+	return 0;
 
 	chrono::steady_clock::time_point begin1;
 	chrono::steady_clock::time_point begin;

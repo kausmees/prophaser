@@ -20,7 +20,7 @@ namespace VcfUtils{
  */
 void LoadReferenceMarkers(const String &file_name){
 
-//	printf("Loading markers from file %s \n", file_name.c_str());
+	printf("Loading markers from file %s \n", file_name.c_str());
 
 	VcfFileReader reader;
 	VcfHeader header;
@@ -52,7 +52,12 @@ void LoadReferenceMarkers(const String &file_name){
 		if(record.getNumRefBases() == 1 && record.getNumAlts() == 1 && strcmp(record.getRefStr(),"N") != 0 && strlen(record.getRefStr()) == 1 && strlen(record.getAltStr()) == 1) {
 
 			int marker_id = Pedigree::GetMarkerID(marker_name);
-//			printf("added marker (%d, %s) to pedigree \n", marker_id, marker_name);
+			printf("added marker (%d, %s) to pedigree. \n", marker_id, marker_name);
+
+			MarkerInfo* m1 = Pedigree::GetMarkerInfo(marker_id);
+			printf("%d %f \n", m1->chromosome, m1->position);
+
+
 			String ref_base = String(record.getRefStr()[0]);
 			String alt_base = String(record.getAltStr()[0]);
 
