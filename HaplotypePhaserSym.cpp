@@ -834,7 +834,7 @@ vector<vector<double>>  HaplotypePhaserSym::ReadPosteriorStats(const char * file
  * Haplotypes printed to out_file and returned.
  *
  */
-HaplotypePair HaplotypePhaserSym::PrintGenotypesToFile(vector<vector<double>> & stats, const char * out_file){
+HaplotypePair HaplotypePhaserSym::PrintGenotypesToFile(vector<vector<double>> & stats, const char * out_file, const char * sample_file){
 	std::vector<String> h1;
 	std::vector<String> h2;
 
@@ -843,6 +843,35 @@ HaplotypePair HaplotypePhaserSym::PrintGenotypesToFile(vector<vector<double>> & 
 	int hapcode2;
 	int max_geno_code;
 	float max_geno_prob;
+
+	VcfFileReader reader;
+	VcfHeader header_read;
+	reader.open(sample_file, header_read);
+	string sample_name = header_read.getSampleName(0);
+	reader.close();
+
+
+	reader.open("template.vcf", header_read);
+	VcfRecord record_template;
+	record_template.getGenotypeInfo().addStoreField("GT");
+	reader.readRecord(record_template);
+	reader.close();
+
+
+
+
+	VcfHeader header_new;
+	header_new.appendMetaLine("##fileformat=VCFv4.2");
+	header_new.appendMetaLine("##FILTER=<ID=PASS,Description=\"All filters passed\">");
+	header_new.appendMetaLine("##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">");
+	header_new.addHeaderLine(("#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	" + sample_name).c_str());
+
+	VcfFileWriter writer;
+	writer.open((string(out_file) + ".vcf.gz").c_str(), header_new, InputFile::BGZF);
+
+
+
+
 
 	for(int m = 0; m < num_markers; m++) {
 
@@ -870,8 +899,43 @@ HaplotypePair HaplotypePhaserSym::PrintGenotypesToFile(vector<vector<double>> & 
 		h1.push_back(Pedigree::GetMarkerInfo(m)->GetAlleleLabel(hapcode1+1));
 		h2.push_back(Pedigree::GetMarkerInfo(m)->GetAlleleLabel(hapcode2+1));
 
-	}
 
+		/////////////////////
+
+		MarkerInfo* markerinfo = Pedigree::GetMarkerInfo(m);
+		std::string marker_name = markerinfo->name.c_str();
+		std::size_t delim = marker_name.find(":");
+		string chrom =  marker_name.substr(0,delim);
+		int pos =  std::stoi(marker_name.substr(delim+1));
+	//	printf("%s %d %s \n", chrom.c_str(), pos, (markerinfo->name).c_str());
+		record_template.setChrom(chrom.c_str());
+		record_template.set1BasedPosition(pos);
+		record_template.setID(marker_name.c_str());
+		record_template.setRef((markerinfo->GetAlleleLabel(1)).c_str());
+		record_template.setAlt((markerinfo->GetAlleleLabel(2)).c_str());
+		record_template.setQual(".");
+
+		std::stringstream ss;
+		ss << to_string(hapcode1) << "|" << to_string(hapcode2);
+		string GTstring = ss.str();
+
+		int succ = record_template.getGenotypeInfo().setString("GT",0, GTstring.c_str());
+
+		if (succ == 0) {
+			printf("ERROR IN WRITING TO VCF %s \n", GTstring.c_str());
+		}
+		else {
+			printf("Wrote %s \n", GTstring.c_str());
+			writer.writeRecord(record_template);
+		}
+
+
+		///////////////////////
+
+
+
+	}
+	writer.close();
 	HaplotypePair hp(h1,h2);
 	hp.printToFile(out_file);
 	return hp;
@@ -1115,25 +1179,21 @@ void HaplotypePhaserSym::PrintReferenceHaplotypes(int * ml_states, const char * 
 				if(first == prev_ref_hap1) {
 					ref_hap1 = first;
 					ref_hap2 = second;
-
 				}
 				else {
 					if(first == prev_ref_hap2) {
 						ref_hap1 = second;
 						ref_hap2 = first;
-
 					}
 					else {
 						if(second == prev_ref_hap1) {
 							ref_hap1 = second;
 							ref_hap2 = first;
-
 						}
 						// here we know s == prev_ref_hap2
 						else {
 							ref_hap1 = first;
 							ref_hap2 = second;
-
 						}
 					}
 				}
@@ -1143,17 +1203,13 @@ void HaplotypePhaserSym::PrintReferenceHaplotypes(int * ml_states, const char * 
 				ref_hap1 = first;
 				ref_hap2 = second;
 			}
-
 		}
 		prev_ref_hap1 = ref_hap1;
 		prev_ref_hap2 = ref_hap2;
 
 		ref1.push_back(ref_hap1);
 		ref2.push_back(ref_hap2);
-
-
 	}
-
 
 	FILE * hapout = fopen(out_file, "w");
 

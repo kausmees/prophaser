@@ -65,7 +65,7 @@ int main(int argc, char ** argv){
 	string data_id = "5";
 	string filetype = "_s";
 
-//	coverage = "0.010000";
+	coverage = "0.010000";
 
 
 	string par;
@@ -140,7 +140,7 @@ int main(int argc, char ** argv){
 
 	HaplotypePair mine_haps1 = phaser.PrintHaplotypesToFile(ml_states, result_file.c_str(), sample_file.c_str());
 	phaser.PrintReferenceHaplotypes(ml_states,(result_file+"_ref_haps").c_str());
-	HaplotypePair mine_genos = phaser.PrintGenotypesToFile(stats, (result_file+"_genos").c_str());
+	HaplotypePair mine_genos = phaser.PrintGenotypesToFile(stats, (result_file+"_genos").c_str(), sample_file.c_str());
 
 	mine_haps1.print();
 
