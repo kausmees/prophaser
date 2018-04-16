@@ -65,6 +65,9 @@ int main(int argc, char ** argv){
 	string data_id = "5";
 	string filetype = "_s";
 
+//	coverage = "0.010000";
+
+
 	string par;
 	if(coverage.IsEmpty()) {
 		par = "";
@@ -135,15 +138,18 @@ int main(int argc, char ** argv){
 //		fprintf(mout,"%d\n", ml_states[i]);
 //	}
 
-	HaplotypePair mine_haps1 = phaser.PrintHaplotypesToFile(ml_states, result_file.c_str());
-	HaplotypePair mine_haps2 = phaser.PrintReferenceHaplotypes(ml_states,(result_file+"_ref_haps").c_str());
+	HaplotypePair mine_haps1 = phaser.PrintHaplotypesToFile(ml_states, result_file.c_str(), sample_file.c_str());
+	phaser.PrintReferenceHaplotypes(ml_states,(result_file+"_ref_haps").c_str());
 	HaplotypePair mine_genos = phaser.PrintGenotypesToFile(stats, (result_file+"_genos").c_str());
+
+	mine_haps1.print();
 
 	cout << "Done Haps \n";
 
-	if(!mine_haps1.isEqual(mine_haps2)){
-		printf("Haps not equal \n");
-	}
+//	if(!mine_haps1.isEqual(mine_haps_byref)){
+//		printf("Haps not equal \n");
+//	}
+
 	end= std::chrono::steady_clock::now();
 	cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
 	cout << "Total: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin1).count() << " millisec" <<endl<<endl<<endl;
