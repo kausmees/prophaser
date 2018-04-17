@@ -97,12 +97,16 @@ int main(int argc, char ** argv){
 	phaser.Ne = Ne;
 	phaser.error = error;
 
+	// corresponds to git branch
+	string executable = "nc_";
+
+
 	string sample_file=string(dir) + string(subset_id)+"/" + string(data_id) +"_" + string(subset_id) + "_" + string(individual) + par+ string(filetype) +".vcf.gz";
 	string true_file = string(dir) + string(subset_id)+"/" + string(data_id) +"_" + string(subset_id) + "_" + string(individual) + "_snps.vcf.gz";
 	string ref_file =  string(dir) + string(subset_id)+"/" + string(data_id) +"_" + string(subset_id) + "_" + string(ref_set)  + "_snps" + splitstr + ".vcf.gz";
 
 	string result_file ="./Results/" + string(subset_id)+ "/"+ string(ref_set) + "/" + string(data_id) + "_" + string(subset_id) + "_" + string(individual) + par  +
-			string(filetype)+ ".phased_"+ distance_code+splitstr;
+			string(filetype)+ ".phased_"+ executable +distance_code + splitstr;
 
 	printf("Phasing file : %s \n", sample_file.c_str());
 	printf("Reference file : %s \n", ref_file.c_str());
@@ -113,11 +117,11 @@ int main(int argc, char ** argv){
 
 	////////////////////////////////////////// phasing start //////////////////////////////////////////////////////////////
 
-	ChromosomePair cp (1,2);
-	int s = sizeof(cp);
-	printf("Size of chrom pair: % d \n" ,s);
-
-	return 0;
+//	ChromosomePair cp (1,2);
+//	int s = sizeof(cp);
+//	printf("Size of chrom pair: % d \n" ,s);
+//
+//	return 0;
 
 	phaser.LoadData(ref_file.c_str(), sample_file.c_str(), 0, map_file.c_str());
 

@@ -62,7 +62,7 @@ void HaplotypePhaserSym::AllocateMemory(){
 	normalizers = new double[num_markers];
 
 
-	pdf_cases = MatrixXi::Zero(num_states, num_states);
+//	pdf_cases = MatrixXi::Zero(num_states, num_states);
 //	pdf_cases_rowmaj = rowmajdyn::Zero(num_states,num_states);
 
 	//	s_forward2 = AllocateDoubleMatrix(num_markers, num_states);
@@ -91,7 +91,7 @@ void HaplotypePhaserSym::LoadData(const String &ref_file, const String &sample_f
 	printf("2\n");
 	AllocateMemory();
 	printf("3\n");
-	CalcCases();
+//	CalcCases();
 	printf("4\n");
 	VcfUtils::LoadHaplotypes(ref_file, ped, haplotypes);
 	printf("5\n");
@@ -125,22 +125,22 @@ void HaplotypePhaserSym::LoadSampleData(const String &ref_file, const String &sa
 };
 
 
-void HaplotypePhaserSym::CalcCases(){
-	for(int j = 0; j < num_states; j ++) {
-		for(int s = 0; s < num_states; s ++) {
-			int chrom_case = (states[s]).NumEquals2(states[j]);
-			if(states[j].first == states[j].second) {
-				chrom_case += 3;
-			}
-			pdf_cases(j,s) = chrom_case;
-		}
-	}
-
-//	pdf_cases_rowmaj = pdf_cases;
-
-//	std::cout << "Pdf cases: m:\n" << pdf_cases << std::endl;
-
-};
+//void HaplotypePhaserSym::CalcCases(){
+//	for(int j = 0; j < num_states; j ++) {
+//		for(int s = 0; s < num_states; s ++) {
+//			int chrom_case = (states[s]).NumEquals2(states[j]);
+//			if(states[j].first == states[j].second) {
+//				chrom_case += 3;
+//			}
+//			pdf_cases(j,s) = chrom_case;
+//		}
+//	}
+//
+////	pdf_cases_rowmaj = pdf_cases;
+//
+////	std::cout << "Pdf cases: m:\n" << pdf_cases << std::endl;
+//
+//};
 
 
 /**
@@ -349,8 +349,12 @@ void HaplotypePhaserSym::CalcScaledForward(){
 			for(int j = 0; j < num_states; j++){
 
 
-				sum += s_forward[m-1][j] * probs[pdf_cases(j,s)];
+				int chrom_case = (states[s]).NumEquals2(states[j]);
+				if(states[j].first == states[j].second) {
+					chrom_case += 3;
+				}
 
+				sum += s_forward[m-1][j] * probs[chrom_case];
 
 
 
@@ -413,9 +417,6 @@ void HaplotypePhaserSym::CalcScaledForward(){
 			s_forward[m][s] = s_forward[m][s] * normalizers[m];
 		}
 	}
-
-	pdf_cases_rowmaj = pdf_cases;
-	pdf_cases.resize(0,0);
 
 	delete [] emission_probs;
 
@@ -502,12 +503,12 @@ void HaplotypePhaserSym::CalcScaledBackward(){
 #pragma GCC ivdep
 			for(int j = 0; j < num_states; j++){
 
-//				chrom_case = (states[s]).NumEquals2(states[j]);
-//				// use the pdf that s defines
-//				sum += s_backward[m+1][j] * probs_this[chrom_case] * emission_probs[j];
+				int chrom_case = (states[s]).NumEquals(states[j]);
+				if(states[s].first == states[s].second) {
+					chrom_case += 3;
+				}
 
-				// works - but inefficiewnt with-column major pdf_cases
-				sum +=  s_backward[m+1][j]* probs[pdf_cases_rowmaj(s,j)] * emission_probs[j];
+				sum +=  s_backward[m+1][j]* probs[chrom_case] * emission_probs[j];
 
 
 //				// prob here is p_trans s -> j

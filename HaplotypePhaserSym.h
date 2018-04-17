@@ -98,8 +98,11 @@ struct ChromosomePair {
 		else{
 			return (first == other.first) + (first == other.second);
 		}
+
 		return num;
 	}
+
+
 
 	//
 	// About 2 times longer time than NumEquals2
@@ -133,10 +136,8 @@ public:
 	int num_haps;
 	vector<ChromosomePair> states;
 
-	MatrixXi pdf_cases;
-	rowmajdyn pdf_cases_rowmaj;
-
-//	Matrix<float, 3, 3, RowMajor> test;
+//	MatrixXi pdf_cases;
+//	rowmajdyn pdf_cases_rowmaj;
 
 
 	// phred_probs[i] contains linear-scale genotype likelihood
@@ -175,7 +176,7 @@ public:
 	void CalcTransitionProbs(int marker, int marker_state, double * probs);
 	void CalcTransitionProbs(int marker, double ** probs);
 	void CalcEmissionProbs(int marker, double * probs);
-	void CalcCases();
+//	void CalcCases();
 
 	void InitPriorScaledForward();
 	void InitPriorScaledBackward();
