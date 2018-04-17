@@ -86,12 +86,19 @@ void HaplotypePhaserSym::setDistanceCode(int c) {
  */
 void HaplotypePhaserSym::LoadData(const String &ref_file, const String &sample_file, int sample_index, const String &map_file){
 	VcfUtils::LoadReferenceMarkers(ref_file);
+	printf("1\n");
 	VcfUtils::LoadIndividuals(ped, ref_file, sample_file, sample_index);
+	printf("2\n");
 	AllocateMemory();
+	printf("3\n");
 	CalcCases();
+	printf("4\n");
 	VcfUtils::LoadHaplotypes(ref_file, ped, haplotypes);
+	printf("5\n");
 	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls, sample_index);
+	printf("6\n");
 	VcfUtils::LoadGeneticMap(map_file, ped, distances);
+	printf("7\n");
 
 };
 

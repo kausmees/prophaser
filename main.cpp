@@ -21,6 +21,7 @@ int main(int argc, char ** argv){
 	double Ne;
 	double error;
 	double seq_error;
+	int split;
 
 	ParameterList parameter_list;
 	LongParamContainer long_parameters;
@@ -35,6 +36,7 @@ int main(int argc, char ** argv){
 	long_parameters.addGroup("Parameters");
 	long_parameters.addDouble("Ne", &Ne);
 	long_parameters.addDouble("error", &error);
+	long_parameters.addInt("split", &split);
 
 
 	parameter_list.Add(new LongParameters("Options",long_parameters.getLongParameterList()));
@@ -65,7 +67,7 @@ int main(int argc, char ** argv){
 	string data_id = "5";
 	string filetype = "_s";
 
-	coverage = "0.010000";
+//	coverage = "0.010000";
 
 
 	string par;
@@ -75,6 +77,15 @@ int main(int argc, char ** argv){
 	else{
 		par = "_" + string(coverage.c_str()) + "_" + to_string(seq_error);
 	}
+
+	string splitstr;
+	if(!split) {
+		splitstr = "";
+	}
+	else{
+		splitstr = ".split." + to_string(split);
+	}
+
 	HaplotypePhaserSym phaser;
 	string distance_code = "sym_Ne"+ss.str();
 
@@ -88,10 +99,10 @@ int main(int argc, char ** argv){
 
 	string sample_file=string(dir) + string(subset_id)+"/" + string(data_id) +"_" + string(subset_id) + "_" + string(individual) + par+ string(filetype) +".vcf.gz";
 	string true_file = string(dir) + string(subset_id)+"/" + string(data_id) +"_" + string(subset_id) + "_" + string(individual) + "_snps.vcf.gz";
-	string ref_file =  string(dir) + string(subset_id)+"/" + string(data_id) +"_" + string(subset_id) + "_" + string(ref_set)  + "_snps.vcf.gz";
+	string ref_file =  string(dir) + string(subset_id)+"/" + string(data_id) +"_" + string(subset_id) + "_" + string(ref_set)  + "_snps" + splitstr + ".vcf.gz";
 
 	string result_file ="./Results/" + string(subset_id)+ "/"+ string(ref_set) + "/" + string(data_id) + "_" + string(subset_id) + "_" + string(individual) + par  +
-			string(filetype)+ ".phased_"+ distance_code;
+			string(filetype)+ ".phased_"+ distance_code+splitstr;
 
 	printf("Phasing file : %s \n", sample_file.c_str());
 	printf("Reference file : %s \n", ref_file.c_str());
