@@ -63,7 +63,7 @@ void HaplotypePhaserSym::AllocateMemory(){
 
 
 	pdf_cases = MatrixXi::Zero(num_states, num_states);
-	pdf_cases_rowmaj = rowmajdyn::Zero(num_states,num_states);
+//	pdf_cases_rowmaj = rowmajdyn::Zero(num_states,num_states);
 
 	//	s_forward2 = AllocateDoubleMatrix(num_markers, num_states);
 	//	s_backward2 = AllocateDoubleMatrix(num_markers, num_states);
@@ -136,7 +136,7 @@ void HaplotypePhaserSym::CalcCases(){
 		}
 	}
 
-	pdf_cases_rowmaj = pdf_cases;
+//	pdf_cases_rowmaj = pdf_cases;
 
 //	std::cout << "Pdf cases: m:\n" << pdf_cases << std::endl;
 
@@ -276,6 +276,8 @@ void HaplotypePhaserSym::CalcScaledForward(){
 
 	printf("Num states = %d \n", num_states);
 	printf("Num h = %d \n", num_h);
+	printf("Num markers = %d \n", num_markers);
+
 
 	double pop_const = (4.0 * Ne) / 100.0;
 
@@ -411,6 +413,9 @@ void HaplotypePhaserSym::CalcScaledForward(){
 			s_forward[m][s] = s_forward[m][s] * normalizers[m];
 		}
 	}
+
+	pdf_cases_rowmaj = pdf_cases;
+	pdf_cases.resize(0,0);
 
 	delete [] emission_probs;
 

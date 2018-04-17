@@ -46,14 +46,14 @@ int main(int argc, char ** argv){
 	// Defaults
 	Ne = Ne ? Ne : 11418.0;
 	seq_error = seq_error ? seq_error : 0.001;
-	error = error ? error : 0.01;
+	error = error ? error : 0.001;
 	dir = !dir.IsEmpty() ? dir : "../../Data/1KGData/vcfs/chrom20/";
 	map_file = !map_file.IsEmpty() ? map_file : "../../Data/1KGData/vcfs/chrom20/maps/5_snps_interpolated_HapMap2_map_20";
 	subset_id = !subset_id.IsEmpty() ? subset_id : "B";
 	individual = !individual.IsEmpty() ? individual : "NA12890";
 	ref_set = !ref_set.IsEmpty() ? ref_set : "CEU_10";
 	std::stringstream ss;
-	ss << std::fixed << std::setprecision(2) << Ne;
+	ss << std::fixed << std::setprecision(3) << Ne << "_" << error;
 
 
 //	ChromosomePair a(1, 2);
@@ -109,13 +109,18 @@ int main(int argc, char ** argv){
 	printf("Writing to : %s \n", result_file.c_str());
 //
 	printf("With: \nNe %f \n", phaser.Ne);
-//	printf("error %f \n", phaser.error);
+	printf("error %f \n", phaser.error);
 
 	////////////////////////////////////////// phasing start //////////////////////////////////////////////////////////////
 
+	ChromosomePair cp (1,2);
+	int s = sizeof(cp);
+	printf("Size of chrom pair: % d \n" ,s);
+
+	return 0;
+
 	phaser.LoadData(ref_file.c_str(), sample_file.c_str(), 0, map_file.c_str());
 
-//	return 0;
 
 	chrono::steady_clock::time_point begin1;
 	chrono::steady_clock::time_point begin;
