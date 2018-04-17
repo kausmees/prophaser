@@ -188,9 +188,9 @@ public:
 	vector<vector<double>> GetPosteriorStats(const char * filename);
 	vector<vector<double>>  ReadPosteriorStats(const char * filename);
 
-	HaplotypePair PrintGenotypesToFile(vector<vector<double>> & stats, const char * out_file);
-	HaplotypePair PrintHaplotypesToFile(int * states, const char * out_file);
-	HaplotypePair PrintReferenceHaplotypes(int * ml_states, const char * out_file);
+	HaplotypePair PrintGenotypesToFile(vector<vector<double>> & stats, const char * out_file, const char * sample_file);
+	HaplotypePair PrintHaplotypesToFile(int * states, const char * out_file,  const char * sample_file);
+	void PrintReferenceHaplotypes(int * ml_states, const char * out_file);
 };
 
 

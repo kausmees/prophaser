@@ -21,6 +21,7 @@ int main(int argc, char ** argv){
 	double Ne;
 	double error;
 	double seq_error;
+	int split;
 
 	ParameterList parameter_list;
 	LongParamContainer long_parameters;
@@ -35,6 +36,7 @@ int main(int argc, char ** argv){
 	long_parameters.addGroup("Parameters");
 	long_parameters.addDouble("Ne", &Ne);
 	long_parameters.addDouble("error", &error);
+	long_parameters.addInt("split", &split);
 
 
 	parameter_list.Add(new LongParameters("Options",long_parameters.getLongParameterList()));
@@ -66,6 +68,9 @@ int main(int argc, char ** argv){
 //	string filetype = "_s";
 	string filetype = "_snps";
 
+//	coverage = "0.010000";
+
+
 	string par;
 	if(coverage.IsEmpty()) {
 		par = "";
@@ -73,6 +78,15 @@ int main(int argc, char ** argv){
 	else{
 		par = "_" + string(coverage.c_str()) + "_" + to_string(seq_error);
 	}
+
+	string splitstr;
+	if(!split) {
+		splitstr = "";
+	}
+	else{
+		splitstr = ".split." + to_string(split);
+	}
+
 	HaplotypePhaserSym phaser;
 	string distance_code = "sym_Ne"+ss.str();
 
@@ -86,10 +100,10 @@ int main(int argc, char ** argv){
 
 	string sample_file=string(dir) + string(subset_id)+"/" + string(data_id) +"_" + string(subset_id) + "_" + string(individual) + par+ string(filetype) +".vcf.gz";
 	string true_file = string(dir) + string(subset_id)+"/" + string(data_id) +"_" + string(subset_id) + "_" + string(individual) + "_snps.vcf.gz";
-	string ref_file =  string(dir) + string(subset_id)+"/" + string(data_id) +"_" + string(subset_id) + "_" + string(ref_set)  + "_snps.vcf.gz";
+	string ref_file =  string(dir) + string(subset_id)+"/" + string(data_id) +"_" + string(subset_id) + "_" + string(ref_set)  + "_snps" + splitstr + ".vcf.gz";
 
 	string result_file ="./Results/" + string(subset_id)+ "/"+ string(ref_set) + "/" + string(data_id) + "_" + string(subset_id) + "_" + string(individual) + par  +
-			string(filetype)+ ".phased_"+ distance_code;
+			string(filetype)+ ".phased_"+ distance_code+splitstr;
 
 	printf("Phasing file : %s \n", sample_file.c_str());
 	printf("Reference file : %s \n", ref_file.c_str());
@@ -164,15 +178,18 @@ int main(int argc, char ** argv){
 //		fprintf(mout,"%d\n", ml_states[i]);
 //	}
 
-	HaplotypePair mine_haps1 = phaser.PrintHaplotypesToFile(ml_states, result_file.c_str());
-	HaplotypePair mine_haps2 = phaser.PrintReferenceHaplotypes(ml_states,(result_file+"_ref_haps").c_str());
-	HaplotypePair mine_genos = phaser.PrintGenotypesToFile(stats, (result_file+"_genos").c_str());
+	HaplotypePair mine_haps1 = phaser.PrintHaplotypesToFile(ml_states, result_file.c_str(), sample_file.c_str());
+	phaser.PrintReferenceHaplotypes(ml_states,(result_file+"_ref_haps").c_str());
+	HaplotypePair mine_genos = phaser.PrintGenotypesToFile(stats, (result_file+"_genos").c_str(), sample_file.c_str());
+
+//	mine_haps1.print();
 
 	cout << "Done Haps \n";
 
-	if(!mine_haps1.isEqual(mine_haps2)){
-		printf("Haps not equal \n");
-	}
+//	if(!mine_haps1.isEqual(mine_haps_byref)){
+//		printf("Haps not equal \n");
+//	}
+
 	end= std::chrono::steady_clock::now();
 	cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
 	cout << "Total: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin1).count() << " millisec" <<endl<<endl<<endl;
