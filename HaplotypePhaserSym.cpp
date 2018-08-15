@@ -38,6 +38,8 @@ void HaplotypePhaserSym::AllocateMemory(){
 		}
 	}
 
+
+
 	num_markers = Pedigree::markerCount;
 	num_inds = ped.count;
 
@@ -660,6 +662,10 @@ vector<vector<double>>  HaplotypePhaserSym::GetPosteriorStats(const char * filen
 			// 00, 01, 10, 11
 			int hapcode1 = haplotypes[ref_hap1][m];
 			int hapcode2 = haplotypes[ref_hap2][m];
+
+			if(hapcode1 == 1 || hapcode2 == 1) {
+				printf("HAPCODE 0 at %d \n", m);
+			};
 
 			int geno_code;
 
