@@ -150,7 +150,7 @@ void LoadHaplotypes(const String &file_name, const Pedigree &ped, char** haploty
  * and that the pedigree only contains monomorphic SNPs.
  *
  */
-void LoadHaplotypes(const String &file_name, const Pedigree &ped, MatrixXi haplotypes) {
+void LoadHaplotypes(const String &file_name, const Pedigree &ped, MatrixXc haplotypes) {
 
 //	printf("Loading haplotypes into phasing engine from file %s \n", file_name.c_str());
 	VcfFileReader reader;
@@ -171,9 +171,10 @@ void LoadHaplotypes(const String &file_name, const Pedigree &ped, MatrixXi haplo
 				int i0 = record.getGT(ind,0);
 				int i1 = record.getGT(ind,1);
 
+				printf("marker: %d  h0:%d  h1:%d \n", marker_id, i0, i1);
+
 				haplotypes(ind*2,marker_id) = i0;
 				haplotypes(ind*2 + 1,marker_id) = i1;
-
 			}
 		}
 	}

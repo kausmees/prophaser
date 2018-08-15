@@ -128,7 +128,10 @@ public:
 
 //	char ** haplotypes;
 
-	MatrixXi haplotypes;
+
+	MatrixXc haplotypes;
+
+//	MatrixXi haplotypes;
 	// vector of count of reference allele in reference for every marker
 	VectorXi allele_counts;
 

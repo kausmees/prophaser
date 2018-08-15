@@ -151,7 +151,7 @@ int main(int argc, char ** argv){
 //	return 0;
 
 	phaser.LoadData(ref_file.c_str(), sample_file.c_str(), 0, map_file.c_str());
-
+//	cout << "Haplotypes:\n" << phaser.haplotypes << endl;
 
 	chrono::steady_clock::time_point begin1;
 	chrono::steady_clock::time_point begin;
@@ -161,7 +161,7 @@ int main(int argc, char ** argv){
 	begin1 = chrono::steady_clock::now();
 	begin = chrono::steady_clock::now();
 	cout << "Starting Forward \n";
-	phaser.CalcScaledForwardMarginalized();
+//	phaser.CalcScaledForwardMarginalized();
 	phaser.CalcScaledForward();
 	end= std::chrono::steady_clock::now();
 	cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
