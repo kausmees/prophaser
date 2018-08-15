@@ -143,6 +143,43 @@ void LoadHaplotypes(const String &file_name, const Pedigree &ped, char** haploty
 //	printf("Done \n");
 };
 
+/**
+ * Load all alleles from file_name at markers present in pedigree into haplotypes.
+ *
+ * Assumes the file only contains samples that are phased at all markers, have no missing reference of alternative alleles,
+ * and that the pedigree only contains monomorphic SNPs.
+ *
+ */
+void LoadHaplotypes(const String &file_name, const Pedigree &ped, MatrixXi haplotypes) {
+
+//	printf("Loading haplotypes into phasing engine from file %s \n", file_name.c_str());
+	VcfFileReader reader;
+	VcfHeader header;
+	reader.open(file_name, header);
+
+	const char * marker_name;
+	VcfRecord record;
+
+	while(reader.readRecord(record)){
+		std::stringstream ss;
+		ss << record.getChromStr() << ":" << record.get1BasedPosition();
+
+		marker_name = ss.str().c_str();
+		int marker_id = Pedigree::LookupMarker(marker_name);
+		if(marker_id >= 0){
+			for (int ind = 0; ind < ped.count; ind++) {
+				int i0 = record.getGT(ind,0);
+				int i1 = record.getGT(ind,1);
+
+				haplotypes(ind*2,marker_id) = i0;
+				haplotypes(ind*2 + 1,marker_id) = i1;
+
+			}
+		}
+	}
+	reader.close();
+//	printf("Done \n");
+};
 
 
 /**

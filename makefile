@@ -8,7 +8,7 @@ LFLAGS = -static -static-libgcc -static-libstdc++ -fopenmp -g -o
 
 SOURCES=$(wildcard *.cpp)
 OBJECTS=$(SOURCES:.cpp=.o)
-TARGET=phase
+TARGET=phase_ls
 
 all: $(TARGET)
 

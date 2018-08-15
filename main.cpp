@@ -13,6 +13,7 @@ int main(int argc, char ** argv){
 //	String sample_file;
 //	String ref_file;
 	String dir;
+	String res_dir;
 	String subset_id;
 	String individual;
 	String ref_set;
@@ -27,6 +28,7 @@ int main(int argc, char ** argv){
 	LongParamContainer long_parameters;
 	long_parameters.addGroup("Input files");
 	long_parameters.addString("directory", &dir);
+	long_parameters.addString("results_directory", &res_dir);
 	long_parameters.addString("subset", &subset_id);
 	long_parameters.addString("individual", &individual);
 	long_parameters.addString("reference", &ref_set);
@@ -48,6 +50,7 @@ int main(int argc, char ** argv){
 	seq_error = seq_error ? seq_error : 0.001;
 	error = error ? error : 0.001;
 	dir = !dir.IsEmpty() ? dir : "../../Data/1KGData/vcfs/chrom20/";
+	res_dir = !res_dir.IsEmpty() ? res_dir : "./Results/";
 	map_file = !map_file.IsEmpty() ? map_file : "../../Data/1KGData/vcfs/chrom20/maps/5_snps_interpolated_HapMap2_map_20";
 	subset_id = !subset_id.IsEmpty() ? subset_id : "B";
 	individual = !individual.IsEmpty() ? individual : "NA12890";
@@ -59,7 +62,31 @@ int main(int argc, char ** argv){
 //	ChromosomePair a(1, 2);
 //	ChromosomePair b(3, 4);
 
-
+//
+//	// rows x cols
+//	MatrixXf L(6,5);
+//    VectorXf u(6);
+//
+//    float e = 0.01;
+//	int p=3;
+//	int q=1;
+//
+//	L << 0,pow((1-e),2),pow((1-e),2)-1,0,pow((1-e),2),
+//		   0,2*(1-e)*e-1, 2*(1-e)*e, 0,2*(1-e)*e,
+//		   0,pow(e,2),pow(e,2),0,(pow(e,2))-1,
+//		   (1-e)*e,0,0,(1-e)*e*2-1,0,
+//		   1-(pow(e,2))-pow(1-e,2),0,0,-2*(pow(1-e,2) + pow(e,2)),0,
+//		   2*p*q,pow(p,2) +pow(q,2),pow(p,2) +pow(q,2),4*p*q,pow(p,2) +pow(q,2);
+//
+//   u << 0, 0, 0 , 0 , 0, 1;
+//     cout << "Here is the matrix L:\n" << L << endl;
+//     cout << "Here is the vector u:\n" << u << endl;
+//
+//     VectorXf x(5);
+//     x = L.bdcSvd(ComputeThinU | ComputeThinV).solve(u);
+//     cout << "The solution is:\n" << x << endl;
+//
+//
 //	return 0;
 
 ////////// Fixed parameters and settings ////////////////
@@ -98,14 +125,14 @@ int main(int argc, char ** argv){
 	phaser.error = error;
 
 	// corresponds to git branch
-	string executable = "nc_";
+	string executable = "ls_";
 
 
 	string sample_file=string(dir) + string(subset_id)+"/" + string(data_id) +"_" + string(subset_id) + "_" + string(individual) + par+ string(filetype) +".vcf.gz";
 	string true_file = string(dir) + string(subset_id)+"/" + string(data_id) +"_" + string(subset_id) + "_" + string(individual) + "_snps.vcf.gz";
 	string ref_file =  string(dir) + string(subset_id)+"/" + string(data_id) +"_" + string(subset_id) + "_" + string(ref_set)  + "_snps" + splitstr + ".vcf.gz";
 
-	string result_file ="./Results/" + string(subset_id)+ "/"+ string(ref_set) + "/" + string(data_id) + "_" + string(subset_id) + "_" + string(individual) + par  +
+	string result_file =string(res_dir) + string(subset_id)+ "/"+ string(ref_set) + "/" + string(data_id) + "_" + string(subset_id) + "_" + string(individual) + par  +
 			string(filetype)+ ".phased_"+ executable +distance_code + splitstr;
 
 	printf("Phasing file : %s \n", sample_file.c_str());
@@ -134,6 +161,7 @@ int main(int argc, char ** argv){
 	begin1 = chrono::steady_clock::now();
 	begin = chrono::steady_clock::now();
 	cout << "Starting Forward \n";
+	phaser.CalcScaledForwardMarginalized();
 	phaser.CalcScaledForward();
 	end= std::chrono::steady_clock::now();
 	cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;

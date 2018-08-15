@@ -7,14 +7,17 @@
 #include <chrono>
 #include <algorithm>
 #include <Eigen/Dense>
+#include <math.h>
+
 
 using Eigen::MatrixXd;
+using Eigen::VectorXd;
 using Eigen::MatrixXi;
 using Eigen::RowMajor;
 using Eigen::Dynamic;
 using Eigen::Matrix;
 
-
+using namespace Eigen;
 
 typedef Eigen::Matrix<int, Dynamic,Dynamic, RowMajor> rowmajdyn;
 
@@ -122,7 +125,13 @@ Main haplotype phasing and imputation functionality.
 class HaplotypePhaserSym {
 
 public:
-	char ** haplotypes;
+
+//	char ** haplotypes;
+
+	MatrixXi haplotypes;
+	// vector of count of reference allele in reference for every marker
+	VectorXi allele_counts;
+
 	//	char ** genotypes;
 	vector <double> sample_gls;
 	Pedigree ped;
@@ -176,11 +185,16 @@ public:
 	void CalcTransitionProbs(int marker, int marker_state, double * probs);
 	void CalcTransitionProbs(int marker, double ** probs);
 	void CalcEmissionProbs(int marker, double * probs);
+	void CalcEmissionProbsMarginalized(int marker, double * probs);
+
+
+
 //	void CalcCases();
 
 	void InitPriorScaledForward();
 	void InitPriorScaledBackward();
 	void CalcScaledForward();
+	void CalcScaledForwardMarginalized();
 	void CalcScaledBackward();
 	void GetMLHaplotypes(int * ml_states);
 	vector<vector<double>> GetPosteriorStats(const char * filename);
