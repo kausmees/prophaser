@@ -62,10 +62,12 @@ int main(int argc, char ** argv){
 //	ChromosomePair a(1, 2);
 //	ChromosomePair b(3, 4);
 
-//
-//	// rows x cols
+
+	// rows x cols
 //	MatrixXf L(6,5);
 //    VectorXf u(6);
+//    VectorXf coefs_p0(5);
+//    VectorXf coefs_p1(5);
 //
 //    float e = 0.01;
 //	int p=3;
@@ -85,6 +87,11 @@ int main(int argc, char ** argv){
 //     VectorXf x(5);
 //     x = L.bdcSvd(ComputeThinU | ComputeThinV).solve(u);
 //     cout << "The solution is:\n" << x << endl;
+//
+// 	coefs_p0 << q, p, p , 2*q , p;
+// 	coefs_p1 << p, q, q , 2*p , q;
+//
+// 	cout << "P0: " << coefs_p0.dot(x) << endl;
 //
 //
 //	return 0;
@@ -153,8 +160,10 @@ int main(int argc, char ** argv){
 	phaser.LoadData(ref_file.c_str(), sample_file.c_str(), 0, map_file.c_str());
 
 	cout << "Haplotypes:\n" << phaser.haplotypes.block(0,0,22,10) << endl;
+	phaser.CalcAlleleCounts();
+	cout << "Allele counts:\n" << phaser.allele_counts.segment(0, 10) << endl;
 
-
+	return 0;
 
 	chrono::steady_clock::time_point begin1;
 	chrono::steady_clock::time_point begin;
@@ -163,34 +172,44 @@ int main(int argc, char ** argv){
 
 	begin1 = chrono::steady_clock::now();
 	begin = chrono::steady_clock::now();
-	cout << "Starting Forward \n";
-//	phaser.CalcScaledForwardMarginalized();
-	phaser.CalcScaledForward();
+	cout << "Starting Forward haplotype 1\n";
+	phaser.CalcScaledForwardMarginalized();
+//	phaser.CalcScaledForward();
 	end= std::chrono::steady_clock::now();
 	cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
 	begin = chrono::steady_clock::now();
-	cout << "Starting Backward \n";
-	phaser.CalcScaledBackward();
+	cout << "Starting Backward haplotype 1 \n";
+//	phaser.CalcScaledBackward();
+	phaser.CalcScaledBackwardMarginalized();
+
 	end= std::chrono::steady_clock::now();
 	cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
 	begin = chrono::steady_clock::now();
-	cout << "Starting Stats \n";
+	cout << "Starting Stats haplotype 1\n";
 
 	vector<vector<double>> stats = phaser.GetPosteriorStats((result_file+"_stats").c_str());
 	cout << "Done Stats \n";
-	int * ml_states = new int[phaser.num_markers];
+	int * ml_states_h1 = new int[phaser.num_markers];
 	for (int i = 0; i < phaser.num_markers; i++) {
-		ml_states[i] = stats[i][39];
+		ml_states_h1[i] = stats[i][39];
 	}
-	cout << "Done ml states \n";
+	cout << "Done ml states h1 \n";
+
+
+
+
+
+
+
+
 
 //	FILE * mout = fopen((result_file+"_mlstates").c_str(), "w");
 //	for(int i = 0; i<phaser.num_markers; i++) {
 //		fprintf(mout,"%d\n", ml_states[i]);
 //	}
 
-	HaplotypePair mine_haps1 = phaser.PrintHaplotypesToFile(ml_states, result_file.c_str(), sample_file.c_str());
-	phaser.PrintReferenceHaplotypes(ml_states,(result_file+"_ref_haps").c_str());
+	HaplotypePair mine_haps1 = phaser.PrintHaplotypesToFile(ml_states_h1, result_file.c_str(), sample_file.c_str());
+	phaser.PrintReferenceHaplotypes(ml_states_h1,(result_file+"_ref_haps").c_str());
 	HaplotypePair mine_genos = phaser.PrintGenotypesToFile(stats, (result_file+"_genos").c_str(), sample_file.c_str());
 
 //	mine_haps1.print();

@@ -105,6 +105,25 @@ void LoadIndividuals(Pedigree &ped, const String &ref_file, const String &sample
 
 };
 
+
+/**
+ * Initialize the haplotypes of the samples to 0.
+ *
+ * index indicates the first index that contains a sample haplotype
+ *
+ */
+void FillSampleHaplotypes(const Pedigree &ped, MatrixXc & haplotypes, int index) {
+
+	for (int hap = index; hap < ped.count*2; hap++) {
+		for (int m = 0;  m < ped.markerCount; m++) {
+			haplotypes(hap,m) = 0;
+		}
+	}
+};
+
+
+
+
 /**
  * Load all alleles from file_name at markers present in pedigree into haplotypes.
  *
@@ -143,6 +162,7 @@ void LoadHaplotypes(const String &file_name, const Pedigree &ped, char** haploty
 	//	printf("Done \n");
 };
 
+
 /**
  * Load all alleles from file_name at markers present in pedigree into haplotypes.
  *
@@ -174,8 +194,8 @@ void LoadHaplotypes(const String &file_name, const Pedigree &ped, MatrixXc & hap
 				if(marker_id < 5) {
 					printf("marker: %d  h0:%d  h1:%d \n", marker_id, i0, i1);
 				};
-//				haplotypes(ind*2,marker_id) = 5;
-//				haplotypes(ind*2 + 1,marker_id) = 6;
+				//				haplotypes(ind*2,marker_id) = 5;
+				//				haplotypes(ind*2 + 1,marker_id) = 6;
 
 				haplotypes(ind*2,marker_id) = i0;
 				haplotypes(ind*2 + 1,marker_id) = i1;

@@ -148,6 +148,17 @@ public:
 	int num_haps;
 	vector<ChromosomePair> states;
 
+	MatrixXd L;
+	VectorXd u;
+	VectorXd x;
+
+	VectorXd coefs_p0;
+	VectorXd coefs_p1;
+	double p0;
+	double p1;
+
+
+
 //	MatrixXi pdf_cases;
 //	rowmajdyn pdf_cases_rowmaj;
 
@@ -185,9 +196,12 @@ public:
 	void AllocateMemory();
 	void DeAllocateMemory();
 
+	void CalcAlleleCounts();
+
 	void CalcTransitionProbs(int marker, int marker_state, double * probs);
 	void CalcTransitionProbs(int marker, double ** probs);
 	void CalcEmissionProbs(int marker, double * probs);
+	void CalcMarginalStateProbs(int marker);
 	void CalcEmissionProbsMarginalized(int marker, double * probs);
 
 
@@ -199,8 +213,10 @@ public:
 	void CalcScaledForward();
 	void CalcScaledForwardMarginalized();
 	void CalcScaledBackward();
+	void CalcScaledBackwardMarginalized();
 	void GetMLHaplotypes(int * ml_states);
 	vector<vector<double>> GetPosteriorStats(const char * filename);
+	vector<vector<double>> GetPosteriorStatsMarginalized(const char * filename);
 	vector<vector<double>>  ReadPosteriorStats(const char * filename);
 
 	HaplotypePair PrintGenotypesToFile(vector<vector<double>> & stats, const char * out_file, const char * sample_file);

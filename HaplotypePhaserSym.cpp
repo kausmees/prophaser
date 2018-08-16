@@ -9,7 +9,7 @@
 
 
 HaplotypePhaserSym::~HaplotypePhaserSym(){
-//	FreeCharMatrix(haplotypes, ped.count*2);
+	//	FreeCharMatrix(haplotypes, ped.count*2);
 	//	FreeCharMatrix(genotypes, ped.count);
 	delete [] phred_probs;
 	FreeDoubleMatrix(s_forward, num_markers);
@@ -24,7 +24,7 @@ void HaplotypePhaserSym::AllocateMemory(){
 	String::caseSensitive = false;
 
 	num_haps = (ped.count-1)*2;
-//	num_states = num_haps;
+	//	num_states = num_haps;
 	num_states = ((num_haps)*(num_haps+1)) / 2;
 
 	for(int i = 0; i < num_haps; i++) {
@@ -32,6 +32,9 @@ void HaplotypePhaserSym::AllocateMemory(){
 			states.push_back(ChromosomePair(i,j));
 		}
 	}
+
+
+
 
 	num_markers = Pedigree::markerCount;
 	num_inds = ped.count;
@@ -48,13 +51,21 @@ void HaplotypePhaserSym::AllocateMemory(){
 		phred_probs[i] = pow(10.0, -i * 0.1);
 	};
 
-//	haplotypes = AllocateCharMatrix(num_inds*2, num_markers);
-//	haplotypes = MatrixXi(num_inds*2, num_markers);
+	//	haplotypes = AllocateCharMatrix(num_inds*2, num_markers);
+	//	haplotypes = MatrixXi(num_inds*2, num_markers);
 
+	// haplotypes(h,m) = 0/1 representing allele of haplotype h at marker m
 	haplotypes = MatrixXc(num_inds*2, num_markers);
 
+	// allele_counts(m) = number of haplotypes with allele 1 at marker m
+	allele_counts = VectorXi(num_markers);
 
-
+	L = MatrixXd(6,5);
+	u = VectorXd(6);
+	u << 0, 0, 0 , 0 , 0, 1;
+	x = VectorXd(5);
+	coefs_p0 = VectorXd(5);
+	coefs_p1 = VectorXd(5);
 	sample_gls.resize(num_markers*3);
 
 
@@ -63,8 +74,8 @@ void HaplotypePhaserSym::AllocateMemory(){
 	normalizers = new double[num_markers];
 
 
-//	pdf_cases = MatrixXi::Zero(num_states, num_states);
-//	pdf_cases_rowmaj = rowmajdyn::Zero(num_states,num_states);
+	//	pdf_cases = MatrixXi::Zero(num_states, num_states);
+	//	pdf_cases_rowmaj = rowmajdyn::Zero(num_states,num_states);
 
 	//	s_forward2 = AllocateDoubleMatrix(num_markers, num_states);
 	//	s_backward2 = AllocateDoubleMatrix(num_markers, num_states);
@@ -73,7 +84,7 @@ void HaplotypePhaserSym::AllocateMemory(){
 };
 
 void HaplotypePhaserSym::DeAllocateMemory(){
-//	FreeCharMatrix(haplotypes, ped.count*2);
+	//	FreeCharMatrix(haplotypes, ped.count*2);
 };
 void HaplotypePhaserSym::setDistanceCode(int c) {
 	distance_code = c;
@@ -92,9 +103,13 @@ void HaplotypePhaserSym::LoadData(const String &ref_file, const String &sample_f
 	printf("2\n");
 	AllocateMemory();
 	printf("3\n");
-//	CalcCases();
+	//	CalcCases();
 	printf("4\n");
+	// Loads the reference haplotypes
 	VcfUtils::LoadHaplotypes(ref_file, ped, haplotypes);
+
+	// (Fill the initial sample haplotypes - not used for single-sample: but prep for multi-sample)
+	VcfUtils::FillSampleHaplotypes(ped, haplotypes, num_haps);
 
 
 
@@ -145,6 +160,18 @@ void HaplotypePhaserSym::LoadSampleData(const String &ref_file, const String &sa
 ////	std::cout << "Pdf cases: m:\n" << pdf_cases << std::endl;
 //
 //};
+
+
+/**
+ * Fill allele_counts.
+ *
+ * allele_counts(m) = number of haplotypes with allele 1 at marker m
+ *
+ */
+void HaplotypePhaserSym::CalcAlleleCounts() {
+	allele_counts = haplotypes.colwise().sum();
+};
+
 
 
 /**
@@ -234,6 +261,46 @@ void HaplotypePhaserSym::CalcEmissionProbs(int marker, double * probs) {
 }
 
 
+
+
+/**
+ *  Fill marginal_state_probs with p(s) marginalized over emission probabilities for marker marker.
+ *
+ */
+
+void HaplotypePhaserSym::CalcMarginalStateProbs(int marker) {
+
+	int q = allele_counts[marker];
+	int p = num_haps - q;
+
+	L << 0,pow((1-error),2),pow((1-error),2)-1,0,pow((1-error),2),
+			0,2*(1-error)*error-1, 2*(1-error)*error, 0,2*(1-error)*error,
+			0,pow(error,2),pow(error,2),0,(pow(error,2))-1,
+			(1-error)*error,0,0,(1-error)*error*2-1,0,
+			1-(pow(error,2))-pow(1-error,2),0,0,-2*(pow(1-error,2) + pow(error,2)),0,
+			2*p*q,pow(p,2) +pow(q,2),pow(p,2) +pow(q,2),4*p*q,pow(p,2) +pow(q,2);
+
+	//	 cout << "Here is the matrix L:\n" << L << endl;
+	//	 cout << "Here is the vector u:\n" << u << endl;
+	//
+	x = L.bdcSvd(ComputeThinU | ComputeThinV).solve(u);
+	cout << "cases primes = :\n" << x << endl;
+
+	coefs_p0 << q, p, p , 2*q , p;
+	coefs_p1 << p, q, q , 2*p , q;
+
+	cout << "P0: " << coefs_p0.dot(x) << endl;
+	cout << "P1: " << coefs_p1.dot(x) << endl;
+
+	p0 = coefs_p0.dot(x);
+	p1 = coefs_p1.dot(x);
+
+
+
+}
+
+
+
 /**
  * Get the emission probability of the observed genotype likelihoods at marker
  * for haplotype 1 - marginalizing over haplotype 2
@@ -242,87 +309,104 @@ void HaplotypePhaserSym::CalcEmissionProbs(int marker, double * probs) {
  * where state space consists of only one haplotype (num_states = num_inds)
  */
 
-//void HaplotypePhaserSym::CalcEmissionProbsMarginalized(int marker, double * probs) {
-//	int h1;
-//	int h2;
-//	double sum;
-//
-//	double case_1 = (pow(1 - error, 2) + pow(error, 2));
-//	double case_2 = 2 * (1 - error) * error;
-//	double case_3 = pow(1 - error, 2);
-//	double case_4 = (1 - error) * error;
-//	double case_5 = pow(error,2);
-//
-//
-//
-//	// OPT1
-//	for (int state = 0; state < num_states; state++) {
-//		//	for (ChromosomePair state  : states) {
-//
-//		ChromosomePair chrom_state = states[state];
-//
-//		// First reference hapotype at state (0: REF 1: ALT)
-//		h1 = haplotypes(chrom_state.first,marker);
-//		// Second reference hapotype at state (0: REF 1: ALT)
-//		h2 = haplotypes(chrom_state.second,marker);
-//
-//		sum = 0.0;
-//		// case1: g = 0
-//
-//		if(h1 == 0 and h2 == 0){
-//			sum += case_3 *  sample_gls[marker * 3];
-//			//				printf("adding = %f \n", pow(1 - errors[marker], 2) * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3]]);
-//		}
-//		else {
-//			if((h1 == 0 and h2 == 1) or (h1 == 1 and h2 == 0)){
-//
-//				sum += case_4 * sample_gls[marker * 3];
-//				//						printf("adding = %f \n", (1 - errors[marker]) * error * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3]]);
-//
-//			}
-//			else{
-//				sum +=  case_5 *  sample_gls[marker * 3];
-//				//						printf("adding = %f \n", errors[marker] * 2 * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3]]);
-//
-//			}
-//		}
-//
-//		// case2: g = 1
-//		if((h1 == 0 and h2 == 1) or (h1 == 1 and h2 == 0)){
-//			sum += case_1 *  sample_gls[marker * 3 + 1];
-//			//				printf("adding1 = %f \n", (pow(1 - errors[marker], 2) + pow(errors[marker], 2)) * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3 + 1]]);
-//
-//		}
-//		else{
-//			sum +=case_2 * sample_gls[marker * 3 + 1];
-//			//				printf("adding2 = %f \n", 2 * (1 - errors[marker]) * errors[marker] * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3 + 1]]);
-//
-//		}
-//
-//		// case3: g = 2
-//		if(h1 == 1 and h2 == 1){
-//			sum += case_3 * sample_gls[marker * 3 + 2];
-//			//				printf("adding = %f \n", pow(1 - errors[marker], 2) * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3 + 2]]);
-//
-//		} else{
-//			if((h1 == 0 and h2 == 1) or (h1 == 1 and h2 == 0)){
-//				sum += case_4 * sample_gls[marker * 3 + 2];
-//				//						printf("adding = %f \n", (1 - errors[marker]) * error * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3 + 2]]);
-//
-//			}
-//			else{
-//				sum += case_5 * sample_gls[marker * 3 + 2];
-//				//						printf("adding = %f \n", pow(errors[marker],2) * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3 + 2]]);
-//
-//			}
-//		}
-//		probs[state] = sum;
-//	}
-//
-//
-//
-//}
-//
+void HaplotypePhaserSym::CalcEmissionProbsMarginalized(int marker, double * probs) {
+	int h1;
+	int h2;
+	double sum_geno0;
+	double sum_geno1;
+	double sum_geno2;
+
+	CalcMarginalStateProbs(marker);
+
+	double this_p;
+
+	double case_1 = (pow(1 - error, 2) + pow(error, 2));
+	double case_2 = 2 * (1 - error) * error;
+	double case_3 = pow(1 - error, 2);
+	double case_4 = (1 - error) * error;
+	double case_5 = pow(error,2);
+
+
+	sum_geno0 = 0.0;
+	sum_geno1 = 0.0;
+	sum_geno2 = 0.0;
+
+	for (int state = 0; state < num_states; state++) {
+		// First reference hapotype at state (0: REF 1: ALT)
+		h1 = haplotypes(state, marker);
+
+
+		for (int state2 = 0; state2 < num_states; state2++) {
+
+			// Second reference hapotype at state (0: REF 1: ALT)
+			h2 = haplotypes(state2, marker);
+			this_p = h2*p1 + (1-h2)*p0;
+
+			// case1: g = 0
+
+			if(h1 == 0 and h2 == 0){
+				sum_geno0 += case_3 * this_p;
+				//				sum_states += case_3 *  sample_gls[marker * 3];
+				//				printf("adding = %f \n", pow(1 - errors[marker], 2) * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3]]);
+			}
+			else {
+				if((h1 == 0 and h2 == 1) or (h1 == 1 and h2 == 0)){
+					sum_geno0 += case_4 * this_p;
+					//					sum_states += case_4 * sample_gls[marker * 3];
+					//						printf("adding = %f \n", (1 - errors[marker]) * error * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3]]);
+
+				}
+				else{
+					sum_geno0 += case_5 * this_p;
+					//					sum_states +=  case_5 *  sample_gls[marker * 3];
+					//						printf("adding = %f \n", errors[marker] * 2 * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3]]);
+
+				}
+			}
+
+			// case2: g = 1
+			if((h1 == 0 and h2 == 1) or (h1 == 1 and h2 == 0)){
+				sum_geno1 += case_1 * this_p;
+				//				sum_states += case_1 *  sample_gls[marker * 3 + 1];
+				//				printf("adding1 = %f \n", (pow(1 - errors[marker], 2) + pow(errors[marker], 2)) * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3 + 1]]);
+
+			}
+			else{
+				sum_geno1 += case_2 * this_p;
+				//				sum_states +=case_2 * sample_gls[marker * 3 + 1];
+				//				printf("adding2 = %f \n", 2 * (1 - errors[marker]) * errors[marker] * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3 + 1]]);
+
+			}
+
+			// case3: g = 2
+			if(h1 == 1 and h2 == 1){
+				sum_geno2 += case_3 * this_p;
+				//				sum_states += case_3 * sample_gls[marker * 3 + 2];
+				//				printf("adding = %f \n", pow(1 - errors[marker], 2) * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3 + 2]]);
+
+			} else{
+				if((h1 == 0 and h2 == 1) or (h1 == 1 and h2 == 0)){
+					sum_geno2 += case_4 * this_p;
+					//					sum_states += case_4 * sample_gls[marker * 3 + 2];
+					//						printf("adding = %f \n", (1 - errors[marker]) * error * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3 + 2]]);
+
+				}
+				else{
+					sum_geno2 += case_5 * this_p;
+					//					sum_states += case_5 * sample_gls[marker * 3 + 2];
+					//						printf("adding = %f \n", pow(errors[marker],2) * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3 + 2]]);
+
+				}
+			}
+		}
+		probs[state] =
+				sample_gls[marker * 3  ] * sum_geno0 +
+				sample_gls[marker * 3+1] * sum_geno1 +
+				sample_gls[marker * 3+2] * sum_geno2;
+	}
+
+}
+
 
 
 
@@ -358,6 +442,7 @@ void HaplotypePhaserSym::InitPriorScaledBackward(){
 
 void HaplotypePhaserSym::CalcScaledForward(){
 	double * emission_probs = new double[num_states];
+
 	int num_h = 2 * num_inds - 2;
 	double c;
 	double case_probs[3];
@@ -419,15 +504,15 @@ void HaplotypePhaserSym::CalcScaledForward(){
 
 
 
-//		// test that the number of cases
-//		// over s is correct
-//		int case_counter[3];
-//		case_counter[0] = 0;
-//		case_counter[1] = 0;
-//		case_counter[2] = 0;
-//		double prob_test = 0;
-//		// the fixed j over which to test the sum over s - this j defines a pdf
-//		int testj = 90;
+		//		// test that the number of cases
+		//		// over s is correct
+		//		int case_counter[3];
+		//		case_counter[0] = 0;
+		//		case_counter[1] = 0;
+		//		case_counter[2] = 0;
+		//		double prob_test = 0;
+		//		// the fixed j over which to test the sum over s - this j defines a pdf
+		//		int testj = 90;
 
 #pragma omp parallel for schedule(dynamic,32)
 		for(int s = 0; s < num_states; s++){
@@ -450,26 +535,26 @@ void HaplotypePhaserSym::CalcScaledForward(){
 
 
 
-//				 prob here is p_trans j -> s
-//				 conditioning on j
+				//				 prob here is p_trans j -> s
+				//				 conditioning on j
 				// this is the one we expect to sum to 1
-//				// over s
-//				int chrom_case = pdf_cases(j,s) % 3;
-//				if (j==testj) {
-//					if(states[j].first == states[j].second) {
-//#pragma omp atomic
-//						prob_test += probs[pdf_cases(j,s)];
-//#pragma omp atomic
-//						case_counter[chrom_case] += 1;
-//					}
-//					else{
-//#pragma omp atomic
-//
-//						prob_test += probs[pdf_cases(j,s)];
-//#pragma omp atomic
-//						case_counter[chrom_case] += 1;
-//					}
-//				}
+				//				// over s
+				//				int chrom_case = pdf_cases(j,s) % 3;
+				//				if (j==testj) {
+				//					if(states[j].first == states[j].second) {
+				//#pragma omp atomic
+				//						prob_test += probs[pdf_cases(j,s)];
+				//#pragma omp atomic
+				//						case_counter[chrom_case] += 1;
+				//					}
+				//					else{
+				//#pragma omp atomic
+				//
+				//						prob_test += probs[pdf_cases(j,s)];
+				//#pragma omp atomic
+				//						case_counter[chrom_case] += 1;
+				//					}
+				//				}
 
 
 
@@ -478,23 +563,23 @@ void HaplotypePhaserSym::CalcScaledForward(){
 			s_forward[m][s] =  emission_probs[s] * sum;
 		}
 
-////		 if case counts are wrong
-////		 over s
-//		if(states[testj].first == states[testj].second) {
-//			if(case_counter[0] != num_h*(num_h-1)/2 || case_counter[1] != (num_h-1) || case_counter[2] != 1) {
-//				printf("j= %d : (%d,%d) case counts: 0:%d 1:%d 2:%d \n", testj, states[testj].first, states[testj].second,case_counter[0], case_counter[1], case_counter[2]);
-//			}
-//		}
-//		else{
-//			if(case_counter[0] != (num_h-2)*(num_h-1)/2 || case_counter[1] != 2*(num_h-1) || case_counter[2] != 1) {
-//				printf("j= %d : (%d,%d) case counts: 0:%d 1:%d 2:%d \n", testj, states[testj].first, states[testj].second,case_counter[0], case_counter[1], case_counter[2]);
-//			}
-//		}
-//		// if prob sum is wrong
-//		// over s
-//		if(abs(prob_test-1.0) > 0.00001) {
-//			printf(" m = % d !! Probtest = %f !! \n", m, prob_test);
-//		}
+		////		 if case counts are wrong
+		////		 over s
+		//		if(states[testj].first == states[testj].second) {
+		//			if(case_counter[0] != num_h*(num_h-1)/2 || case_counter[1] != (num_h-1) || case_counter[2] != 1) {
+		//				printf("j= %d : (%d,%d) case counts: 0:%d 1:%d 2:%d \n", testj, states[testj].first, states[testj].second,case_counter[0], case_counter[1], case_counter[2]);
+		//			}
+		//		}
+		//		else{
+		//			if(case_counter[0] != (num_h-2)*(num_h-1)/2 || case_counter[1] != 2*(num_h-1) || case_counter[2] != 1) {
+		//				printf("j= %d : (%d,%d) case counts: 0:%d 1:%d 2:%d \n", testj, states[testj].first, states[testj].second,case_counter[0], case_counter[1], case_counter[2]);
+		//			}
+		//		}
+		//		// if prob sum is wrong
+		//		// over s
+		//		if(abs(prob_test-1.0) > 0.00001) {
+		//			printf(" m = % d !! Probtest = %f !! \n", m, prob_test);
+		//		}
 
 
 
@@ -515,164 +600,239 @@ void HaplotypePhaserSym::CalcScaledForward(){
 }
 
 
-//void HaplotypePhaserSym::CalcScaledForwardMarginalized(){
-//	double * emission_probs = new double[num_states];
-////	int num_h = 2 * num_inds - 2;
-//
-//	double c;
-//	double case_probs[3];
-//	double probs[6];
-//
-//	double scaled_dist;
-//	double c1,c2;
-//
-//	printf("Num states = %d \n", num_states);
-//	printf("Num h = %d \n", num_haps);
-//	printf("Num markers = %d \n", num_markers);
-//
-//
-//	double pop_const = (4.0 * Ne) / 100.0;
-//
-//	InitPriorScaledForward();
-//
-//	double diff_0 = ((num_haps-1) * (num_haps-2) / 2);
-//	double diff_1 = 2*(num_haps-1);
-//
-//	double same_0 = (num_haps*(num_haps-1)/2);
-//	double same_1 = (num_haps-1);
-//
-//
-//	for(int m = 1; m < num_markers; m++){
-//		CalcEmissionProbsMarginalized(m, emission_probs);
-//		c = 0.0;
-//
-//		scaled_dist = 1-exp(-(distances[m] * pop_const)/num_haps);
-//
-//		c1 = scaled_dist/num_haps;
-//		c2 = 1 - scaled_dist;
-//
-//		//both_switch
-//		case_probs[0] = pow(c1, 2);
-//		//one switch
-//		case_probs[1] =  (c2*c1) + pow(c1, 2);
-//		// no switch
-//		case_probs[2] = pow(c2, 2) + (2*c2*c1) + pow(c1, 2);
-//
-//
-//		double norm_const_case_diff = (diff_0 * case_probs[0]) + (diff_1 * case_probs[1]) + case_probs[2];
-//		double norm_const_case_same = (same_0 * case_probs[0]) + (same_1 * case_probs[1]) + case_probs[2];
-//
-//		// diff: (j.first != j.second)
-//		probs[0] = case_probs[0] / norm_const_case_diff;
-//		//one switch
-//		probs[1] =  case_probs[1] / norm_const_case_diff;
-//		// no switch
-//		probs[2] = case_probs[2] / norm_const_case_diff;
-//
-//		// same: (j.first == j.second)
-//		probs[3] = case_probs[0] / norm_const_case_same;
-//		//one switch
-//		probs[4] =  case_probs[1] / norm_const_case_same;
-//		// no switch
-//		probs[5] = case_probs[2] / norm_const_case_same;
-//
-//
-//
-//
-////		// test that the number of cases
-////		// over s is correct
-////		int case_counter[3];
-////		case_counter[0] = 0;
-////		case_counter[1] = 0;
-////		case_counter[2] = 0;
-////		double prob_test = 0;
-////		// the fixed j over which to test the sum over s - this j defines a pdf
-////		int testj = 90;
-//
-//#pragma omp parallel for schedule(dynamic,32)
-//		for(int s = 0; s < num_states; s++){
-//
-//			double sum = 0.0;
-//			//			int marker_c1 = s / num_h;
-//			//			int marker_c2 = s % num_h;
-//
-//
-//#pragma GCC ivdep
-//			for(int j = 0; j < num_states; j++){
-//
-//
-//				int chrom_case = (states[s]).NumEquals2(states[j]);
-//				if(states[j].first == states[j].second) {
-//					chrom_case += 3;
-//				}
-//
-//				sum += s_forward[m-1][j] * probs[chrom_case];
-//
-//
-//
-////				 prob here is p_trans j -> s
-////				 conditioning on j
-//				// this is the one we expect to sum to 1
-////				// over s
-////				int chrom_case = pdf_cases(j,s) % 3;
-////				if (j==testj) {
-////					if(states[j].first == states[j].second) {
-////#pragma omp atomic
-////						prob_test += probs[pdf_cases(j,s)];
-////#pragma omp atomic
-////						case_counter[chrom_case] += 1;
-////					}
-////					else{
-////#pragma omp atomic
-////
-////						prob_test += probs[pdf_cases(j,s)];
-////#pragma omp atomic
-////						case_counter[chrom_case] += 1;
-////					}
-////				}
-//
-//
-//
-//
-//			}
-//			s_forward[m][s] =  emission_probs[s] * sum;
-//		}
-//
-//////		 if case counts are wrong
-//////		 over s
-////		if(states[testj].first == states[testj].second) {
-////			if(case_counter[0] != num_h*(num_h-1)/2 || case_counter[1] != (num_h-1) || case_counter[2] != 1) {
-////				printf("j= %d : (%d,%d) case counts: 0:%d 1:%d 2:%d \n", testj, states[testj].first, states[testj].second,case_counter[0], case_counter[1], case_counter[2]);
-////			}
-////		}
-////		else{
-////			if(case_counter[0] != (num_h-2)*(num_h-1)/2 || case_counter[1] != 2*(num_h-1) || case_counter[2] != 1) {
-////				printf("j= %d : (%d,%d) case counts: 0:%d 1:%d 2:%d \n", testj, states[testj].first, states[testj].second,case_counter[0], case_counter[1], case_counter[2]);
-////			}
-////		}
-////		// if prob sum is wrong
-////		// over s
-////		if(abs(prob_test-1.0) > 0.00001) {
-////			printf(" m = % d !! Probtest = %f !! \n", m, prob_test);
-////		}
-//
-//
-//
-//
-//
-//		for(int s = 0; s < num_states; s++){
-//			c+= s_forward[m][s];
-//		}
-//		normalizers[m] = 1.0/c;
-//
-//		for(int s = 0; s < num_states; s++){
-//			s_forward[m][s] = s_forward[m][s] * normalizers[m];
-//		}
-//	}
-//
-//	delete [] emission_probs;
-//
-//}
+void HaplotypePhaserSym::CalcScaledForwardMarginalized(){
+	double * emission_probs = new double[num_states];
+	double c, c1, c2;
+	double scaled_dist;
+
+	printf("Num states = %d \n", num_states);
+	printf("Num h = %d \n", num_haps);
+	printf("Num markers = %d \n", num_markers);
+
+
+	double pop_const = (4.0 * Ne) / 100.0;
+
+	InitPriorScaledForward();
+
+
+	for(int m = 1; m < num_markers; m++){
+		CalcEmissionProbsMarginalized(m, emission_probs);
+
+		scaled_dist = 1-exp(-(distances[m] * pop_const)/num_haps);
+
+		// same
+		c1 = scaled_dist / num_haps;
+		// different
+		c2 = ((1 - scaled_dist)*num_haps + scaled_dist) / num_haps;
+
+
+		//		// test that the number of cases
+		//		// over s is correct
+		//		int case_counter[3];
+		//		case_counter[0] = 0;
+		//		case_counter[1] = 0;
+		//		case_counter[2] = 0;
+		//		double prob_test = 0;
+		//		// the fixed j over which to test the sum over s - this j defines a pdf
+		//		int testj = 90;
+
+#pragma omp parallel for schedule(dynamic,32)
+		for(int s = 0; s < num_states; s++){
+
+			double sum = 0.0;
+
+
+#pragma GCC ivdep
+			for(int j = 0; j < num_states ; j++){
+
+
+				if (j == s) {
+					sum += s_forward[m-1][j] * c1;
+				}
+				else {
+					sum += s_forward[m-1][j] * c2;
+
+				}
+
+
+				//				 prob here is p_trans j -> s
+				//				 conditioning on j
+				// this is the one we expect to sum to 1
+				//				// over s
+				//				int chrom_case = pdf_cases(j,s) % 3;
+				//				if (j==testj) {
+				//					if(states[j].first == states[j].second) {
+				//#pragma omp atomic
+				//						prob_test += probs[pdf_cases(j,s)];
+				//#pragma omp atomic
+				//						case_counter[chrom_case] += 1;
+				//					}
+				//					else{
+				//#pragma omp atomic
+				//
+				//						prob_test += probs[pdf_cases(j,s)];
+				//#pragma omp atomic
+				//						case_counter[chrom_case] += 1;
+				//					}
+				//				}
+
+
+
+
+			}
+
+			s_forward[m][s] =  emission_probs[s] * sum;
+		}
+
+		////		 if case counts are wrong
+		////		 over s
+		//		if(states[testj].first == states[testj].second) {
+		//			if(case_counter[0] != num_h*(num_h-1)/2 || case_counter[1] != (num_h-1) || case_counter[2] != 1) {
+		//				printf("j= %d : (%d,%d) case counts: 0:%d 1:%d 2:%d \n", testj, states[testj].first, states[testj].second,case_counter[0], case_counter[1], case_counter[2]);
+		//			}
+		//		}
+		//		else{
+		//			if(case_counter[0] != (num_h-2)*(num_h-1)/2 || case_counter[1] != 2*(num_h-1) || case_counter[2] != 1) {
+		//				printf("j= %d : (%d,%d) case counts: 0:%d 1:%d 2:%d \n", testj, states[testj].first, states[testj].second,case_counter[0], case_counter[1], case_counter[2]);
+		//			}
+		//		}
+		//		// if prob sum is wrong
+		//		// over s
+		//		if(abs(prob_test-1.0) > 0.00001) {
+		//			printf(" m = % d !! Probtest = %f !! \n", m, prob_test);
+		//		}
+
+
+
+
+
+		for(int s = 0; s < num_states; s++){
+			c+= s_forward[m][s];
+		}
+		normalizers[m] = 1.0/c;
+
+		for(int s = 0; s < num_states; s++){
+			s_forward[m][s] = s_forward[m][s] * normalizers[m];
+		}
+	}
+
+	delete [] emission_probs;
+
+}
+
+
+void HaplotypePhaserSym::CalcScaledBackwardMarginalized(){
+	double * emission_probs = new double[num_states];
+	int num_h = 2*num_inds - 2;
+
+	double scaled_dist;
+	double c1;
+	double c2;
+
+	double diff_0 = ((num_h-1) * (num_h-2) / 2);
+	double diff_1 = 2*(num_h-1);
+
+	double same_0 = (num_h*(num_h-1)/2);
+	double same_1 = (num_h-1);
+
+
+	double pop_const = (4.0 * Ne) / 100.0;
+
+	InitPriorScaledBackward();
+
+	for(int m = num_markers-2; m >= 0; m--){
+		scaled_dist = 1.0 - exp(-(distances[m+1] * pop_const)/num_h);
+
+		// same
+		c1 = scaled_dist / num_haps;
+		// different
+		c2 = ((1 - scaled_dist)*num_haps + scaled_dist) / num_haps;
+
+		CalcEmissionProbs(m+1, emission_probs);
+
+
+
+
+#pragma omp parallel for
+		for(int s = 0; s < num_states; s++){
+			double sum = 0.0;
+			//			int marker_c1 = s / num_h;
+			//			int marker_c2 = s % num_h;
+
+
+			////			// test that the number of cases
+			////			// over j is correct
+			//			int case_counter[3];
+			//			case_counter[0] = 0;
+			//			case_counter[1] = 0;
+			//			case_counter[2] = 0;
+			//			double prob_test = 0;
+
+
+#pragma GCC ivdep
+			for(int j = 0; j < num_states; j++){
+
+
+				if (s == j) {
+				sum +=  s_backward[m+1][j]* c1 * emission_probs[j];
+				}
+				else {
+					sum +=  s_backward[m+1][j]* c2 * emission_probs[j];
+
+				}
+
+				//				// prob here is p_trans s -> j
+				//				// conditioning on s
+				//				// this is the one we expect to sum to 1
+				//				// over j
+				//				int chrom_case = pdf_cases(s,j) % 3;
+				//				printf("Chrom case = %d \n", chrom_case);
+
+				//					if(states[s].first == states[s].second) {
+				//#pragma omp atomic
+				//						prob_test += probs[pdf_cases(s,j)];
+				//#pragma omp atomic
+				//						case_counter[chrom_case] += 1;
+				//					}
+				//					else{
+				//#pragma omp atomic
+				//
+				//
+				//#pragma omp atomic
+				//						case_counter[chrom_case] += 1;
+				//					}
+
+
+			}
+
+			s_backward[m][s] = sum * normalizers[m];
+
+			//////					 if case counts are wrong
+			//////					 over s
+			//			if(states[s].first == states[s].second) {
+			//				if(case_counter[0] != num_h*(num_h-1)/2 || case_counter[1] != (num_h-1) || case_counter[2] != 1) {
+			//					printf("bw s= %d : (%d,%d) case counts: 0:%d 1:%d 2:%d \n", s, states[s].first, states[s].second,case_counter[0], case_counter[1], case_counter[2]);
+			//				}
+			//			}
+			//			else{
+			//				if(case_counter[0] != (num_h-2)*(num_h-1)/2 || case_counter[1] != 2*(num_h-1) || case_counter[2] != 1) {
+			//					printf("bw s= %d : (%d,%d) case counts: 0:%d 1:%d 2:%d \n", s, states[s].first, states[s].second,case_counter[0], case_counter[1], case_counter[2]);
+			//				}
+			//			}
+			//			// if prob sum is wrong
+			//			// over s
+			//			if(abs(prob_test-1.0) > 0.00001) {
+			//				printf("bw m = % d !! Probtest = %f !! \n", m, prob_test);
+			//			}
+
+
+
+		}
+	}
+	delete [] emission_probs;
+}
+
+
 
 
 void HaplotypePhaserSym::CalcScaledBackward(){
@@ -744,13 +904,13 @@ void HaplotypePhaserSym::CalcScaledBackward(){
 			//			int marker_c2 = s % num_h;
 
 
-////			// test that the number of cases
-////			// over j is correct
-//			int case_counter[3];
-//			case_counter[0] = 0;
-//			case_counter[1] = 0;
-//			case_counter[2] = 0;
-//			double prob_test = 0;
+			////			// test that the number of cases
+			////			// over j is correct
+			//			int case_counter[3];
+			//			case_counter[0] = 0;
+			//			case_counter[1] = 0;
+			//			case_counter[2] = 0;
+			//			double prob_test = 0;
 
 
 #pragma GCC ivdep
@@ -764,49 +924,49 @@ void HaplotypePhaserSym::CalcScaledBackward(){
 				sum +=  s_backward[m+1][j]* probs[chrom_case] * emission_probs[j];
 
 
-//				// prob here is p_trans s -> j
-//				// conditioning on s
-//				// this is the one we expect to sum to 1
-//				// over j
-//				int chrom_case = pdf_cases(s,j) % 3;
-//				printf("Chrom case = %d \n", chrom_case);
+				//				// prob here is p_trans s -> j
+				//				// conditioning on s
+				//				// this is the one we expect to sum to 1
+				//				// over j
+				//				int chrom_case = pdf_cases(s,j) % 3;
+				//				printf("Chrom case = %d \n", chrom_case);
 
-//					if(states[s].first == states[s].second) {
-//#pragma omp atomic
-//						prob_test += probs[pdf_cases(s,j)];
-//#pragma omp atomic
-//						case_counter[chrom_case] += 1;
-//					}
-//					else{
-//#pragma omp atomic
-//
-//						prob_test += probs[pdf_cases(s,j)];
-//#pragma omp atomic
-//						case_counter[chrom_case] += 1;
-//					}
+				//					if(states[s].first == states[s].second) {
+				//#pragma omp atomic
+				//						prob_test += probs[pdf_cases(s,j)];
+				//#pragma omp atomic
+				//						case_counter[chrom_case] += 1;
+				//					}
+				//					else{
+				//#pragma omp atomic
+				//
+				//						prob_test += probs[pdf_cases(s,j)];
+				//#pragma omp atomic
+				//						case_counter[chrom_case] += 1;
+				//					}
 
 
 			}
 
 			s_backward[m][s] = sum * normalizers[m];
 
-//////					 if case counts are wrong
-//////					 over s
-//			if(states[s].first == states[s].second) {
-//				if(case_counter[0] != num_h*(num_h-1)/2 || case_counter[1] != (num_h-1) || case_counter[2] != 1) {
-//					printf("bw s= %d : (%d,%d) case counts: 0:%d 1:%d 2:%d \n", s, states[s].first, states[s].second,case_counter[0], case_counter[1], case_counter[2]);
-//				}
-//			}
-//			else{
-//				if(case_counter[0] != (num_h-2)*(num_h-1)/2 || case_counter[1] != 2*(num_h-1) || case_counter[2] != 1) {
-//					printf("bw s= %d : (%d,%d) case counts: 0:%d 1:%d 2:%d \n", s, states[s].first, states[s].second,case_counter[0], case_counter[1], case_counter[2]);
-//				}
-//			}
-//			// if prob sum is wrong
-//			// over s
-//			if(abs(prob_test-1.0) > 0.00001) {
-//				printf("bw m = % d !! Probtest = %f !! \n", m, prob_test);
-//			}
+			//////					 if case counts are wrong
+			//////					 over s
+			//			if(states[s].first == states[s].second) {
+			//				if(case_counter[0] != num_h*(num_h-1)/2 || case_counter[1] != (num_h-1) || case_counter[2] != 1) {
+			//					printf("bw s= %d : (%d,%d) case counts: 0:%d 1:%d 2:%d \n", s, states[s].first, states[s].second,case_counter[0], case_counter[1], case_counter[2]);
+			//				}
+			//			}
+			//			else{
+			//				if(case_counter[0] != (num_h-2)*(num_h-1)/2 || case_counter[1] != 2*(num_h-1) || case_counter[2] != 1) {
+			//					printf("bw s= %d : (%d,%d) case counts: 0:%d 1:%d 2:%d \n", s, states[s].first, states[s].second,case_counter[0], case_counter[1], case_counter[2]);
+			//				}
+			//			}
+			//			// if prob sum is wrong
+			//			// over s
+			//			if(abs(prob_test-1.0) > 0.00001) {
+			//				printf("bw m = % d !! Probtest = %f !! \n", m, prob_test);
+			//			}
 
 
 
@@ -856,6 +1016,90 @@ void HaplotypePhaserSym::GetMLHaplotypes(int * ml_states){
 }
 
 
+/**
+ * For every marker m, get the state with highest posterior probability at that location, given the entire observation sequence
+ * (not most likely sequence of states)
+ *
+ * Calculate array ml_states s.t.
+ * ml_states[m] = s_i that maximises P(Q_m = s_i | O_1 ... O_num_markers)
+ *
+ * for m in {0 ... num_markers-1}
+ *
+ * for haplotype 1, marginalized over haplotype 2
+ */
+vector<vector<double>>  HaplotypePhaserSym::GetPosteriorStatsMarginalized(const char * filename){
+	vector<vector<double>> stats;
+
+
+	for(int m = 0; m < num_markers; m++) {
+		stats.push_back({});
+		stats[m].resize(44,-1.0);
+	}
+
+
+	for(int m = 0; m < num_markers; m++) {
+		vector<double> posteriors;
+		posteriors.resize(num_states, -1);
+
+		double norm = 0.0;
+
+		for(int i = 0; i < num_states; i++) {
+			norm += s_forward[m][i] * s_backward[m][i];
+		}
+
+		double sum = 0.0;
+
+		for(int s = 0; s < num_states; s++) {
+			posteriors[s] = s_forward[m][s] * s_backward[m][s] / norm;
+			sum += posteriors[s];
+
+			//			cout << "Wtf3 " <<  posteriors[s] << " " <<  s_forward[m][s] << " " << s_backward[m][s] << "\n";
+
+			//////////genotype probability/////////////////
+
+			// AGCT allele
+			//			String allele1 = Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap1][m]+1);
+			//			String allele2 = Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap2][m]+1);
+
+			// 00, 01, 10, 11
+			int hapcode1 = haplotypes(s,m);
+
+		}
+
+
+		vector<size_t> res = sort_indexes(posteriors);
+
+		//add lowest probabilities to stats[m] - in increasing order
+		for(int i = 0; i < 10; i++) {
+			stats[m][i] = posteriors[res[i]];
+		}
+		//add states corresponding to lowest probabilitoes to stats[m]
+		for(int i = 0; i < 10; i++) {
+			stats[m][10 + i] = res[i];
+		}
+
+		//add highest probabilities to stats[m]  - in increasing order (ml state gets index 39)
+		for(int i = 0; i < 10; i++) {
+			stats[m][20 + i] = posteriors[res[posteriors.size() - 10 + i]];
+		}
+		//add states corresponding to highest probabilitoes to stats[m]
+		for(int i = 0; i < 10; i++) {
+			stats[m][30 + i] = res[posteriors.size() - 10 + i];
+		}
+
+		stats[m][40] = sum / posteriors.size();
+		stats[m][41] = -1;
+		stats[m][42] = -1;
+		stats[m][43] = -1;
+
+	}
+
+	writeVectorToCSV(filename, stats, "w");
+	return stats;
+}
+
+
+
 
 /**
  * For every marker m, get the state with highest posterior probability at that location, given the entire observation sequence
@@ -868,7 +1112,6 @@ void HaplotypePhaserSym::GetMLHaplotypes(int * ml_states){
  *
  */
 vector<vector<double>>  HaplotypePhaserSym::GetPosteriorStats(const char * filename){
-	int num_h = 2*num_inds - 2;
 	vector<vector<double>> stats;
 	vector<vector<double>> geno_probs;
 
@@ -899,7 +1142,7 @@ vector<vector<double>>  HaplotypePhaserSym::GetPosteriorStats(const char * filen
 			posteriors[s] = s_forward[m][s] * s_backward[m][s] / norm;
 			sum += posteriors[s];
 
-//			cout << "Wtf3 " <<  posteriors[s] << " " <<  s_forward[m][s] << " " << s_backward[m][s] << "\n";
+			//			cout << "Wtf3 " <<  posteriors[s] << " " <<  s_forward[m][s] << " " << s_backward[m][s] << "\n";
 
 			//////////genotype probability/////////////////
 			int ref_hap1 = states[s].first;
@@ -1172,7 +1415,7 @@ HaplotypePair HaplotypePhaserSym::PrintGenotypesToFile(vector<vector<double>> & 
 		std::size_t delim = marker_name.find(":");
 		string chrom =  marker_name.substr(0,delim);
 		int pos =  std::stoi(marker_name.substr(delim+1));
-	//	printf("%s %d %s \n", chrom.c_str(), pos, (markerinfo->name).c_str());
+		//	printf("%s %d %s \n", chrom.c_str(), pos, (markerinfo->name).c_str());
 		record_template.setChrom(chrom.c_str());
 		record_template.set1BasedPosition(pos);
 		record_template.setID(marker_name.c_str());
@@ -1190,7 +1433,7 @@ HaplotypePair HaplotypePhaserSym::PrintGenotypesToFile(vector<vector<double>> & 
 			printf("ERROR IN WRITING TO VCF %s \n", GTstring.c_str());
 		}
 		else {
-//			printf("Wrote %s \n", GTstring.c_str());
+			//			printf("Wrote %s \n", GTstring.c_str());
 			writer.writeRecord(record_template);
 		}
 
@@ -1269,7 +1512,7 @@ HaplotypePair HaplotypePhaserSym::PrintHaplotypesToFile(int * ml_states, const c
 	std::size_t delim = marker_name.find(":");
 	string chrom =  marker_name.substr(0,delim);
 	int pos =  std::stoi(marker_name.substr(delim+1));
-//	printf("%s %d %s \n", chrom.c_str(), pos, (markerinfo->name).c_str());
+	//	printf("%s %d %s \n", chrom.c_str(), pos, (markerinfo->name).c_str());
 	record_template.setChrom(chrom.c_str());
 	record_template.set1BasedPosition(pos);
 	record_template.setID(marker_name.c_str());
@@ -1282,7 +1525,7 @@ HaplotypePair HaplotypePhaserSym::PrintHaplotypesToFile(int * ml_states, const c
 	string GTstring = ss.str();
 
 	int succ = record_template.getGenotypeInfo().setString("GT",0, GTstring.c_str());
-//	int succ = record_template.getGenotypeInfo().setString("GT",0, "1|1");
+	//	int succ = record_template.getGenotypeInfo().setString("GT",0, "1|1");
 
 	//	record_template.getGenotypeInfo().addStoreField("GT");
 
@@ -1290,7 +1533,7 @@ HaplotypePair HaplotypePhaserSym::PrintHaplotypesToFile(int * ml_states, const c
 		printf("ERROR IN WRITING TO VCF %s \n", GTstring.c_str());
 	}
 	else {
-//		printf("Wrote %s \n", GTstring.c_str());
+		//		printf("Wrote %s \n", GTstring.c_str());
 		writer.writeRecord(record_template);
 	}
 
@@ -1357,7 +1600,7 @@ HaplotypePair HaplotypePhaserSym::PrintHaplotypesToFile(int * ml_states, const c
 		delim = marker_name.find(":");
 		chrom =  marker_name.substr(0,delim);
 		pos =  std::stoi(marker_name.substr(delim+1));
-	//	printf("%s %d %s \n", chrom.c_str(), pos, (markerinfo->name).c_str());
+		//	printf("%s %d %s \n", chrom.c_str(), pos, (markerinfo->name).c_str());
 		record_template.setChrom(chrom.c_str());
 		record_template.set1BasedPosition(pos);
 		record_template.setID(marker_name.c_str());
@@ -1369,7 +1612,7 @@ HaplotypePair HaplotypePhaserSym::PrintHaplotypesToFile(int * ml_states, const c
 		GTstring = ss.str();
 
 		int succ = record_template.getGenotypeInfo().setString("GT",0, GTstring.c_str());
-//		int succ = record_template.getGenotypeInfo().setString("GT",0, "0|1");
+		//		int succ = record_template.getGenotypeInfo().setString("GT",0, "0|1");
 
 		if (succ == 0 && m==1) {
 			printf("ERROR IN WRITING TO VCF %s %d \n", GTstring.c_str(), haplotypes(ref_hap2,m));
@@ -1488,7 +1731,7 @@ void HaplotypePhaserSym::PrintReferenceHaplotypes(int * ml_states, const char * 
 
 	fclose(hapout);
 
-//	return refs;
+	//	return refs;
 	//	Print to file
 }
 
