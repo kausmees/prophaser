@@ -151,7 +151,10 @@ int main(int argc, char ** argv){
 //	return 0;
 
 	phaser.LoadData(ref_file.c_str(), sample_file.c_str(), 0, map_file.c_str());
-//	cout << "Haplotypes:\n" << phaser.haplotypes << endl;
+
+	cout << "Haplotypes:\n" << phaser.haplotypes.block(0,0,22,10) << endl;
+
+
 
 	chrono::steady_clock::time_point begin1;
 	chrono::steady_clock::time_point begin;

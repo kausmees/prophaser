@@ -913,10 +913,6 @@ vector<vector<double>>  HaplotypePhaserSym::GetPosteriorStats(const char * filen
 			// 00, 01, 10, 11
 			int hapcode1 = haplotypes(ref_hap1,m);
 			int hapcode2 = haplotypes(ref_hap2,m);
-			if(hapcode1 == 1 || hapcode2 == 1) {
-				printf("HAPCODE 0 at %d \n", m);
-			};
-
 
 			int geno_code;
 
@@ -926,7 +922,6 @@ vector<vector<double>>  HaplotypePhaserSym::GetPosteriorStats(const char * filen
 			else {
 				geno_code = (hapcode1 == 0) ? 0 : 2;
 			}
-
 			geno_probs[m][geno_code] += posteriors[s];
 
 		}

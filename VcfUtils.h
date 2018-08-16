@@ -31,7 +31,7 @@ extern std::vector<int> unphased_marker_subset;
 void LoadReferenceMarkers(const String &file_name);
 void LoadIndividuals(Pedigree &ped, const String &ref_file, const String & sample_file, int sample_id);
 void LoadHaplotypes(const String &file_name, const Pedigree &ped, char** haplotypes);
-void LoadHaplotypes(const String &file_name, const Pedigree &ped, MatrixXc haplotypes);
+void LoadHaplotypes(const String &file_name, const Pedigree &ped, MatrixXc & haplotypes );
 void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, vector<double> & genotypes, int sample_ind_file);
 int GetMarkerPos(int marker_id);
 void LoadGeneticMap(const char * file_name, const Pedigree &ped, vector<double> &thetas);
