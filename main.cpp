@@ -158,7 +158,7 @@ int main(int argc, char ** argv){
 	phaser.error = error;
 
 	// corresponds to git branch
-	string executable = "ls_h1";
+	string executable = "ls_x3";
 
 
 	string sample_file=string(dir) + string(subset_id)+"/" + string(data_id) +"_" + string(subset_id) + "_" + string(individual) + par+ string(filetype) +".vcf.gz";
@@ -238,7 +238,7 @@ int main(int argc, char ** argv){
 
 
 
-
+	phaser.curr_hap = 2;
 	cout << "Starting Forward haplotype 2\n";
 	phaser.CalcScaledForward();
 	end= std::chrono::steady_clock::now();
@@ -254,20 +254,31 @@ int main(int argc, char ** argv){
 
 	vector<vector<double>> stats2 = phaser.GetPosteriorStats((result_file+"_stats_h2").c_str());
 	cout << "Done Stats \n";
-	for (int i = 0; i < phaser.num_markers; i++) {
-		phaser.ml_states_h2[i] = stats2[i][39];
-	}
 	cout << "Done ml states h2 \n";
 
-	HaplotypePair mine_genos = phaser.PrintGenotypesToFile(stats2, (result_file+"_genos").c_str(), sample_file.c_str());
+
+
+	phaser.curr_hap = 1;
+	cout << "Starting Forward haplotype 1 again\n";
+	phaser.CalcScaledForward();
+	end= std::chrono::steady_clock::now();
+	cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
+	begin = chrono::steady_clock::now();
+	cout << "Starting Backward haplotype 1 again \n";
+	phaser.CalcScaledBackward();
+
+	end= std::chrono::steady_clock::now();
+	cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
+	begin = chrono::steady_clock::now();
+	cout << "Starting Stats haplotype 1 again\n";
+
+	vector<vector<double>> stats3 = phaser.GetPosteriorStats((result_file+"_stats_h3").c_str());
+	cout << "Done Stats \n";
+	cout << "Done ml states h1 again \n";
+
+
+	HaplotypePair mine_genos = phaser.PrintGenotypesToFile(stats3, (result_file+"_genos").c_str(), sample_file.c_str());
 	HaplotypePair mine_haps1 = phaser.PrintHaplotypesToFile(result_file.c_str(), sample_file.c_str());
-
-	//	if(!mine_haps1.isEqual(mine_haps_byref)){
-	//		printf("Haps not equal \n");
-	//	}
-
-
-
 
 
 	end= std::chrono::steady_clock::now();
