@@ -128,6 +128,7 @@ public:
 
 //	char ** haplotypes;
 
+	int prob_precision = 6;
 
 	MatrixXc haplotypes;
 
@@ -145,8 +146,10 @@ public:
 	std::vector<double> distances;
 
 	int distance_code;
+
+	// Number of reference haplotypes that will be considered when handling one sample
+	// The num_haps first haplotypes in the matrix haplotypes will be used.
 	int num_haps;
-	vector<ChromosomePair> states;
 
 	MatrixXd L;
 	VectorXd u;
@@ -187,6 +190,12 @@ public:
 	double ** s_forward;
 	double * normalizers;
 
+	int * ml_states_h1;
+	int * ml_states_h2;
+
+	int * ml_alleles_h1;
+	int * ml_alleles_h2;
+
 
 	//	double ** s_backward2;
 	//	double ** s_forward2;
@@ -209,6 +218,7 @@ public:
 //	void CalcCases();
 
 	void InitPriorScaledForward();
+	void InitPriorScaledForwardMarginalized();
 	void InitPriorScaledBackward();
 	void CalcScaledForward();
 	void CalcScaledForwardMarginalized();
@@ -220,8 +230,10 @@ public:
 	vector<vector<double>>  ReadPosteriorStats(const char * filename);
 
 	HaplotypePair PrintGenotypesToFile(vector<vector<double>> & stats, const char * out_file, const char * sample_file);
-	HaplotypePair PrintHaplotypesToFile(int * states, const char * out_file,  const char * sample_file);
+	HaplotypePair PrintHaplotypesToFile(const char * out_file,  const char * sample_file);
 	void PrintReferenceHaplotypes(int * ml_states, const char * out_file);
+	void PrintReferenceHaplotypesMarginalized(const char * out_file);
+
 };
 
 
