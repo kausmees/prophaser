@@ -429,10 +429,10 @@ void HaplotypePhaserSym::InitPriorScaledForward(){
 	CalcEmissionProbs(0, emission_probs);
 
 
-		printf("Emission probs[0] h2: \n");
-		for(int s = 0; s < num_states; s++){
-			printf("%e \n", emission_probs[s]);
-		};
+//		printf("Emission probs[0] h2: \n");
+//		for(int s = 0; s < num_states; s++){
+//			printf("%e \n", emission_probs[s]);
+//		};
 
 
 	for(int s = 0; s < num_states; s++){
@@ -521,12 +521,12 @@ void HaplotypePhaserSym::CalcScaledForward(){
 	for(int m = 1; m < num_markers; m++){
 		CalcEmissionProbs(m, emission_probs);
 
-		if(m==3) {
-			printf("Emission probs[3] h2: \n");
-			for(int s = 0; s < num_states; s++){
-				printf("%e \n", emission_probs[s]);
-			};
-		};
+//		if(m==3) {
+//			printf("Emission probs[3] h2: \n");
+//			for(int s = 0; s < num_states; s++){
+//				printf("%e \n", emission_probs[s]);
+//			};
+//		};
 
 		c = 0.0;
 
@@ -758,11 +758,7 @@ void HaplotypePhaserSym::CalcScaledBackward(){
 		// no switch
 		case_probs[2] = pow(c2, 2) + (2*c2*c1) + pow(c1, 2);
 
-
-
 		CalcEmissionProbs(m+1, emission_probs);
-
-
 
 
 #pragma omp parallel for
@@ -781,14 +777,11 @@ void HaplotypePhaserSym::CalcScaledBackward(){
 
 				int chrom_case = ChromosomePair(ml_states_other[m],s).NumEquals2(ChromosomePair(ml_states_other[m+1],j));
 
-
 				sum +=  s_backward[m+1][j]* case_probs[chrom_case] * emission_probs[j];
-
 
 			}
 
 			s_backward[m][s] = sum * normalizers[m];
-
 
 		}
 	}
@@ -960,21 +953,23 @@ vector<vector<double>>  HaplotypePhaserSym::GetPosteriorStats(const char * filen
 	int * ml_alleles_other;
 	int * ml_alleles_this;
 	int * ml_states_this;
+	int * ml_states_other;
 
 
 	if (curr_hap == 2) {
 		ml_alleles_other = ml_alleles_h1;
-
 		ml_alleles_this = ml_alleles_h2;
+
+		ml_states_other = ml_states_h1;
 		ml_states_this = ml_states_h2;
 
 	}
 	if (curr_hap == 1) {
 		ml_alleles_other = ml_alleles_h2;
-
 		ml_alleles_this = ml_alleles_h1;
-		ml_states_this = ml_states_h1;
 
+		ml_states_other = ml_states_h2;
+		ml_states_this = ml_states_h1;
 	}
 
 
@@ -1019,25 +1014,32 @@ vector<vector<double>>  HaplotypePhaserSym::GetPosteriorStats(const char * filen
 			//			cout << "Wtf3 " <<  posteriors[s] << " " <<  s_forward[m][s] << " " << s_backward[m][s] << "\n";
 
 			//////////genotype probability - retrieve which genotype this pair of ref haps implies /////////////////
-			int ref_hap2 = s;
+
+			int ref_hap_this = s;
 
 			// AGCT allele
 			//			String allele1 = Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap1][m]+1);
 			//			String allele2 = Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap2][m]+1);
 
 			// 00, 01, 10, 11
-			int hapcode1 = ml_alleles_other[m];
-			int hapcode2 = haplotypes(ref_hap2,m);
 
-			allele_probs[m][hapcode2] += posteriors[s];
+
+			// use ml allele for genos
+			int hapcode_other = ml_alleles_other[m];
+
+			// use ml state for genos
+//			int hapcode_other = haplotypes(ml_states_other[m],m);
+			int hapcode_this = haplotypes(ref_hap_this,m);
+
+			allele_probs[m][hapcode_this] += posteriors[s];
 
 			int geno_code;
 
-			if(hapcode1 != hapcode2) {
+			if(hapcode_other != hapcode_this) {
 				geno_code = 1;
 			}
 			else {
-				geno_code = (hapcode1 == 0) ? 0 : 2;
+				geno_code = (hapcode_other == 0) ? 0 : 2;
 			}
 			geno_probs[m][geno_code] += posteriors[s];
 
@@ -1048,19 +1050,19 @@ vector<vector<double>>  HaplotypePhaserSym::GetPosteriorStats(const char * filen
 			check_sum += geno_probs[m][i];
 		}
 
-		if(abs(check_sum - 1.0) > 0.000000001 ) {
-			printf("!!!!!!!!!!!!!!!!!!!!!!!!!Sum of all geno probs is %f at marker %d !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1\n ", check_sum, m);
-		}
+//		if(abs(check_sum - 1.0) > 0.000000001 ) {
+//			printf("!!!!!!!!!!!!!!!!!!!!!!!!!Sum of all geno probs is %f at marker %d !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1\n ", check_sum, m);
+//		}
 
 
 		vector<size_t> res = sort_indexes(posteriors);
 
-		if(m==1 || m==28007 || m==28008 ) {
-			printf("posteriors at %d: \n", m);
-			for (int i = 0; i < num_states; i++) {
-				printf("%d : %f \n", res[i], posteriors[res[i]]);
-			}
-		}
+//		if(m==1 || m==28007 || m==28008 ) {
+//			printf("posteriors at %d: \n", m);
+//			for (int i = 0; i < num_states; i++) {
+//				printf("%d : %f \n", res[i], posteriors[res[i]]);
+//			}
+//		}
 
 		//add lowest elements to stats[m]
 		for(int i = 0; i < 10; i++) {
@@ -1081,14 +1083,14 @@ vector<vector<double>>  HaplotypePhaserSym::GetPosteriorStats(const char * filen
 		stats[m][42] = geno_probs[m][1];
 		stats[m][43] = geno_probs[m][2];
 
-		if(stats[m][41] > stats[m][42]) {
+		if(allele_probs[m][0] >= allele_probs[m][1]) {
 			ml_alleles_this[m] = 0;
 		}
 		else {
 			ml_alleles_this[m] = 1;
 		}
-
 	}
+
 
 
 	for (int i = 0; i < num_markers; i++) {
@@ -1335,6 +1337,8 @@ HaplotypePair HaplotypePhaserSym::PrintGenotypesToFile(vector<vector<double>> & 
 
 
 	}
+	printf("WROTE GENOS TO VCF \n");
+
 	writer.close();
 	HaplotypePair hp(h1,h2);
 	hp.printToFile(out_file);

@@ -128,7 +128,7 @@ public:
 
 //	char ** haplotypes;
 
-	int prob_precision = 6;
+	int prob_precision = 10;
 	int curr_hap;
 	MatrixXc haplotypes;
 
