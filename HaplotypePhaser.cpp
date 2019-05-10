@@ -65,7 +65,7 @@ void HaplotypePhaser::setDistanceCode(int c) {
  */
 void HaplotypePhaser::LoadData(const String &ref_file, const String &sample_file, int sample_index, const String &map_file){
 	VcfUtils::LoadReferenceMarkers(ref_file);
-	VcfUtils::LoadIndividuals(ped, ref_file, sample_file, sample_index);
+//	VcfUtils::LoadIndividuals(ped, ref_file, sample_file, sample_index);
 	AllocateMemory();
 	VcfUtils::LoadHaplotypes(ref_file, ped, haplotypes);
 	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls, sample_index);
@@ -78,7 +78,7 @@ void HaplotypePhaser::LoadData(const String &ref_file, const String &sample_file
  */
 void HaplotypePhaser::LoadReferenceData(const String &ref_file, const String &sample_file, int sample_index){
 	VcfUtils::LoadReferenceMarkers(ref_file);
-	VcfUtils::LoadIndividuals(ped,ref_file, sample_file, sample_index);
+//	VcfUtils::LoadIndividuals(ped,ref_file, sample_file, sample_index);
 	AllocateMemory();
 	VcfUtils::LoadHaplotypes(ref_file, ped, haplotypes);
 };

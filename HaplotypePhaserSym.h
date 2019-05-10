@@ -8,6 +8,9 @@
 #include <algorithm>
 #include <Eigen/Dense>
 #include <math.h>
+//#include <sys/stat.h>
+//#include <iostream>
+//#include <fstream>
 
 
 using Eigen::MatrixXd;
@@ -133,7 +136,7 @@ public:
 	MatrixXc haplotypes;
 
 //	MatrixXi haplotypes;
-	// vector of count of reference allele in reference for every marker
+	// vector of count of alt allele in reference for every marker
 	VectorXi allele_counts;
 
 	//	char ** genotypes;
@@ -160,6 +163,7 @@ public:
 	double p0;
 	double p1;
 
+	MatrixXd all_posteriors;
 
 
 //	MatrixXi pdf_cases;
@@ -171,8 +175,8 @@ public:
 
 	~HaplotypePhaserSym();
 	void LoadData(const String &ref_file, const String &sample_file, int sample_index, const String &map_file);
-	void LoadReferenceData(const String &ref_file, const String &sample_file, int sample_index);
-	void LoadSampleData(const String &ref_file, const String &sample_file, int sample_index);
+	void LoadReferenceData(const String &ref_file);
+	void LoadSampleData(const String &sample_file, int sample_index);
 	void setDistanceCode(int c);
 
 
@@ -212,6 +216,8 @@ public:
 	void CalcEmissionProbs(int marker, double * probs);
 	void CalcMarginalStateProbs(int marker);
 	void CalcEmissionProbsMarginalized(int marker, double * probs);
+	void CalcEmissionProbsIntegrated(int marker, double * probs);
+	void CalcEmissionProbsMla(int marker, double * probs);
 
 
 
@@ -220,17 +226,31 @@ public:
 	void InitPriorScaledForward();
 	void InitPriorScaledForwardMarginalized();
 	void InitPriorScaledBackward();
+
 	void CalcScaledForward();
+	void CalcScaledForwardSeparate();
+	void CalcScaledForwardIntegrated();
+
+
+
 	void CalcScaledForwardMarginalized();
+
+	void CalcScaledBackwardSeparate();
+	void CalcScaledBackwardIntegrated();
+
 	void CalcScaledBackward();
 	void CalcScaledBackwardMarginalized();
 	void GetMLHaplotypes(int * ml_states);
 	vector<vector<double>> GetPosteriorStats(const char * filename);
+	vector<vector<double>> GetPosteriorStatsSpecial(const char * filename);
 	vector<vector<double>> GetPosteriorStatsMarginalized(const char * filename);
 	vector<vector<double>>  ReadPosteriorStats(const char * filename);
 
 	HaplotypePair PrintGenotypesToFile(vector<vector<double>> & stats, const char * out_file, const char * sample_file);
+	void PrintGenotypesToVCF(vector<vector<int>> & ml_genotypes, const char * out_file, const char * sample_file);
+
 	HaplotypePair PrintHaplotypesToFile(const char * out_file,  const char * sample_file);
+
 	void PrintReferenceHaplotypes(int * ml_states, const char * out_file);
 	void PrintReferenceHaplotypesMarginalized(const char * out_file);
 

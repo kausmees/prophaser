@@ -29,7 +29,10 @@ extern std::vector<int> unphased_marker_subset;
 
 
 void LoadReferenceMarkers(const String &file_name);
-void LoadIndividuals(Pedigree &ped, const String &ref_file, const String & sample_file, int sample_id);
+void LoadReferenceIndividuals(Pedigree &ped, const String &ref_file);
+void LoadSampleIndividual(Pedigree &ped, const String & sample_file, int sample_id);
+
+
 void LoadHaplotypes(const String &file_name, const Pedigree &ped, char** haplotypes);
 void LoadHaplotypes(const String &file_name, const Pedigree &ped, MatrixXc & haplotypes );
 void FillSampleHaplotypes(const Pedigree &ped, MatrixXc & haplotypes, int index);

@@ -41,6 +41,7 @@ void LoadReferenceMarkers(const String &file_name){
 		// or large to cause buffer overflow issues?
 		//sprintf(marker_id, "%s:%d",record.getChromStr(), record.get1BasedPosition());
 
+
 		if(!record.allPhased()) {
 			//TODO throw error.
 			printf("ERROR: NOT ALL PHASED!\n");
@@ -67,6 +68,9 @@ void LoadReferenceMarkers(const String &file_name){
 			//printf("ref str = %s  num = %d \n", ref_base.c_str(), ref);
 			//printf("alt str = %s  num = %d \n", alt_base.c_str(), alt);
 		}
+//		else{
+//			printf("Excluding marker: %s \n ", marker_name);
+//		}
 	}
 	unphased_marker_subset.resize(Pedigree::markerCount,0);
 	reader.close();
@@ -74,11 +78,9 @@ void LoadReferenceMarkers(const String &file_name){
 
 /**
  * Add individuals from ref_file to the pedigree ped.
- * Also individual sample_index from sample_file.
  *
- * TODO possibly no need to have individuals in pedigree.
  */
-void LoadIndividuals(Pedigree &ped, const String &ref_file, const String &sample_file, int sample_index) {
+void LoadReferenceIndividuals(Pedigree &ped, const String &ref_file) {
 
 	VcfFileReader reader;
 	VcfHeader header;
@@ -97,13 +99,28 @@ void LoadIndividuals(Pedigree &ped, const String &ref_file, const String &sample
 	}
 
 	reader.close();
-	//	printf("Num reference inds in ped: %d \n", ped.count);
+
+};
+
+
+
+/**
+ * Add individual sample_index from sample_file to pedigree.
+ *
+ */
+void LoadSampleIndividual(Pedigree &ped, const String &sample_file, int sample_index) {
+
+	VcfFileReader reader;
+	VcfHeader header;
 
 	reader.open(sample_file, header);
+
 	ped.AddPerson(header.getSampleName(sample_index), header.getSampleName(sample_index), "0", "0", 0, 1);
+
 	reader.close();
 
 };
+
 
 
 /**
@@ -326,9 +343,31 @@ void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, vecto
 			//			genotypes[sample_index_ped][marker_id*3+2] = pl_11;
 
 			vector<double> gls = get_GL(header, record, sample_index_file);
+
+			// OBS GL SHOULD BE log10(likelihood, so thould be this)
 			sample_gls[marker_id*3] = pow(10,gls[0]);
 			sample_gls[marker_id*3+1] = pow(10,gls[1]);
 			sample_gls[marker_id*3+2] = pow(10,gls[2]);
+
+
+
+
+//			// TEMPORARY FOR CAMILLE DATA
+//			if(gls[0] == 0.0) {
+//				gls[0] = 0.00000001;
+//			}
+//			if(gls[1] == 0.0) {
+//				gls[1] = 0.00000001;
+//			}
+//			if(gls[2] == 0.0) {
+//				gls[2] = 0.00000001;
+//			}
+//			// Non-logged GLs in sample file
+//			sample_gls[marker_id*3] = gls[0];
+//			sample_gls[marker_id*3+1] = gls[1];
+//			sample_gls[marker_id*3+2] = gls[2];
+
+
 
 			unphased_marker_subset[marker_id] = 1;
 			num_common_markers += 1;
@@ -384,7 +423,6 @@ void LoadGeneticMap(const char *file_name, const Pedigree &ped, vector<double> &
 			//			distances[i] = (dist - prev_dist > 0.00000001) ? (dist - prev_dist) * 5 : 0.01;
 			distances[i] = (dist - prev_dist > 0.0000000000001) ? (dist - prev_dist) : 0.01;
 			prev_dist = dist;
-
 		}
 		else{
 			distances[i] = distances[i-1];
