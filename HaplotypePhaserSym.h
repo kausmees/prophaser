@@ -148,6 +148,8 @@ public:
 
 	std::vector<double> distances;
 
+	vector<ChromosomePair> states;
+
 	int distance_code;
 
 	// Number of reference haplotypes that will be considered when handling one sample

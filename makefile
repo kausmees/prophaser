@@ -13,7 +13,7 @@ LFLAGS = -static -static-libgcc -static-libstdc++ -fopenmp -g -o
 
 SOURCES=$(wildcard *.cpp)
 OBJECTS=$(SOURCES:.cpp=.o)
-TARGET=phase_ls_st_omla_mls_static
+TARGET=phase_multi_sample
 
 all: $(TARGET)
 

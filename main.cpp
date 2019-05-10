@@ -207,16 +207,16 @@ int main(int argc, char ** argv){
 	// n_samples x n_markers array of most likely genotypes
 	vector<vector<int>> ml_genotypes;
 
-//	ml_genotypes.push_back({});
-//	ml_genotypes.push_back({});
-//	ml_genotypes[0].push_back(0);
-//	ml_genotypes[0].push_back(1);
-//	ml_genotypes[0].push_back(2);
-//	ml_genotypes[1].push_back(0);
-//	ml_genotypes[1].push_back(1);
-//	ml_genotypes[1].push_back(2);
-//	phaser.PrintGenotypesToVCF(ml_genotypes, result_file.c_str(), sample_file.c_str());
-//	return 0;
+	//	ml_genotypes.push_back({});
+	//	ml_genotypes.push_back({});
+	//	ml_genotypes[0].push_back(0);
+	//	ml_genotypes[0].push_back(1);
+	//	ml_genotypes[0].push_back(2);
+	//	ml_genotypes[1].push_back(0);
+	//	ml_genotypes[1].push_back(1);
+	//	ml_genotypes[1].push_back(2);
+	//	phaser.PrintGenotypesToVCF(ml_genotypes, result_file.c_str(), sample_file.c_str());
+	//	return 0;
 
 	chrono::steady_clock::time_point begin1;
 	chrono::steady_clock::time_point begin;
@@ -248,292 +248,50 @@ int main(int argc, char ** argv){
 		}
 		begin = chrono::steady_clock::now();
 		cout << "Starting Forward haplotype 1\n";
-		phaser.CalcScaledForwardMarginalized();
-
-		//	phaser.CalcScaledForward();
-		end= std::chrono::steady_clock::now();
-		cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
-		begin = chrono::steady_clock::now();
-		cout << "Starting Backward haplotype 1 \n";
-		//	phaser.CalcScaledBackward();
-		phaser.CalcScaledBackwardMarginalized();
+		phaser.CalcScaledForward();
 
 		end= std::chrono::steady_clock::now();
 		cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
 		begin = chrono::steady_clock::now();
-		cout << "Starting Stats haplotype 1\n";
+		cout << "Starting Backward\n";
+		phaser.CalcScaledBackward();
 
-		vector<vector<double>> stats = phaser.GetPosteriorStatsMarginalized((result_file+"_stats_h1").c_str());
+		end= std::chrono::steady_clock::now();
+		cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
+		begin = chrono::steady_clock::now();
+		cout << "Starting Stats \n";
+
+		vector<vector<double>> stats = phaser.GetPosteriorStats((result_file+"_stats").c_str());
 		cout << "Done Stats \n";
-
-		for (int i = 0; i < phaser.num_markers; i++) {
-			phaser.ml_states_h1[i] = stats[i][39];
-			if(stats[i][41] >= stats[i][42]) {
-				phaser.ml_alleles_h1[i] = 0;
-			}
-			else {
-				phaser.ml_alleles_h1[i] = 1;
-			}
-		}
-
-		cout << "Done ml states h1 \n";
-
-		//	FILE * mout = fopen((result_file+"_mlstates").c_str(), "w");
-		//	for(int i = 0; i<phaser.num_markers; sample++) {
-		//		fprintf(mout,"%d\n", ml_states[sample]);
-		//	}
-
-//		phaser.PrintReferenceHaplotypesMarginalized((result_file+"_ref_haps").c_str());
-
-
-		vector<vector<double>> stats2;
-
-
-
-		// lsmls_mla
-		//	for (int n = 1; n < niter; n++) {
-		//		cout << "Starting iteration " << n << "\n";
-		//
-		//		int hap = (n % 2) + 1;
-		//
-		//		phaser.curr_hap = hap;
-		//		cout << "Starting Forward haplotype " << hap << "\n";
-		//		phaser.CalcScaledForward();
-		//		end= std::chrono::steady_clock::now();
-		//		cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
-		//		begin = chrono::steady_clock::now();
-		//		cout << "Starting Backward haplotype " << hap << "\n";
-		//		phaser.CalcScaledBackward();
-		//
-		//		end= std::chrono::steady_clock::now();
-		//		cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
-		//		begin = chrono::steady_clock::now();
-		//		cout << "Starting Stats haplotype" << hap << "\n";
-		//
-		//		if(n==1) {
-		//			stats2 = phaser.GetPosteriorStatsSpecial((result_file+"_stats_h2").c_str());
-		//		}
-		//		else{
-		//			stats2 = phaser.GetPosteriorStats((result_file+"_stats_h2").c_str());
-		//
-		//		}
-		//
-		//		cout << "Done Stats \n";
-		//		cout << "Done ml states h2 \n";
-		//
-		//	};
-
-
-		//	// ls_st_mlsmla
-		//	for (int n = 1; n < niter; n++) {
-		//		cout << "Starting iteration " << n << "\n";
-		//
-		//		int hap = (n % 2) + 1;
-		//
-		//		phaser.curr_hap = hap;
-		//		cout << "Starting Forward haplotype " << hap << "\n";
-		//		phaser.CalcScaledForwardSeparate();
-		//		end= std::chrono::steady_clock::now();
-		//		cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
-		//		begin = chrono::steady_clock::now();
-		//		cout << "Starting Backward haplotype " << hap << "\n";
-		//		phaser.CalcScaledBackwardSeparate();
-		//
-		//		end= std::chrono::steady_clock::now();
-		//		cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
-		//		begin = chrono::steady_clock::now();
-		//		cout << "Starting Stats haplotype" << hap << "\n";
-		//
-		//		if(n==1) {
-		//			stats2 = phaser.GetPosteriorStatsSpecial((result_file+"_stats_h2").c_str());
-		//		}
-		//		else{
-		//			stats2 = phaser.GetPosteriorStats((result_file+"_stats_h2").c_str());
-		//
-		//		}
-		//
-		//		cout << "Done Stats \n";
-		//		cout << "Done ml states h2 \n";
-		//
-		//	};
-
-		//	// ls_st_mls
-		//	for (int n = 1; n < niter; n++) {
-		//		cout << "Starting iteration " << n << "\n";
-		//
-		//		int hap = (n % 2) + 1;
-		//
-		//		phaser.curr_hap = hap;
-		//		cout << "Starting Forward haplotype " << hap << "\n";
-		//		phaser.CalcScaledForwardSeparate();
-		//		end= std::chrono::steady_clock::now();
-		//		cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
-		//		begin = chrono::steady_clock::now();
-		//		cout << "Starting Backward haplotype " << hap << "\n";
-		//		phaser.CalcScaledBackwardSeparate();
-		//
-		//		end= std::chrono::steady_clock::now();
-		//		cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
-		//		begin = chrono::steady_clock::now();
-		//		cout << "Starting Stats haplotype" << hap << "\n";
-		//
-		//		stats2 = phaser.GetPosteriorStatsSpecial((result_file+"_stats_h2").c_str());
-		//
-		//		cout << "Done Stats \n";
-		//		cout << "Done ml states h2 \n";
-		//
-		//	};
-
-
-
-		// ls_st_mla
-		//	for (int n = 1; n < niter; n++) {
-		//		cout << "Starting iteration " << n << "\n";
-		//
-		//		int hap = (n % 2) + 1;
-		//
-		//		phaser.curr_hap = hap;
-		//		cout << "Starting Forward haplotype " << hap << "\n";
-		//		phaser.CalcScaledForwardSeparate();
-		//		end= std::chrono::steady_clock::now();
-		//		cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
-		//		begin = chrono::steady_clock::now();
-		//		cout << "Starting Backward haplotype " << hap << "\n";
-		//		phaser.CalcScaledBackwardSeparate();
-		//
-		//		end= std::chrono::steady_clock::now();
-		//		cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
-		//		begin = chrono::steady_clock::now();
-		//		cout << "Starting Stats haplotype" << hap << "\n";
-		//
-		//		stats2 = phaser.GetPosteriorStats((result_file+"_stats_h2").c_str());
-		//
-		//		cout << "Done Stats \n";
-		//		cout << "Done ml states h2 \n";
-		//
-		//	};
-
-
-
-		//	// ls_stm1_mls
-		//		for (int n = 1; n < niter; n++) {
-		//			cout << "Starting iteration " << n << "\n";
-		//
-		//			int hap = (n % 2) + 1;
-		//
-		//			phaser.curr_hap = hap;
-		//			cout << "Starting Forward haplotype " << hap << "\n";
-		//			phaser.CalcScaledForwardIntegrated();
-		//			end= std::chrono::steady_clock::now();
-		//			cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
-		//			begin = chrono::steady_clock::now();
-		//			cout << "Starting Backward haplotype " << hap << "\n";
-		//			phaser.CalcScaledBackwardIntegrated();
-		//
-		//			end= std::chrono::steady_clock::now();
-		//			cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
-		//			begin = chrono::steady_clock::now();
-		//			cout << "Starting Stats haplotype" << hap << "\n";
-		//
-		//			stats2 = phaser.GetPosteriorStatsSpecial((result_file+"_stats_h2").c_str());
-		//			cout << "Done Stats \n";
-		//			cout << "Done ml states h2 \n";
-		//
-		//		};
-
-
-
-		//	// ls_st_om_mls
-		for (int n = 1; n < niter; n++) {
-			cout << "Starting iteration " << n << "\n";
-
-			int hap = (n % 2) + 1;
-
-			phaser.curr_hap = hap;
-			cout << "Starting Forward haplotype " << hap << "\n";
-			phaser.CalcScaledForwardSeparate();
-			end= std::chrono::steady_clock::now();
-			cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
-			begin = chrono::steady_clock::now();
-			cout << "Starting Backward haplotype " << hap << "\n";
-			phaser.CalcScaledBackwardSeparate();
-
-			end= std::chrono::steady_clock::now();
-			cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
-			begin = chrono::steady_clock::now();
-			cout << "Starting Stats haplotype" << hap << "\n";
-
-			stats2 = phaser.GetPosteriorStatsSpecial((result_file+"_stats_h2").c_str());
-
-			cout << "Done Stats \n";
-			cout << "Done ml states h2 \n";
-
-		};
 
 		// push back a vector for this sample
 		ml_genotypes.push_back({});
 
 		for(int m = 0; m < phaser.num_markers; m++) {
-
 			float max_geno_prob = 0.0;
 			int max_geno_code;
 			for(int i = 0; i < 3; i++) {
-				if(stats2[m][41+i] > max_geno_prob) {
+				if(stats[m][41+i] > max_geno_prob) {
 					max_geno_prob = stats[m][41+i];
 					max_geno_code = i;
 				};
 			};
-			//			printf("Max geno code: %d \n ", max_geno_code);
+			if(sample==0) {
+				printf("Marker: %d Max geno code: %d \n ", m, max_geno_code);
+			}
 			ml_genotypes[sample].push_back(max_geno_code);
 
 		};
 
-
-		// This was when there was only 1 sample
-		//		HaplotypePair mine_genos = phaser.PrintGenotypesToFile(stats2, (result_file+"_genos").c_str(), s_file.c_str());
-		//		HaplotypePair mine_haps1 = phaser.PrintHaplotypesToFile(result_file.c_str(), s_file.c_str());
 
 		end = std::chrono::steady_clock::now();
 		cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
 
 	};
 
-
-//	printf("ml genos size: %d %d \n ", ml_genotypes.size(), ml_genotypes[0].size());
-//
-//
-//	for (int s = 0; s < ml_genotypes.size() ; s++) {
-//		for (int m = 0; m < 4 ; m++) {
-//			printf("sample: %d  marker: %d geno: %d \n" , s, m, ml_genotypes[s][m]);
-//		}
-//
-//	}
 	printf("wtf \n");
 	phaser.PrintGenotypesToVCF(ml_genotypes, result_file.c_str(), sample_file.c_str());
 
-
-	//
-	//	phaser.curr_hap = 1;
-	//	cout << "Starting Forward haplotype 1 again\n";
-	//	phaser.CalcScaledForward();
-	//	end= std::chrono::steady_clock::now();
-	//	cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
-	//	begin = chrono::steady_clock::now();
-	//	cout << "Starting Backward haplotype 1 again \n";
-	//	phaser.CalcScaledBackward();
-	//
-	//		end= std::chrono::steady_clock::now();
-	//	cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
-	//	begin = chrono::steady_clock::now();
-	//	cout << "Starting Stats haplotype 1 again\n";
-	//
-	//	vector<vector<double>> stats3 = phaser.GetPosteriorStats((result_file+"_stats_h3").c_str());
-	//	cout << "Done Stats \n";
-	//	cout << "Done ml states h1 again \n";
-	//
-	//
-	//	HaplotypePair mine_genos = phaser.PrintGenotypesToFile(stats3, (result_file+"_genos").c_str(), sample_file.c_str());
-	//	HaplotypePair mine_haps1 = phaser.PrintHaplotypesToFile(result_file.c_str(), sample_file.c_str());
 
 	end = std::chrono::steady_clock::now();
 	cout << "Total: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin1).count() << " millisec" <<endl<<endl<<endl;

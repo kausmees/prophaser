@@ -27,11 +27,13 @@ void HaplotypePhaserSym::AllocateMemory(){
 	// The num_haps first haplotypes in the matrix haplotypes will be used.
 	num_haps = (ped.count-1)*2;
 
-	num_states = num_haps;
+	num_states = ((num_haps)*(num_haps+1)) / 2;
 
-	//	num_states = ((num_haps)*(num_haps+1)) / 2;
-
-
+	for(int i = 0; i < num_haps; i++) {
+		for(int j = i; j < num_haps; j++) {
+			states.push_back(ChromosomePair(i,j));
+		}
+	}
 
 
 	num_markers = Pedigree::markerCount;
