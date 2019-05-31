@@ -44,7 +44,7 @@ void LoadReferenceMarkers(const String &file_name){
 
 		if(!record.allPhased()) {
 			//TODO throw error.
-			printf("ERROR: NOT ALL PHASED!\n");
+			printf("ERROR: NOT ALL PHASED!  at %s \n", marker_name);
 			printf("all phased = %d \n", record.allPhased());
 			printf("all genotypes = %d \n", record.hasAllGenotypeAlleles());
 		}
@@ -345,27 +345,27 @@ void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, vecto
 			vector<double> gls = get_GL(header, record, sample_index_file);
 
 			// OBS GL SHOULD BE log10(likelihood, so thould be this)
-//			sample_gls[marker_id*3] = pow(10,gls[0]);
-//			sample_gls[marker_id*3+1] = pow(10,gls[1]);
-//			sample_gls[marker_id*3+2] = pow(10,gls[2]);
+			sample_gls[marker_id*3] = pow(10,gls[0]);
+			sample_gls[marker_id*3+1] = pow(10,gls[1]);
+			sample_gls[marker_id*3+2] = pow(10,gls[2]);
 //
 
 
 
-			// TEMPORARY FOR CAMILLE DATA
-			if(gls[0] == 0.0) {
-				gls[0] = 0.00000001;
-			}
-			if(gls[1] == 0.0) {
-				gls[1] = 0.00000001;
-			}
-			if(gls[2] == 0.0) {
-				gls[2] = 0.00000001;
-			}
-			// Non-logged GLs in sample file
-			sample_gls[marker_id*3] = gls[0];
-			sample_gls[marker_id*3+1] = gls[1];
-			sample_gls[marker_id*3+2] = gls[2];
+//			// TEMPORARY FOR CAMILLE DATA
+//			if(gls[0] == 0.0) {
+//				gls[0] = 0.00000001;
+//			}
+//			if(gls[1] == 0.0) {
+//				gls[1] = 0.00000001;
+//			}
+//			if(gls[2] == 0.0) {
+//				gls[2] = 0.00000001;
+//			}
+//			// Non-logged GLs in sample file
+//			sample_gls[marker_id*3] = gls[0];
+//			sample_gls[marker_id*3+1] = gls[1];
+//			sample_gls[marker_id*3+2] = gls[2];
 
 
 

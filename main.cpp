@@ -1,9 +1,9 @@
 #include <chrono>
-#include "HaplotypePhaser.h"
+//#include "HaplotypePhaser.h"
 #include "HaplotypePhaserSym.h"
 #include "Parameters.h"
 #include "Pedigree.h"
-#include "GenoUtils.h"
+//#include "GenoUtils.h"
 
 // eg ./phase --Ne 30000 --individual NA12717 --reference CEU_10 --cov 0.900000
 
@@ -15,22 +15,22 @@ int main(int argc, char ** argv){
 	String dir;
 	String res_dir;
 	String subset_id;
-	String individual;
+//	String individual;
 	String s_file;
 	String r_file;
 	String ref_set;
 	String map_file;
-	String coverage;
+//	String coverage;
 	double Ne;
 	double error;
-	double seq_error;
-	int split;
-	int niter;
+//	double seq_error;
+//	int split;
+//	int niter;
 
 	ParameterList parameter_list;
 	LongParamContainer long_parameters;
-	long_parameters.addGroup("Input files");
-	//	long_parameters.addString("directory", &dir);
+//	long_parameters.addGroup("Input files");
+	long_parameters.addString("directory", &dir);
 	long_parameters.addString("results_directory", &res_dir);
 	long_parameters.addString("sample_file", &s_file);
 	long_parameters.addString("reference_file", &r_file);
@@ -41,11 +41,8 @@ int main(int argc, char ** argv){
 	//	long_parameters.addString("cov", &coverage);
 	//	long_parameters.addDouble("seq_error", &seq_error);
 	long_parameters.addString("map", &map_file);
-	long_parameters.addGroup("Parameters");
+//	long_parameters.addGroup("Parameters");
 	long_parameters.addDouble("Ne", &Ne);
-	long_parameters.addDouble("error", &error);
-	long_parameters.addInt("split", &split);
-	long_parameters.addInt("niter", &niter);
 
 
 
@@ -55,17 +52,17 @@ int main(int argc, char ** argv){
 
 	// Defaults
 	Ne = Ne ? Ne : 11418.0;
-	seq_error = seq_error ? seq_error : 0.001;
+//	seq_error = seq_error ? seq_error : 0.001;
 	error = error ? error : 0.001;
 
 	dir = !dir.IsEmpty() ? dir : "../../Data/1KGData/vcfs/chrom20/";
 	res_dir = !res_dir.IsEmpty() ? res_dir : "./Results/";
-	map_file = !map_file.IsEmpty() ? map_file : "../../Data/1KGData/vcfs/chrom20/maps/5_snps_interpolated_HapMap2_map_20";
+	map_file = !map_file.IsEmpty() ? map_file : "/home/kristiina/Projects/Data/1KGData/vcfs/chrom20/maps/5_snps_interpolated_HapMap2_map_20";
 	subset_id = !subset_id.IsEmpty() ? subset_id : "B";
-	individual = !individual.IsEmpty() ? individual : "NA12890";
+//	individual = !individual.IsEmpty() ? individual : "NA12890";
 	ref_set = !ref_set.IsEmpty() ? ref_set : "CEU_10";
-	std::stringstream ss;
-	ss << std::fixed << std::setprecision(3) << Ne << "_" << error;
+//	std::stringstream ss;
+//	ss << std::fixed << std::setprecision(3) << Ne << "_" << error;
 
 
 
@@ -140,23 +137,23 @@ int main(int argc, char ** argv){
 
 
 	string par;
-	if(coverage.IsEmpty()) {
-		par = "";
-	}
-	else{
-		par = "_" + string(coverage.c_str()) + "_" + to_string(seq_error);
-	}
-
-	string splitstr;
-	if(!split) {
-		splitstr = "";
-	}
-	else{
-		splitstr = ".split." + to_string(split);
-	}
+//	if(coverage.IsEmpty()) {
+//		par = "";
+//	}
+//	else{
+//		par = "_" + string(coverage.c_str()) + "_" + to_string(seq_error);
+//	}
+//
+//	string splitstr;
+//	if(!split) {
+//		splitstr = "";
+//	}
+//	else{
+//		splitstr = ".split." + to_string(split);
+//	}
 
 	HaplotypePhaserSym phaser;
-	string distance_code = "sym_Ne"+ss.str();
+//	string distance_code = "sym_Ne"+ss.str();
 
 	//	HaplotypePhaser phaser;
 	//	string distance_code = "orig_Ne"+ss.str();
@@ -169,7 +166,8 @@ int main(int argc, char ** argv){
 	// corresponds to git branch
 	//	string executable = "lsmlsmla_x"+to_string(niter);
 	//	string executable = "ls_st_om_mls_x"+to_string(niter);
-	string executable = "ls_st_omla_mls_x"+to_string(niter);
+//	string executable = "ls_st_omla_mls_x"+to_string(niter);
+//	string executable = "multi_sample"+to_string(niter);
 
 
 	//	string sample_file=string(dir) + string(subset_id)+"/" + string(data_id) +"_" + string(subset_id) + "_" + string(individual) + par+ string(filetype) +".vcf.gz";
@@ -180,14 +178,14 @@ int main(int argc, char ** argv){
 	//			string(filetype)+ ".phased_"+ executable + distance_code + splitstr;
 
 
-
-	string sample_file = string(s_file);
+	string sample_file = string(dir) + string(s_file);
 	string ref_file = string(r_file);
 	string result_file = string(res_dir) + string(s_file) + ".imputed";
 
 
-	printf("Phasing file : %s \n", s_file.c_str());
-	printf("Reference file : %s \n", r_file.c_str());
+	printf("Phasing file : %s \n", sample_file.c_str());
+	printf("Reference file : %s \n", ref_file.c_str());
+	printf("Map file : %s \n", map_file.c_str());
 	printf("Writing to : %s \n", result_file.c_str());
 	//
 	printf("With: \nNe %f \n", phaser.Ne);
@@ -229,17 +227,16 @@ int main(int argc, char ** argv){
 		cout << "Starting sample " << sample << endl;
 
 		// Ugly solution to reset the pedigree
-		printf("before: %d \n ", phaser.ped.count);
 		Pedigree ped;
 		phaser.ped = ped;
-		printf("after: %d \n ", phaser.ped.count);
-
 		phaser.LoadReferenceData(r_file.c_str());
-		phaser.LoadSampleData(s_file.c_str(), sample);
+		phaser.LoadSampleData(sample_file.c_str(), map_file.c_str(), sample);
+		printf("Num inds in ped after load ref and sample: %d \n ", phaser.ped.count);
+
 
 		cout << "Haplotypes:\n" << phaser.haplotypes.block(0,0,4,10) << endl;
-		phaser.CalcAlleleCounts();
-		cout << "Allele counts:\n" << phaser.allele_counts.segment(0, 10) << endl;
+//		phaser.CalcAlleleCounts();
+//		cout << "Allele counts:\n" << phaser.allele_counts.segment(0, 10) << endl;
 
 		cout << "Sample GLs:\n" << endl;
 
@@ -276,9 +273,9 @@ int main(int argc, char ** argv){
 					max_geno_code = i;
 				};
 			};
-			if(sample==0) {
-				printf("Marker: %d Max geno code: %d \n ", m, max_geno_code);
-			}
+//			if(sample==0) {
+//				printf("Marker: %d Max geno code: %d \n ", m, max_geno_code);
+//			}
 			ml_genotypes[sample].push_back(max_geno_code);
 
 		};
