@@ -150,38 +150,16 @@ public:
 
 	vector<ChromosomePair> states;
 
-	int distance_code;
-
 	// Number of reference haplotypes that will be considered when handling one sample
 	// The num_haps first haplotypes in the matrix haplotypes will be used.
 	int num_haps;
 
-	MatrixXd L;
-	VectorXd u;
-	VectorXd x;
-
-	VectorXd coefs_p0;
-	VectorXd coefs_p1;
-	double p0;
-	double p1;
-
 	MatrixXd all_posteriors;
 
 
-//	MatrixXi pdf_cases;
-//	rowmajdyn pdf_cases_rowmaj;
-
-
-	// phred_probs[i] contains linear-scale genotype likelihood
-	float * phred_probs;
-
 	~HaplotypePhaserSym();
-	void LoadData(const String &ref_file, const String &sample_file, int sample_index, const String &map_file);
 	void LoadReferenceData(const String &ref_file, const char * map_file);
 	void LoadSampleData(const String &sample_file,  int sample_index);
-	void setDistanceCode(int c);
-
-
 
 
 	//private:
@@ -189,7 +167,6 @@ public:
 	int num_states;
 	int num_markers;
 
-	//TODO
 	int num_ref_inds;
 	int num_inds;
 
@@ -204,23 +181,11 @@ public:
 	int * ml_alleles_h2;
 
 
-	//	double ** s_backward2;
-	//	double ** s_forward2;
-	//	double * normalizers2;
-
-
 	void AllocateMemory();
-	void DeAllocateMemory();
 
-	void CalcAlleleCounts();
-
-	void CalcTransitionProbs(int marker, int marker_state, double * probs);
-	void CalcTransitionProbs(int marker, double ** probs);
 	void CalcEmissionProbs(int marker, double * probs);
 
 
-
-//	void CalcCases();
 
 	void InitPriorScaledForward();
 	void InitPriorScaledBackward();
@@ -229,13 +194,12 @@ public:
 	void CalcScaledBackward();
 	void GetMLHaplotypes(int * ml_states);
 	vector<vector<double>> GetPosteriorStats(const char * filename, bool print);
-	vector<vector<double>> GetPosteriorStatsSpecial(const char * filename);
 	vector<vector<double>>  ReadPosteriorStats(const char * filename);
 
 	HaplotypePair PrintGenotypesToFile(vector<vector<double>> & stats, const char * out_file, const char * sample_file);
 	void PrintGenotypesToVCF(vector<vector<int>> & ml_genotypes, const char * out_file, const char * sample_file, const char * vcf_template);
 
-	HaplotypePair PrintHaplotypesToFile(const char * out_file,  const char * sample_file);
+	HaplotypePair PrintHaplotypesToVCF(const char * out_file,  const char * sample_file);
 
 	void PrintReferenceHaplotypes(int * ml_states, const char * out_file);
 

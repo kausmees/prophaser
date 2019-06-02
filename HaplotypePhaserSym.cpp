@@ -9,18 +9,11 @@
 
 
 HaplotypePhaserSym::~HaplotypePhaserSym(){
-	printf("test\n");
-	//	FreeCharMatrix(haplotypes, ped.count*2);
-	//	FreeCharMatrix(genotypes, ped.count);
-	delete [] phred_probs;
 	delete [] normalizers;
 
 	FreeDoubleMatrix(s_forward, num_markers);
 	FreeDoubleMatrix(s_backward, num_markers);
-	delete &ped;
 
-	//TODO need to delete ped?
-	printf("test2\n");
 
 }
 
@@ -32,8 +25,8 @@ void HaplotypePhaserSym::AllocateMemory(){
 
 	// Number of reference inds.
 	num_ref_inds = ped.count;
+	// TODO check usage
 	num_inds = num_ref_inds +1;
-
 
 	printf("Num inds tot: %d \n", num_inds);
 
@@ -50,87 +43,26 @@ void HaplotypePhaserSym::AllocateMemory(){
 		}
 	}
 
-
-
-	//	error = 0.01;
-	//	theta = 0.01;
-
 	distances.resize(num_markers,0.01);
-	//	errors.resize(num_markers,0.01);
 
-	phred_probs = new float[256];
-
-	for(int i = 0; i < 256; i++){
-		phred_probs[i] = pow(10.0, -i * 0.1);
-	};
-
-	//	haplotypes = AllocateCharMatrix(num_inds*2, num_markers);
-	//	haplotypes = MatrixXi(num_inds*2, num_markers);
 
 	// haplotypes(h,m) = 0/1 representing allele of haplotype h at marker m
 	haplotypes = MatrixXc(num_haps+2, num_markers);
 
-	// allele_counts(m) = number of haplotypes with allele 1 at marker m
-	//	allele_counts = VectorXi(num_markers);
 
-
-	L = MatrixXd(6,5);
-	u = VectorXd(6);
-	u << 0, 0, 0 , 0 , 0, 1;
-	x = VectorXd(5);
-	coefs_p0 = VectorXd(5);
-	coefs_p1 = VectorXd(5);
 	sample_gls.resize(num_markers*3);
-
-	//	all_posteriors = MatrixXd(num_markers,num_states);
 
 	s_forward = AllocateDoubleMatrix(num_markers, num_states);
 	s_backward = AllocateDoubleMatrix(num_markers, num_states);
 
 	normalizers = new double[num_markers];
-//	ml_states_h1 = new int[num_markers];
-//	ml_states_h2 = new int[num_markers];
-
-//	ml_alleles_h1 = new int[num_markers];
-//	ml_alleles_h2 = new int[num_markers];
-
-
 };
 
-void HaplotypePhaserSym::DeAllocateMemory(){
-	//	FreeCharMatrix(haplotypes, ped.count*2);
-};
-void HaplotypePhaserSym::setDistanceCode(int c) {
-	distance_code = c;
-};
-
-/**
- * Load vcf data from files.
- * Reference haplotypes are loaded from ref_file.
- * Unphased sample is loaded from sample_file, the individual with sample_index.
- *
- */
-void HaplotypePhaserSym::LoadData(const String &ref_file, const String &sample_file, int sample_index, const String &map_file){
-	VcfUtils::LoadReferenceMarkers(ref_file);
-	VcfUtils::LoadReferenceIndividuals(ped, ref_file);
-	VcfUtils::LoadSampleIndividual(ped, sample_file, sample_index);
-
-	AllocateMemory();
-	//	CalcCases();
-	// Loads the reference haplotypes
-	VcfUtils::LoadHaplotypes(ref_file, ped, haplotypes);
-
-	// (Fill the initial sample haplotypes - not used for single-sample: but prep for multi-sample)
-	VcfUtils::FillSampleHaplotypes(ped, haplotypes, num_haps);
-
-
-	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls, sample_index);
-	//	VcfUtils::LoadGeneticMap(map_file, ped, distances);
-
-};
 
 /**
  * Load reference data from specified file.
+ *
+ * Load genetic distances from map file.
  *
  */
 void HaplotypePhaserSym::LoadReferenceData(const String &ref_file, const char * map_file){
@@ -145,8 +77,7 @@ void HaplotypePhaserSym::LoadReferenceData(const String &ref_file, const char * 
 /**
  * Load sample data from vcf.
  *
- *
- * Load genetic distances from map file.
+ * Overwrites sample_gls, assumed handling one sample at a time.
  *
  */
 void HaplotypePhaserSym::LoadSampleData(const String &sample_file, int sample_index){
@@ -156,39 +87,10 @@ void HaplotypePhaserSym::LoadSampleData(const String &sample_file, int sample_in
 };
 
 
-//void HaplotypePhaserSym::CalcCases(){
-//	for(int j = 0; j < num_states; j ++) {
-//		for(int s = 0; s < num_states; s ++) {
-//			int chrom_case = (states[s]).NumEquals2(states[j]);
-//			if(states[j].first == states[j].second) {
-//				chrom_case += 3;
-//			}
-//			pdf_cases(j,s) = chrom_case;
-//		}
-//	}
-//
-////	pdf_cases_rowmaj = pdf_cases;
-//
-////	std::cout << "Pdf cases: m:\n" << pdf_cases << std::endl;
-//
-//};
-
-
-/**
- * Fill allele_counts.
- *
- * allele_counts(m) = number of haplotypes with allele 1 at marker m
- *
- */
-//void HaplotypePhaserSym::CalcAlleleCounts() {
-//	allele_counts = haplotypes.colwise().sum();
-//};
-
-
 
 /**
  * Get the emission probability of the observed genotype likelihoods at marker
- * forall hidden states
+ * for all hidden states
  *
  * P(GLs(marker)|s) for all s in 0...num_states-1
  * for fixed reference haplotype at chromosome 1
@@ -206,7 +108,6 @@ void HaplotypePhaserSym::CalcEmissionProbs(int marker, double * probs) {
 	double case_5 = pow(error,2);
 
 
-	// OPT1
 	for (int state = 0; state < num_states; state++) {
 
 		ChromosomePair chrom_state = states[state];
@@ -222,18 +123,15 @@ void HaplotypePhaserSym::CalcEmissionProbs(int marker, double * probs) {
 
 		if(h1 == 0 and h2 == 0){
 			sum += case_3 *  sample_gls[marker * 3];
-			//				printf("adding = %f \n", pow(1 - errors[marker], 2) * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3]]);
 		}
 		else {
 			if((h1 == 0 and h2 == 1) or (h1 == 1 and h2 == 0)){
 
 				sum += case_4 * sample_gls[marker * 3];
-				//						printf("adding = %f \n", (1 - errors[marker]) * error * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3]]);
 
 			}
 			else{
 				sum +=  case_5 *  sample_gls[marker * 3];
-				//						printf("adding = %f \n", errors[marker] * 2 * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3]]);
 
 			}
 		}
@@ -241,29 +139,24 @@ void HaplotypePhaserSym::CalcEmissionProbs(int marker, double * probs) {
 		// case2: g = 1
 		if((h1 == 0 and h2 == 1) or (h1 == 1 and h2 == 0)){
 			sum += case_1 *  sample_gls[marker * 3 + 1];
-			//				printf("adding1 = %f \n", (pow(1 - errors[marker], 2) + pow(errors[marker], 2)) * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3 + 1]]);
 
 		}
 		else{
 			sum +=case_2 * sample_gls[marker * 3 + 1];
-			//				printf("adding2 = %f \n", 2 * (1 - errors[marker]) * errors[marker] * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3 + 1]]);
 
 		}
 
 		// case3: g = 2
 		if(h1 == 1 and h2 == 1){
 			sum += case_3 * sample_gls[marker * 3 + 2];
-			//				printf("adding = %f \n", pow(1 - errors[marker], 2) * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3 + 2]]);
 
 		} else{
 			if((h1 == 0 and h2 == 1) or (h1 == 1 and h2 == 0)){
 				sum += case_4 * sample_gls[marker * 3 + 2];
-				//						printf("adding = %f \n", (1 - errors[marker]) * error * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3 + 2]]);
 
 			}
 			else{
 				sum += case_5 * sample_gls[marker * 3 + 2];
-				//						printf("adding = %f \n", pow(errors[marker],2) * phred_probs[(unsigned char) genotypes[num_inds-1][marker * 3 + 2]]);
 
 			}
 		}
@@ -282,7 +175,6 @@ void HaplotypePhaserSym::InitPriorScaledForward(){
 	double prior = 1.0 / num_states;
 	double c1 = 0.0;
 
-
 	CalcEmissionProbs(0, emission_probs);
 
 	for(int s = 0; s < num_states; s++){
@@ -290,7 +182,6 @@ void HaplotypePhaserSym::InitPriorScaledForward(){
 	};
 
 	normalizers[0] = 1.0/(prior*c1);
-	//	printf("First Normalizer = %e Prior = %e c1 = %e \n", normalizers[0], prior, c1);
 
 	for(int s = 0; s < num_states; s++){
 		s_forward[0][s] = (prior*emission_probs[s]) * normalizers[0];
@@ -657,12 +548,17 @@ void HaplotypePhaserSym::GetMLHaplotypes(int * ml_states){
  *
  * for m in {0 ... num_markers-1}
  *
- * print: print stats to file, where stats contains one row for every marker
+ * print: print stats to filename, where stats contains one row for every marker
+ * stats:
  * every row has 44 values:
  * 10 lowest posterior genotype probabilities
  * 10 states corresponding to lowest genotype probabilities
  * to highest posterior genotype probabilities
  * 10 states corresponding to higest genotype probabilities
+ * sum of posterior probs for all states at this marker / num states (expect this to be 1.0 / num_states)
+ * posterior probability of genotype 0
+ * posterior probability of genotype 1
+ * posterior probability of genotype 2
  *
  */
 vector<vector<double>>  HaplotypePhaserSym::GetPosteriorStats(const char * filename, bool print){
@@ -680,7 +576,6 @@ vector<vector<double>>  HaplotypePhaserSym::GetPosteriorStats(const char * filen
 	}
 
 
-
 	for(int m = 0; m < num_markers; m++) {
 		vector<double> posteriors;
 		posteriors.resize(num_states, -1);
@@ -695,24 +590,19 @@ vector<vector<double>>  HaplotypePhaserSym::GetPosteriorStats(const char * filen
 			posteriors[s] = s_forward[m][s] * s_backward[m][s] / norm;
 			sum += posteriors[s];
 
-			//			cout << "Wtf3 " <<  posteriors[s] << " " <<  s_forward[m][s] << " " << s_backward[m][s] << "\n";
-
 			//////////genotype probability/////////////////
 			int ref_hap1 = states[s].first;
 			int ref_hap2 = states[s].second;
 
 
 			// AGCT allele
-			//			String allele1 = Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap1][m]+1);
-			//			String allele2 = Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap2][m]+1);
+			// String allele1 = Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap1][m]+1);
+			// String allele2 = Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap2][m]+1);
 
 			// 00, 01, 10, 11
 			int hapcode1 = haplotypes(ref_hap1,m);
 			int hapcode2 = haplotypes(ref_hap2,m);
 
-			//			if(hapcode1 == 1 || hapcode2 == 1) {
-			//				printf("HAPCODE 0 at %d \n", m);
-			//			};
 
 			int geno_code;
 
@@ -727,6 +617,7 @@ vector<vector<double>>  HaplotypePhaserSym::GetPosteriorStats(const char * filen
 
 		}
 
+		// check that the sum of genotype probabilities adds up to 1
 		float check_sum = 0.0;
 		for(int i = 0; i < 3 ; i++) {
 			check_sum += geno_probs[m][i];
@@ -737,7 +628,6 @@ vector<vector<double>>  HaplotypePhaserSym::GetPosteriorStats(const char * filen
 
 
 		vector<size_t> res = sort_indexes(posteriors);
-
 
 		//add lowest elements to stats[m]
 		for(int i = 0; i < 10; i++) {
@@ -758,211 +648,18 @@ vector<vector<double>>  HaplotypePhaserSym::GetPosteriorStats(const char * filen
 		stats[m][42] = geno_probs[m][1];
 		stats[m][43] = geno_probs[m][2];
 
-
-
 	}
 
 	if (print) {
-			(filename, stats, "w");
+		writeVectorToCSV(filename, stats, "w");
 	}
 
 	return stats;
 }
 
-//
-///**
-// * For every marker m, get the state with highest posterior probability at that location, given the entire observation sequence
-// * (not most likely sequence of states)
-// *
-// * Calculate array ml_states s.t.
-// * ml_states[m] = s_i that maximises P(Q_m = s_i | O_1 ... O_num_markers)
-// *
-// * for m in {0 ... num_markers-1}
-// *
-// */
-//vector<vector<double>>  HaplotypePhaserSym::GetPosteriorStatsSpecial(const char * filename){
-//	vector<vector<double>> stats;
-//	vector<vector<double>> geno_probs;
-//	vector<vector<double>> allele_probs;
-//	int * ml_alleles_other;
-//	int * ml_alleles_this;
-//	int * ml_states_this;
-//	int * ml_states_other;
-//
-//
-//	if (curr_hap == 2) {
-//		ml_alleles_other = ml_alleles_h1;
-//		ml_alleles_this = ml_alleles_h2;
-//
-//		ml_states_other = ml_states_h1;
-//		ml_states_this = ml_states_h2;
-//
-//	}
-//	if (curr_hap == 1) {
-//		ml_alleles_other = ml_alleles_h2;
-//		ml_alleles_this = ml_alleles_h1;
-//
-//		ml_states_other = ml_states_h2;
-//		ml_states_this = ml_states_h1;
-//	}
-//
-//
-//	for(int m = 0; m < num_markers; m++) {
-//		stats.push_back({});
-//		stats[m].resize(44,-1.0);
-//	}
-//
-//	for(int m = 0; m < num_markers; m++) {
-//		allele_probs.push_back({});
-//		allele_probs[m].resize(2,0.0);
-//	};
-//
-//	for(int m = 0; m < num_markers; m++) {
-//		geno_probs.push_back({});
-//		geno_probs[m].resize(3,0.0);
-//	}
-//
-//	//	cout << "1 " <<  "\n";
-//
-//
-//	for(int m = 0; m < num_markers; m++) {
-//		vector<double> posteriors;
-//		posteriors.resize(num_states, -1);
-//
-//		double norm = 0.0;
-//		for(int i = 0; i < num_states; i++) {
-//			norm += s_forward[m][i] * s_backward[m][i];
-//		}
-//
-//		double sum = 0.0;
-//		for(int s = 0; s < num_states; s++) {
-//			//			posteriors[s] = s_forward[m][s] * s_backward[m][s] / norm;
-//
-//			stringstream tmp;
-//			tmp << setprecision(prob_precision) << fixed << s_forward[m][s] * s_backward[m][s] / norm;
-//			posteriors[s] = stod(tmp.str());
-//
-//			//			cout << "2 " <<  "\n";
-//
-//			all_posteriors(m,s) = posteriors[s];
-//
-//			sum += posteriors[s];
-//
-//			//			if(m==0 ) {
-//			//					printf("%d : %f  %f \n", s, s_forward[m][s], s_backward[m][s]);
-//			//			}
-//
-//
-//
-//			//			cout << "Wtf3 " <<  posteriors[s] << " " <<  s_forward[m][s] << " " << s_backward[m][s] << "\n";
-//
-//			//////////genotype probability - retrieve which genotype this pair of ref haps implies /////////////////
-//
-//			int ref_hap_this = s;
-//
-//			// AGCT allele
-//			//			String allele1 = Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap1][m]+1);
-//			//			String allele2 = Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap2][m]+1);
-//
-//			// 00, 01, 10, 11
-//
-//
-//			// use ml allele for genos
-//			//			int hapcode_other = ml_alleles_other[m];
-//
-//			// use ml state for genos
-//			int hapcode_other = haplotypes(ml_states_other[m],m);
-//			int hapcode_this = haplotypes(ref_hap_this,m);
-//
-//			allele_probs[m][hapcode_this] += posteriors[s];
-//
-//			int geno_code;
-//
-//			if(hapcode_other != hapcode_this) {
-//				geno_code = 1;
-//			}
-//			else {
-//				geno_code = (hapcode_other == 0) ? 0 : 2;
-//			}
-//			geno_probs[m][geno_code] += posteriors[s];
-//
-//		}
-//
-//		//		if(m==0 || m==28007 || m==28008 ) {
-//		//			printf("posteriors at %d: \n", m);
-//		//			for (int i = 0; i < num_states; i++) {
-//		//				printf("%d : %f \n", i, posteriors[i]);
-//		//			}
-//		//		}
-//
-//
-//		//		cout << "3 " <<  "\n";
-//
-//		float check_sum = 0.0;
-//		for(int i = 0; i < 3 ; i++) {
-//			check_sum += geno_probs[m][i];
-//		}
-//
-//		if(abs(check_sum - 1.0) > 0.0001 ) {
-//			printf("!!!!!!!!!!!!!!!!!!!!!!!!!Sum of all geno probs is %f at marker %d !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1\n ", check_sum, m);
-//		}
-//
-//
-//		vector<size_t> res = sort_indexes(posteriors);
-//		//		cout << "4 " <<  "\n";
-//
-//
-//		//add lowest elements to stats[m]
-//		for(int i = 0; i < 10; i++) {
-//			stats[m][i] = posteriors[res[i]];
-//		}
-//		for(int i = 0; i < 10; i++) {
-//			stats[m][10 + i] = res[i];
-//		}
-//		for(int i = 0; i < 10; i++) {
-//			stats[m][20 + i] = posteriors[res[posteriors.size() - 10 + i]];
-//		}
-//		for(int i = 0; i < 10; i++) {
-//			stats[m][30 + i] = res[posteriors.size() - 10 + i];
-//		}
-//
-//		stats[m][40] = sum / posteriors.size();
-//		stats[m][41] = geno_probs[m][0];
-//		stats[m][42] = geno_probs[m][1];
-//		stats[m][43] = geno_probs[m][2];
-//
-//		//		cout << "5 " <<  "\n";
-//
-//		if(allele_probs[m][0] >= allele_probs[m][1]) {
-//			ml_alleles_this[m] = 0;
-//		}
-//		else {
-//			ml_alleles_this[m] = 1;
-//		}
-//		if (abs(sum -1 ) > 0.0001){
-//
-//			cout << "SUM OF POSTERIORS =  " << sum <<  "\n";
-//		}
-//	}
-//
-//
-//
-//	for (int i = 0; i < num_markers; i++) {
-//		ml_states_this[i] = stats[i][39];
-//	}
-//
-//	//	writeVectorToCSV(filename, stats, "w");
-//	//	cout << "7 " <<  "\n";
-//
-//
-//	return stats;
-//}
-
-
-
 
 /**
- * Read stats from filename
+ * Read stats from filename.
  */
 vector<vector<double>>  HaplotypePhaserSym::ReadPosteriorStats(const char * filename){
 
@@ -1089,141 +786,11 @@ vector<vector<double>>  HaplotypePhaserSym::ReadPosteriorStats(const char * file
 
 
 /**
- * Translate genotype probabilities to most likely genotypes (represented as haplotype pair).
- *
- * Haplotypes printed to out_file and returned.
- *
- */
-HaplotypePair HaplotypePhaserSym::PrintGenotypesToFile(vector<vector<double>> & stats, const char * out_file, const char * sample_file){
-	std::vector<String> h1;
-	std::vector<String> h2;
-
-	//hapcodes 00, 10, 11  represent geno_codes 0,1,2
-	int hapcode1;
-	int hapcode2;
-	int max_geno_code;
-	float max_geno_prob;
-
-	VcfFileReader reader;
-	VcfHeader header_read;
-	reader.open(sample_file, header_read);
-	string sample_name = header_read.getSampleName(0);
-	reader.close();
-
-
-	reader.open("template.vcf", header_read);
-	VcfRecord record_template;
-	record_template.getGenotypeInfo().addStoreField("GT");
-	reader.readRecord(record_template);
-	reader.close();
-
-
-
-
-	VcfHeader header_new;
-	header_new.appendMetaLine("##fileformat=VCFv4.2");
-	header_new.appendMetaLine("##FILTER=<ID=PASS,Description=\"All filters passed\">");
-	header_new.appendMetaLine("##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">");
-	header_new.addHeaderLine(("#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	" + sample_name).c_str());
-
-	VcfFileWriter writer;
-	writer.open((string(out_file) + ".vcf.gz").c_str(), header_new, InputFile::BGZF);
-
-
-
-
-
-	for(int m = 0; m < num_markers; m++) {
-
-		max_geno_prob = 0.0;
-		for(int i=0; i<3;i++) {
-			if(stats[m][41+i] > max_geno_prob) {
-				max_geno_prob = stats[m][41+i];
-				max_geno_code = i;
-			}
-		}
-
-		if(max_geno_code == 0) {
-			hapcode1 = 0;
-			hapcode2 = 0;
-		}
-		if(max_geno_code == 1) {
-			hapcode1 = 0;
-			hapcode2 = 1;
-		}
-		if(max_geno_code == 2) {
-			hapcode1 = 1;
-			hapcode2 = 1;
-		}
-
-		h1.push_back(Pedigree::GetMarkerInfo(m)->GetAlleleLabel(hapcode1+1));
-		h2.push_back(Pedigree::GetMarkerInfo(m)->GetAlleleLabel(hapcode2+1));
-
-
-		/////////////////////
-
-		MarkerInfo* markerinfo = Pedigree::GetMarkerInfo(m);
-		std::string marker_name = markerinfo->name.c_str();
-		std::size_t delim = marker_name.find(":");
-		string chrom =  marker_name.substr(0,delim);
-		int pos =  std::stoi(marker_name.substr(delim+1));
-		//	printf("%s %d %s \n", chrom.c_str(), pos, (markerinfo->name).c_str());
-		record_template.setChrom(chrom.c_str());
-		record_template.set1BasedPosition(pos);
-		record_template.setID(marker_name.c_str());
-		record_template.setRef((markerinfo->GetAlleleLabel(1)).c_str());
-		record_template.setAlt((markerinfo->GetAlleleLabel(2)).c_str());
-		record_template.setQual(".");
-
-		std::stringstream ss;
-		ss << to_string(hapcode1) << "|" << to_string(hapcode2);
-		string GTstring = ss.str();
-
-		int succ = record_template.getGenotypeInfo().setString("GT",0, GTstring.c_str());
-
-		if (succ == 0) {
-			printf("ERROR IN WRITING TO VCF %s \n", GTstring.c_str());
-		}
-		else {
-			//			printf("Wrote %s \n", GTstring.c_str());
-			writer.writeRecord(record_template);
-		}
-
-
-		///////////////////////
-
-
-
-	}
-	printf("WROTE GENOS TO VCF \n");
-
-	writer.close();
-	HaplotypePair hp(h1,h2);
-	hp.printToFile(out_file);
-	return hp;
-	//	Print to file
-}
-
-
-/**
  * Print the given genotypes to a VCF.
  *
  */
 void HaplotypePhaserSym::PrintGenotypesToVCF(vector<vector<int>> & genotypes, const char * out_file, const char * sample_file, const char * vcf_template ){
-	//	std::vector<String> h1;
-	//	std::vector<String> h2;
-
-	//hapcodes 00, 10, 11  represent geno_codes 0,1,2
-	//	int hapcode1;
-	//	int hapcode2;
-	//	int max_geno_code;
-	//	float max_geno_prob;
-
 	VcfRecord record_template;
-
-
-
-
 	VcfFileReader reader;
 	VcfHeader header_read;
 
@@ -1231,30 +798,23 @@ void HaplotypePhaserSym::PrintGenotypesToVCF(vector<vector<int>> & genotypes, co
 	reader.readRecord(record_template);
 	reader.close();
 
+	printf("Reading from template %s \n", vcf_template);
+
+
 	reader.open(sample_file, header_read);
-	record_template.getGenotypeInfo().addStoreField("GT");
 
 
 	int num_samples = header_read.getNumSamples();
 
-	//	record_template.getGenotypeInfo().addStoreField("GT");
-
-
-	//	printf("BEFORE pos %d  num samples: %d\n", record_template.get1BasedPosition(), record_template.getGenotypeInfo().getNumSamples());
-	//	reader.close();
-	//	record_template.reset();
-	//	record_template.getGenotypeInfo().setGT(0,0,0);
-	//	printf("AFTER pos %d  num samples: %d\n", record_template.get1BasedPosition(), record_template.getGenotypeInfo().getNumSamples());
-
-
-	//	header_read.appendMeta	Line("##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotypez\">");
-
+	if (num_samples != record_template.getNumSamples()) {
+		printf("!!!!! INCONSISTENT NUMBER OF SAMPLES when writing to VCF !!!!!\nSomething is probably wrong with the vcf template \n");
+		printf("num samples from header:  %d \n", num_samples);
+		printf("num samples in record:  %d \n", record_template.getNumSamples());
+	}
 	VcfFileWriter writer;
 	writer.open((string(out_file) + ".vcf.gz").c_str(), header_read, InputFile::BGZF);
 
 	for(int m = 0; m < num_markers; m++) {
-
-		/////////////////////
 
 		MarkerInfo* markerinfo = Pedigree::GetMarkerInfo(m);
 		std::string marker_name = markerinfo->name.c_str();
@@ -1294,7 +854,7 @@ void HaplotypePhaserSym::PrintGenotypesToVCF(vector<vector<int>> & genotypes, co
 
 
 			if (!succ) {
-				printf("ERROR IN WRITING TO VCF for marker %d \n", m);
+				printf("ERROR IN WRITING TO VCF for marker %d for ind %d \n", m, sample);
 			}
 		}
 
@@ -1310,139 +870,188 @@ void HaplotypePhaserSym::PrintGenotypesToVCF(vector<vector<int>> & genotypes, co
 }
 
 
-/**
- * Translate maximum likelihood states to haplotypes.
- *
- * Haplotypes printed to out_file and returned.
- * Also printed to out_file.vcf.gz
- *
- */
-HaplotypePair HaplotypePhaserSym::PrintHaplotypesToFile(const char * out_file, const char * sample_file){
-	std::vector<String> h1;
-	std::vector<String> h2;
-
-	int ref_hap1;
-	int ref_hap2;
-	//	int prev_ref_hap1;
-	//	int prev_ref_hap2;
-
-	VcfFileReader reader;
-	VcfHeader header_read;
-	reader.open(sample_file, header_read);
-	string sample_name = header_read.getSampleName(0);
-	reader.close();
-
-
-	reader.open("template.vcf", header_read);
-	VcfRecord record_template;
-	record_template.getGenotypeInfo().addStoreField("GT");
-	reader.readRecord(record_template);
-	reader.close();
-
-
-
-
-	VcfHeader header_new;
-	header_new.appendMetaLine("##fileformat=VCFv4.2");
-	header_new.appendMetaLine("##FILTER=<ID=PASS,Description=\"All filters passed\">");
-	header_new.appendMetaLine("##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">");
-	header_new.addHeaderLine(("#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	" + sample_name).c_str());
-
-	VcfFileWriter writer;
-	writer.open((string(out_file) + ".vcf.gz").c_str(), header_new, InputFile::BGZF);
-
-
-
-
-	// First marker. order does not matter
-	ref_hap1 = ml_states_h1[0];
-	ref_hap2 = ml_states_h2[0];
-
-	h1.push_back(Pedigree::GetMarkerInfo(0)->GetAlleleLabel(int(haplotypes(ref_hap1,0))+1));
-	h2.push_back(Pedigree::GetMarkerInfo(0)->GetAlleleLabel(int(haplotypes(ref_hap2,0))+1));
-
-
-	MarkerInfo* markerinfo = Pedigree::GetMarkerInfo(0);
-	std::string marker_name = markerinfo->name.c_str();
-	std::size_t delim = marker_name.find(":");
-	string chrom =  marker_name.substr(0,delim);
-	int pos =  std::stoi(marker_name.substr(delim+1));
-	//	printf("%s %d %s \n", chrom.c_str(), pos, (markerinfo->name).c_str());
-	record_template.setChrom(chrom.c_str());
-	record_template.set1BasedPosition(pos);
-	record_template.setID(marker_name.c_str());
-	record_template.setRef((markerinfo->GetAlleleLabel(1)).c_str());
-	record_template.setAlt((markerinfo->GetAlleleLabel(2)).c_str());
-	record_template.setQual(".");
-
-	std::stringstream ss;
-	ss << to_string(int(haplotypes(ref_hap1,0))) << "|" << to_string(int(haplotypes(ref_hap2,0)));
-	string GTstring = ss.str();
-
-	int succ = record_template.getGenotypeInfo().setString("GT",0, GTstring.c_str());
-	//	int succ = record_template.getGenotypeInfo().setString("GT",0, "1|1");
-
-	//	record_template.getGenotypeInfo().addStoreField("GT");
-
-	if (succ == 0) {
-		printf("ERROR IN WRITING TO VCF %s \n", GTstring.c_str());
-	}
-	else {
-		//		printf("Wrote %s \n", GTstring.c_str());
-		writer.writeRecord(record_template);
-	}
-
-
-	for(int m = 1; m < num_markers; m++) {
-
-
-		ref_hap1 = ml_states_h1[m];
-		ref_hap2 = ml_states_h2[m];
-
-		h1.push_back(Pedigree::GetMarkerInfo(m)->GetAlleleLabel(int(haplotypes(ref_hap1,m))+1));
-		h2.push_back(Pedigree::GetMarkerInfo(m)->GetAlleleLabel(int(haplotypes(ref_hap2,m))+1));
-
-		////////////////////////
-
-		markerinfo = Pedigree::GetMarkerInfo(m);
-		marker_name = markerinfo->name.c_str();
-		delim = marker_name.find(":");
-		chrom =  marker_name.substr(0,delim);
-		pos =  std::stoi(marker_name.substr(delim+1));
-		//	printf("%s %d %s \n", chrom.c_str(), pos, (markerinfo->name).c_str());
-		record_template.setChrom(chrom.c_str());
-		record_template.set1BasedPosition(pos);
-		record_template.setID(marker_name.c_str());
-		record_template.setRef((markerinfo->GetAlleleLabel(1)).c_str());
-		record_template.setAlt((markerinfo->GetAlleleLabel(2)).c_str());
-
-		ss.str("");
-		ss << to_string(int(haplotypes(ref_hap1,m))) << "|" << to_string(int(haplotypes(ref_hap2,m)));
-		GTstring = ss.str();
-
-		int succ = record_template.getGenotypeInfo().setString("GT",0, GTstring.c_str());
-		//		int succ = record_template.getGenotypeInfo().setString("GT",0, "0|1");
-
-		if (succ == 0 && m==1) {
-			printf("ERROR IN WRITING TO VCF %s %d \n", GTstring.c_str(), haplotypes(ref_hap2,m));
-
-		}
-		else {
-			writer.writeRecord(record_template);
-		}
-
-
-		///////////////////////
-
-
-	}
-	writer.close();
-
-	HaplotypePair hp(h1,h2);
-	hp.printToFile(out_file);
-	return hp;
-	//	Print to file
-}
+///**
+// * Translate maximum likelihood states to haplotypes.
+// *
+// * Haplotypes printed to out_file and returned.
+// * Also printed to out_file.vcf.gz
+// *
+// */
+//HaplotypePair HaplotypePhaserSym::PrintHaplotypesToVCF(int * ml_states, const char * out_file, const char * sample_file){
+//	std::vector<String> h1;
+//	std::vector<String> h2;
+//
+//	int ref_hap1;
+//	int ref_hap2;
+//	int prev_ref_hap1;
+//	int prev_ref_hap2;
+//
+//	VcfFileReader reader;
+//	VcfHeader header_read;
+//	reader.open(sample_file, header_read);
+//	string sample_name = header_read.getSampleName(0);
+//	reader.close();
+//
+//
+//	reader.open("template.vcf", header_read);
+//	VcfRecord record_template;
+//	record_template.getGenotypeInfo().addStoreField("GT");
+//	reader.readRecord(record_template);
+//	reader.close();
+//
+//
+//
+//
+//	VcfHeader header_new;
+//	header_new.appendMetaLine("##fileformat=VCFv4.2");
+//	header_new.appendMetaLine("##FILTER=<ID=PASS,Description=\"All filters passed\">");
+//	header_new.appendMetaLine("##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">");
+//	header_new.addHeaderLine(("#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	" + sample_name).c_str());
+//
+//	VcfFileWriter writer;
+//	writer.open((string(out_file) + ".vcf.gz").c_str(), header_new, InputFile::BGZF);
+//
+//
+//
+//
+//	// First marker. order does not matter
+//	ref_hap1 = states[ml_states[0]].first;
+//	ref_hap2 = states[ml_states[0]].second;
+//
+//	h1.push_back(Pedigree::GetMarkerInfo(0)->GetAlleleLabel(haplotypes[ref_hap1][0]+1));
+//	h2.push_back(Pedigree::GetMarkerInfo(0)->GetAlleleLabel(haplotypes[ref_hap2][0]+1));
+//
+//	prev_ref_hap1 = ref_hap1;
+//	prev_ref_hap2 = ref_hap2;
+//
+//
+//	MarkerInfo* markerinfo = Pedigree::GetMarkerInfo(0);
+//	std::string marker_name = markerinfo->name.c_str();
+//	std::size_t delim = marker_name.find(":");
+//	string chrom =  marker_name.substr(0,delim);
+//	int pos =  std::stoi(marker_name.substr(delim+1));
+////	printf("%s %d %s \n", chrom.c_str(), pos, (markerinfo->name).c_str());
+//	record_template.setChrom(chrom.c_str());
+//	record_template.set1BasedPosition(pos);
+//	record_template.setID(marker_name.c_str());
+//	record_template.setRef((markerinfo->GetAlleleLabel(1)).c_str());
+//	record_template.setAlt((markerinfo->GetAlleleLabel(2)).c_str());
+//	record_template.setQual(".");
+//
+//	std::stringstream ss;
+//	ss << to_string(int(haplotypes[ref_hap1][0])) << "|" << to_string(int(haplotypes[ref_hap2][0]));
+//	string GTstring = ss.str();
+//
+//	int succ = record_template.getGenotypeInfo().setString("GT",0, GTstring.c_str());
+////	int succ = record_template.getGenotypeInfo().setString("GT",0, "1|1");
+//
+//	//	record_template.getGenotypeInfo().addStoreField("GT");
+//
+//	if (succ == 0) {
+//		printf("ERROR IN WRITING TO VCF %s \n", GTstring.c_str());
+//	}
+//	else {
+////		printf("Wrote %s \n", GTstring.c_str());
+//		writer.writeRecord(record_template);
+//	}
+//
+//
+//	for(int m = 1; m < num_markers; m++) {
+//
+//
+//		int first = states[ml_states[m]].first;
+//		int second = states[ml_states[m]].second;
+//
+//		// No switch
+//		if(states[ml_states[m]].NumEquals(states[ml_states[m-1]]) == 2) {
+//			ref_hap1 = prev_ref_hap1;
+//			ref_hap2 = prev_ref_hap2;
+//		}
+//		else {
+//			// One switch
+//			if(states[ml_states[m]].NumEquals(states[ml_states[m-1]]) == 1) {
+//
+//				if(first == prev_ref_hap1) {
+//					ref_hap1 = first;
+//					ref_hap2 = second;
+//
+//				}
+//				else {
+//					if(first == prev_ref_hap2) {
+//						ref_hap1 = second;
+//						ref_hap2 = first;
+//
+//					}
+//					else {
+//						if(second == prev_ref_hap1) {
+//							ref_hap1 = second;
+//							ref_hap2 = first;
+//
+//						}
+//						// here we know s == prev_ref_hap2
+//						else {
+//							ref_hap1 = first;
+//							ref_hap2 = second;
+//
+//						}
+//					}
+//				}
+//			}
+//			// if we have two switches then we can use the original order - should not matter?
+//			else {
+//				ref_hap1 = first;
+//				ref_hap2 = second;
+//			}
+//
+//		}
+//
+//		prev_ref_hap1 = ref_hap1;
+//		prev_ref_hap2 = ref_hap2;
+//
+//		h1.push_back(Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap1][m]+1));
+//		h2.push_back(Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap2][m]+1));
+//
+//		////////////////////////
+//
+//		markerinfo = Pedigree::GetMarkerInfo(m);
+//		marker_name = markerinfo->name.c_str();
+//		delim = marker_name.find(":");
+//		chrom =  marker_name.substr(0,delim);
+//		pos =  std::stoi(marker_name.substr(delim+1));
+//	//	printf("%s %d %s \n", chrom.c_str(), pos, (markerinfo->name).c_str());
+//		record_template.setChrom(chrom.c_str());
+//		record_template.set1BasedPosition(pos);
+//		record_template.setID(marker_name.c_str());
+//		record_template.setRef((markerinfo->GetAlleleLabel(1)).c_str());
+//		record_template.setAlt((markerinfo->GetAlleleLabel(2)).c_str());
+//
+//		ss.str("");
+//		ss << to_string(int(haplotypes[ref_hap1][m])) << "|" << to_string(int(haplotypes[ref_hap2][m]));
+//		GTstring = ss.str();
+//
+//		int succ = record_template.getGenotypeInfo().setString("GT",0, GTstring.c_str());
+////		int succ = record_template.getGenotypeInfo().setString("GT",0, "0|1");
+//
+//		if (succ == 0 && m==1) {
+//			printf("ERROR IN WRITING TO VCF %s %d \n", GTstring.c_str(), haplotypes[ref_hap2][m]);
+//
+//		}
+//		else {
+//			writer.writeRecord(record_template);
+//		}
+//
+//
+//		///////////////////////
+//
+//
+//	}
+//	writer.close();
+//
+//	HaplotypePair hp(h1,h2);
+//	hp.printToFile(out_file);
+//	return hp;
+//	//	Print to file
+//}
 
 
 
@@ -1452,98 +1061,98 @@ HaplotypePair HaplotypePhaserSym::PrintHaplotypesToFile(const char * out_file, c
  * to out_file_ref_haps
  *
  *
- */
-void HaplotypePhaserSym::PrintReferenceHaplotypes(int * ml_states, const char * out_file){
-
-
-	//	std::vector<int> ref1;
-	//	std::vector<int> ref2;
-	//
-	//
-	//	int num_haps = 2*num_inds - 2;
-	//	int ref_hap1;
-	//	int ref_hap2;
-	//	int prev_ref_hap1;
-	//	int prev_ref_hap2;
-	//
-	//
-	//	std::vector<char> codes;
-	//
-	//	for(int i = 65; i < 65+num_haps; i++) {
-	//		codes.push_back(i);
-	//	}
-	//
-	//	ref_hap1 = states[ml_states[0]].first;
-	//	ref_hap2 = states[ml_states[0]].second;
-	//
-	//	prev_ref_hap1 = ref_hap1;
-	//	prev_ref_hap2 = ref_hap2;
-	//	ref1.push_back(ref_hap1);
-	//	ref2.push_back(ref_hap2);
-	//	for(int m = 1; m < num_markers; m++) {
-	//
-	//		int first = states[ml_states[m]].first;
-	//		int second = states[ml_states[m]].second;
-	//
-	//		// No switch
-	//		if(states[ml_states[m]].NumEquals(states[ml_states[m-1]]) == 2) {
-	//			ref_hap1 = prev_ref_hap1;
-	//			ref_hap2 = prev_ref_hap2;
-	//		}
-	//		else {
-	//			// One switch
-	//			if(states[ml_states[m]].NumEquals(states[ml_states[m-1]]) == 1) {
-	//
-	//				if(first == prev_ref_hap1) {
-	//					ref_hap1 = first;
-	//					ref_hap2 = second;
-	//				}
-	//				else {
-	//					if(first == prev_ref_hap2) {
-	//						ref_hap1 = second;
-	//						ref_hap2 = first;
-	//					}
-	//					else {
-	//						if(second == prev_ref_hap1) {
-	//							ref_hap1 = second;
-	//							ref_hap2 = first;
-	//						}
-	//						// here we know s == prev_ref_hap2
-	//						else {
-	//							ref_hap1 = first;
-	//							ref_hap2 = second;
-	//						}
-	//					}
-	//				}
-	//			}
-	//			// if we have two switches then we can use the original order - should not matter?
-	//			else {
-	//				ref_hap1 = first;
-	//				ref_hap2 = second;
-	//			}
-	//		}
-	//		prev_ref_hap1 = ref_hap1;
-	//		prev_ref_hap2 = ref_hap2;
-	//
-	//		ref1.push_back(ref_hap1);
-	//		ref2.push_back(ref_hap2);
-	//	}
-	//
-	//	FILE * hapout = fopen(out_file, "w");
-	//
-	//	for(auto h : ref1) {
-	//		fprintf(hapout,"%d\n",h);
-	//	}
-	//	putc('\n', hapout);
-	//	for(auto h : ref2) {
-	//		fprintf(hapout,"%d\n",h);
-	//	}
-	//
-	//	fclose(hapout);
-
-	//	return refs;
-	//	Print to file
-}
-
+// */
+//void HaplotypePhaserSym::PrintReferenceHaplotypes(int * ml_states, const char * out_file){
+//
+//
+//		std::vector<int> ref1;
+//		std::vector<int> ref2;
+//
+//
+//		int num_haps = 2*num_inds - 2;
+//		int ref_hap1;
+//		int ref_hap2;
+//		int prev_ref_hap1;
+//		int prev_ref_hap2;
+//
+//
+//		std::vector<char> codes;
+//
+//		for(int i = 65; i < 65+num_haps; i++) {
+//			codes.push_back(i);
+//		}
+//
+//		ref_hap1 = states[ml_states[0]].first;
+//		ref_hap2 = states[ml_states[0]].second;
+//
+//		prev_ref_hap1 = ref_hap1;
+//		prev_ref_hap2 = ref_hap2;
+//		ref1.push_back(ref_hap1);
+//		ref2.push_back(ref_hap2);
+//		for(int m = 1; m < num_markers; m++) {
+//
+//			int first = states[ml_states[m]].first;
+//			int second = states[ml_states[m]].second;
+//
+//			// No switch
+//			if(states[ml_states[m]].NumEquals(states[ml_states[m-1]]) == 2) {
+//				ref_hap1 = prev_ref_hap1;
+//				ref_hap2 = prev_ref_hap2;
+//			}
+//			else {
+//				// One switch
+//				if(states[ml_states[m]].NumEquals(states[ml_states[m-1]]) == 1) {
+//
+//					if(first == prev_ref_hap1) {
+//						ref_hap1 = first;
+//						ref_hap2 = second;
+//					}
+//					else {
+//						if(first == prev_ref_hap2) {
+//							ref_hap1 = second;
+//							ref_hap2 = first;
+//						}
+//						else {
+//							if(second == prev_ref_hap1) {
+//								ref_hap1 = second;
+//								ref_hap2 = first;
+//							}
+//							// here we know s == prev_ref_hap2
+//							else {
+//								ref_hap1 = first;
+//								ref_hap2 = second;
+//							}
+//						}
+//					}
+//				}
+//				// if we have two switches then we can use the original order - should not matter?
+//				else {
+//					ref_hap1 = first;
+//					ref_hap2 = second;
+//				}
+//			}
+//			prev_ref_hap1 = ref_hap1;
+//			prev_ref_hap2 = ref_hap2;
+//
+//			ref1.push_back(ref_hap1);
+//			ref2.push_back(ref_hap2);
+//		}
+//
+//		FILE * hapout = fopen(out_file, "w");
+//
+//		for(auto h : ref1) {
+//			fprintf(hapout,"%d\n",h);
+//		}
+//		putc('\n', hapout);
+//		for(auto h : ref2) {
+//			fprintf(hapout,"%d\n",h);
+//		}
+//
+//		fclose(hapout);
+//
+//		return refs;
+//		Print to file
+//}
+//
 
 

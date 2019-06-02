@@ -66,9 +66,28 @@ int main(int argc, char ** argv){
 
 	printf("\nTemplate vcf: %s \n\n ", vcf_template.c_str());
 
+	///////////////////////////////////////
+//	VcfRecord record_template;
+//	VcfFileReader reader2;
+//	VcfHeader header_read2;
+//
+//	reader2.open(vcf_template.c_str(), header_read2);
+//	reader2.readRecord(record_template);
+//	reader2.close();
+//
+//	printf("Reading from template %s \n", vcf_template.c_str());
+//
+//	printf("num samples in record:  %d \n", record_template.getNumSamples());
+//	return 0;
+
+////////////////////////
+
+
 	////////////////////////////////////////// phasing start //////////////////////////////////////////////////////////////
 
-//	phaser.LoadReferenceData(r_file.c_str(), map_file.c_str());
+//	Pedigree ped;
+//	phaser.ped = ped;
+	phaser.LoadReferenceData(r_file.c_str(), map_file.c_str());
 
 	VcfFileReader reader;
 	VcfHeader header_read;
@@ -91,18 +110,11 @@ int main(int argc, char ** argv){
 
 		cout << "\n\n------------- Starting sample " << sample << "-------------"<< endl;
 
-		// Ugly solution to reset the pedigree
-		Pedigree ped;
-
-		phaser.ped = ped;
-		phaser.LoadReferenceData(r_file.c_str(), map_file.c_str());
 		phaser.LoadSampleData(sample_file.c_str(), sample);
-		printf("Num inds in ped after load ref and sample: %d \n ", phaser.ped.count);
+		printf("Num inds in ped after load sample: %d \n ", phaser.ped.count);
 
 
 		cout << "Haplotypes:\n" << phaser.haplotypes.block(0,0,4,10) << endl;
-//		phaser.CalcAlleleCounts();
-//		cout << "Allele counts:\n" << phaser.allele_counts.segment(0, 10) << endl;
 
 		cout << "Sample GLs:\n" << endl;
 		for (int m = 0; m < 4 ; m++) {
