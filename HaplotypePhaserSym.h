@@ -8,9 +8,8 @@
 #include <algorithm>
 #include <Eigen/Dense>
 #include <math.h>
-//#include <sys/stat.h>
-//#include <iostream>
-//#include <fstream>
+
+
 
 
 using Eigen::MatrixXd;
@@ -76,6 +75,15 @@ struct ChromosomePair {
 		return num;
 	};
 
+
+	/**
+	 *
+	 * Number of values that exist in oth pairs (0,1 or 2).
+	 *
+	 * Represents the transition cases when states are unordered pairs.
+	 * Assumed that if the same haplotype exists in both pairs, then there is no switch.
+	 *
+	 */
 	int NumEquals2(ChromosomePair other) {
 
 		int num = 0;
@@ -130,14 +138,11 @@ class HaplotypePhaserSym {
 public:
 
 //	char ** haplotypes;
+//	MatrixXi haplotypes;
 
 	int prob_precision = 10;
 	int curr_hap;
 	MatrixXc haplotypes;
-
-//	MatrixXi haplotypes;
-	// vector of count of alt allele in reference for every marker
-	VectorXi allele_counts;
 
 	//	char ** genotypes;
 	vector <double> sample_gls;
@@ -173,13 +178,6 @@ public:
 	double ** s_backward;
 	double ** s_forward;
 	double * normalizers;
-
-	int * ml_states_h1;
-	int * ml_states_h2;
-
-	int * ml_alleles_h1;
-	int * ml_alleles_h2;
-
 
 	void AllocateMemory();
 

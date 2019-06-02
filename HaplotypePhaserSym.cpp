@@ -498,43 +498,43 @@ void HaplotypePhaserSym::CalcScaledBackward(){
 	delete [] emission_probs;
 }
 
-
-/**
- * For every marker m, get the state with highest posterior probability at that location, given the entire observation sequence
- * (not most likely sequence of states)
- *
- * Calculate array ml_states s.t.
- * ml_states[m] = s_i that maximises P(Q_m = s_i | O_1 ... O_num_markers)
- *
- * for m in {0 ... num_markers-1}
- *
- */
-void HaplotypePhaserSym::GetMLHaplotypes(int * ml_states){
-
-
-#pragma omp parallel for
-	for(int m = 0; m < num_markers; m++) {
-		double posterior;
-		double max_posterior = 0.0;
-		int ml_state = -1;
-		double norm = 0.0;
-#pragma GCC ivdep
-		for(int i = 0; i < num_states; i++) {
-			norm += s_forward[m][i] * s_backward[m][i];
-		}
-#pragma GCC ivdep
-		for(int s = 0; s < num_states; s++) {
-			posterior = s_forward[m][s] * s_backward[m][s] / norm;
-
-			if(posterior > max_posterior) {
-				ml_state = s;
-				max_posterior = posterior;
-			}
-		}
-		ml_states[m] = ml_state;
-
-	}
-}
+//
+///**
+// * For every marker m, get the state with highest posterior probability at that location, given the entire observation sequence
+// * (not most likely sequence of states)
+// *
+// * Calculate array ml_states s.t.
+// * ml_states[m] = s_i that maximises P(Q_m = s_i | O_1 ... O_num_markers)
+// *
+// * for m in {0 ... num_markers-1}
+// *
+// */
+//void HaplotypePhaserSym::GetMLHaplotypes(int * ml_states){
+//
+//
+//#pragma omp parallel for
+//	for(int m = 0; m < num_markers; m++) {
+//		double posterior;
+//		double max_posterior = 0.0;
+//		int ml_state = -1;
+//		double norm = 0.0;
+//#pragma GCC ivdep
+//		for(int i = 0; i < num_states; i++) {
+//			norm += s_forward[m][i] * s_backward[m][i];
+//		}
+//#pragma GCC ivdep
+//		for(int s = 0; s < num_states; s++) {
+//			posterior = s_forward[m][s] * s_backward[m][s] / norm;
+//
+//			if(posterior > max_posterior) {
+//				ml_state = s;
+//				max_posterior = posterior;
+//			}
+//		}
+//		ml_states[m] = ml_state;
+//
+//	}
+//}
 
 
 
