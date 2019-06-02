@@ -393,8 +393,8 @@ int GetMarkerPos(int marker_id){
 }
 
 /**
- * Fill thetas with crossover probabilities so that
- * thetas[m] = prob of crossover happening in interval between m-1 and m.
+ * Fill distances with crossover probabilities so that
+ * distances[m] = prob of crossover happening in interval between m-1 and m.
  *
  *
  */
@@ -419,8 +419,6 @@ void LoadGeneticMap(const char *file_name, const Pedigree &ped, vector<double> &
 			result = fscanf(mapstream, "%255s %d %lf", marker_name, &map_pos, &dist);
 		}
 		if(map_pos == ped_pos) {
-			//			distances[i] = (dist - prev_dist > 0.00000001) ? (dist - prev_dist) * pop_const : 0.001 * pop_const;
-			//			distances[i] = (dist - prev_dist > 0.00000001) ? (dist - prev_dist) * 5 : 0.01;
 			distances[i] = (dist - prev_dist > 0.0000000000001) ? (dist - prev_dist) : 0.01;
 			prev_dist = dist;
 		}

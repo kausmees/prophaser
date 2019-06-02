@@ -9,13 +9,18 @@
 
 
 HaplotypePhaserSym::~HaplotypePhaserSym(){
+	printf("test\n");
 	//	FreeCharMatrix(haplotypes, ped.count*2);
 	//	FreeCharMatrix(genotypes, ped.count);
 	delete [] phred_probs;
+	delete [] normalizers;
+
 	FreeDoubleMatrix(s_forward, num_markers);
 	FreeDoubleMatrix(s_backward, num_markers);
+	delete &ped;
 
 	//TODO need to delete ped?
+	printf("test2\n");
 
 }
 
@@ -66,7 +71,7 @@ void HaplotypePhaserSym::AllocateMemory(){
 	haplotypes = MatrixXc(num_haps+2, num_markers);
 
 	// allele_counts(m) = number of haplotypes with allele 1 at marker m
-//	allele_counts = VectorXi(num_markers);
+	//	allele_counts = VectorXi(num_markers);
 
 
 	L = MatrixXd(6,5);
@@ -77,17 +82,17 @@ void HaplotypePhaserSym::AllocateMemory(){
 	coefs_p1 = VectorXd(5);
 	sample_gls.resize(num_markers*3);
 
-//	all_posteriors = MatrixXd(num_markers,num_states);
+	//	all_posteriors = MatrixXd(num_markers,num_states);
 
 	s_forward = AllocateDoubleMatrix(num_markers, num_states);
 	s_backward = AllocateDoubleMatrix(num_markers, num_states);
 
 	normalizers = new double[num_markers];
-	ml_states_h1 = new int[num_markers];
-	ml_states_h2 = new int[num_markers];
+//	ml_states_h1 = new int[num_markers];
+//	ml_states_h2 = new int[num_markers];
 
-	ml_alleles_h1 = new int[num_markers];
-	ml_alleles_h2 = new int[num_markers];
+//	ml_alleles_h1 = new int[num_markers];
+//	ml_alleles_h2 = new int[num_markers];
 
 
 };
@@ -125,27 +130,28 @@ void HaplotypePhaserSym::LoadData(const String &ref_file, const String &sample_f
 };
 
 /**
- * Load vcf data from files. Only reference data.
+ * Load reference data from specified file.
  *
  */
-void HaplotypePhaserSym::LoadReferenceData(const String &ref_file){
+void HaplotypePhaserSym::LoadReferenceData(const String &ref_file, const char * map_file){
 	VcfUtils::LoadReferenceMarkers(ref_file);
 	VcfUtils::LoadReferenceIndividuals(ped,ref_file);
 	AllocateMemory();
 	VcfUtils::LoadHaplotypes(ref_file, ped, haplotypes);
+	VcfUtils::LoadGeneticMap(map_file, ped, distances);
 
 };
 
 /**
- * Load vcf data from files. Only reference data.
+ * Load sample data from vcf.
+ *
+ *
+ * Load genetic distances from map file.
  *
  */
-void HaplotypePhaserSym::LoadSampleData(const String &sample_file,const char * map_file, int sample_index){
+void HaplotypePhaserSym::LoadSampleData(const String &sample_file, int sample_index){
 	VcfUtils::LoadSampleIndividual(ped, sample_file, sample_index);
 	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls, sample_index);
-	VcfUtils::LoadGeneticMap(map_file, ped, distances);
-	//VcfUtils::LoadGeneticMap("/home/kristiina/Projects/Data/1KGData/maps/chr20.OMNI.interpolated_genetic_map", ped, distances);
-	//		VcfUtils::LoadGeneticMap("data/chr20.OMNI.interpolated_genetic_map", ped, distances);
 
 };
 
@@ -367,15 +373,15 @@ void HaplotypePhaserSym::CalcScaledForward(){
 
 
 
-//		// test that the number of cases
-//		// over s is correct
-//		int case_counter[3];
-//		case_counter[0] = 0;
-//		case_counter[1] = 0;
-//		case_counter[2] = 0;
-//		double prob_test = 0;
-//		// the fixed j over which to test the sum over s - this j defines a pdf
-//		int testj = 90;
+		//		// test that the number of cases
+		//		// over s is correct
+		//		int case_counter[3];
+		//		case_counter[0] = 0;
+		//		case_counter[1] = 0;
+		//		case_counter[2] = 0;
+		//		double prob_test = 0;
+		//		// the fixed j over which to test the sum over s - this j defines a pdf
+		//		int testj = 90;
 
 #pragma omp parallel for schedule(dynamic,32)
 		for(int s = 0; s < num_states; s++){
@@ -398,26 +404,26 @@ void HaplotypePhaserSym::CalcScaledForward(){
 
 
 
-//				 prob here is p_trans j -> s
-//				 conditioning on j
+				//				 prob here is p_trans j -> s
+				//				 conditioning on j
 				// this is the one we expect to sum to 1
-//				// over s
-//				int chrom_case = pdf_cases(j,s) % 3;
-//				if (j==testj) {
-//					if(states[j].first == states[j].second) {
-//#pragma omp atomic
-//						prob_test += probs[pdf_cases(j,s)];
-//#pragma omp atomic
-//						case_counter[chrom_case] += 1;
-//					}
-//					else{
-//#pragma omp atomic
-//
-//						prob_test += probs[pdf_cases(j,s)];
-//#pragma omp atomic
-//						case_counter[chrom_case] += 1;
-//					}
-//				}
+				//				// over s
+				//				int chrom_case = pdf_cases(j,s) % 3;
+				//				if (j==testj) {
+				//					if(states[j].first == states[j].second) {
+				//#pragma omp atomic
+				//						prob_test += probs[pdf_cases(j,s)];
+				//#pragma omp atomic
+				//						case_counter[chrom_case] += 1;
+				//					}
+				//					else{
+				//#pragma omp atomic
+				//
+				//						prob_test += probs[pdf_cases(j,s)];
+				//#pragma omp atomic
+				//						case_counter[chrom_case] += 1;
+				//					}
+				//				}
 
 
 
@@ -426,23 +432,23 @@ void HaplotypePhaserSym::CalcScaledForward(){
 			s_forward[m][s] =  emission_probs[s] * sum;
 		}
 
-////		 if case counts are wrong
-////		 over s
-//		if(states[testj].first == states[testj].second) {
-//			if(case_counter[0] != num_h*(num_h-1)/2 || case_counter[1] != (num_h-1) || case_counter[2] != 1) {
-//				printf("j= %d : (%d,%d) case counts: 0:%d 1:%d 2:%d \n", testj, states[testj].first, states[testj].second,case_counter[0], case_counter[1], case_counter[2]);
-//			}
-//		}
-//		else{
-//			if(case_counter[0] != (num_h-2)*(num_h-1)/2 || case_counter[1] != 2*(num_h-1) || case_counter[2] != 1) {
-//				printf("j= %d : (%d,%d) case counts: 0:%d 1:%d 2:%d \n", testj, states[testj].first, states[testj].second,case_counter[0], case_counter[1], case_counter[2]);
-//			}
-//		}
-//		// if prob sum is wrong
-//		// over s
-//		if(abs(prob_test-1.0) > 0.00001) {
-//			printf(" m = % d !! Probtest = %f !! \n", m, prob_test);
-//		}
+		////		 if case counts are wrong
+		////		 over s
+		//		if(states[testj].first == states[testj].second) {
+		//			if(case_counter[0] != num_h*(num_h-1)/2 || case_counter[1] != (num_h-1) || case_counter[2] != 1) {
+		//				printf("j= %d : (%d,%d) case counts: 0:%d 1:%d 2:%d \n", testj, states[testj].first, states[testj].second,case_counter[0], case_counter[1], case_counter[2]);
+		//			}
+		//		}
+		//		else{
+		//			if(case_counter[0] != (num_h-2)*(num_h-1)/2 || case_counter[1] != 2*(num_h-1) || case_counter[2] != 1) {
+		//				printf("j= %d : (%d,%d) case counts: 0:%d 1:%d 2:%d \n", testj, states[testj].first, states[testj].second,case_counter[0], case_counter[1], case_counter[2]);
+		//			}
+		//		}
+		//		// if prob sum is wrong
+		//		// over s
+		//		if(abs(prob_test-1.0) > 0.00001) {
+		//			printf(" m = % d !! Probtest = %f !! \n", m, prob_test);
+		//		}
 
 
 
@@ -530,13 +536,13 @@ void HaplotypePhaserSym::CalcScaledBackward(){
 			//			int marker_c2 = s % num_haps;
 
 
-////			// test that the number of cases
-////			// over j is correct
-//			int case_counter[3];
-//			case_counter[0] = 0;
-//			case_counter[1] = 0;
-//			case_counter[2] = 0;
-//			double prob_test = 0;
+			////			// test that the number of cases
+			////			// over j is correct
+			//			int case_counter[3];
+			//			case_counter[0] = 0;
+			//			case_counter[1] = 0;
+			//			case_counter[2] = 0;
+			//			double prob_test = 0;
 
 
 #pragma GCC ivdep
@@ -550,49 +556,49 @@ void HaplotypePhaserSym::CalcScaledBackward(){
 				sum +=  s_backward[m+1][j]* probs[chrom_case] * emission_probs[j];
 
 
-//				// prob here is p_trans s -> j
-//				// conditioning on s
-//				// this is the one we expect to sum to 1
-//				// over j
-//				int chrom_case = pdf_cases(s,j) % 3;
-//				printf("Chrom case = %d \n", chrom_case);
+				//				// prob here is p_trans s -> j
+				//				// conditioning on s
+				//				// this is the one we expect to sum to 1
+				//				// over j
+				//				int chrom_case = pdf_cases(s,j) % 3;
+				//				printf("Chrom case = %d \n", chrom_case);
 
-//					if(states[s].first == states[s].second) {
-//#pragma omp atomic
-//						prob_test += probs[pdf_cases(s,j)];
-//#pragma omp atomic
-//						case_counter[chrom_case] += 1;
-//					}
-//					else{
-//#pragma omp atomic
-//
-//						prob_test += probs[pdf_cases(s,j)];
-//#pragma omp atomic
-//						case_counter[chrom_case] += 1;
-//					}
+				//					if(states[s].first == states[s].second) {
+				//#pragma omp atomic
+				//						prob_test += probs[pdf_cases(s,j)];
+				//#pragma omp atomic
+				//						case_counter[chrom_case] += 1;
+				//					}
+				//					else{
+				//#pragma omp atomic
+				//
+				//						prob_test += probs[pdf_cases(s,j)];
+				//#pragma omp atomic
+				//						case_counter[chrom_case] += 1;
+				//					}
 
 
 			}
 
 			s_backward[m][s] = sum * normalizers[m];
 
-//////					 if case counts are wrong
-//////					 over s
-//			if(states[s].first == states[s].second) {
-//				if(case_counter[0] != num_haps*(num_haps-1)/2 || case_counter[1] != (num_haps-1) || case_counter[2] != 1) {
-//					printf("bw s= %d : (%d,%d) case counts: 0:%d 1:%d 2:%d \n", s, states[s].first, states[s].second,case_counter[0], case_counter[1], case_counter[2]);
-//				}
-//			}
-//			else{
-//				if(case_counter[0] != (num_haps-2)*(num_haps-1)/2 || case_counter[1] != 2*(num_haps-1) || case_counter[2] != 1) {
-//					printf("bw s= %d : (%d,%d) case counts: 0:%d 1:%d 2:%d \n", s, states[s].first, states[s].second,case_counter[0], case_counter[1], case_counter[2]);
-//				}
-//			}
-//			// if prob sum is wrong
-//			// over s
-//			if(abs(prob_test-1.0) > 0.00001) {
-//				printf("bw m = % d !! Probtest = %f !! \n", m, prob_test);
-//			}
+			//////					 if case counts are wrong
+			//////					 over s
+			//			if(states[s].first == states[s].second) {
+			//				if(case_counter[0] != num_haps*(num_haps-1)/2 || case_counter[1] != (num_haps-1) || case_counter[2] != 1) {
+			//					printf("bw s= %d : (%d,%d) case counts: 0:%d 1:%d 2:%d \n", s, states[s].first, states[s].second,case_counter[0], case_counter[1], case_counter[2]);
+			//				}
+			//			}
+			//			else{
+			//				if(case_counter[0] != (num_haps-2)*(num_haps-1)/2 || case_counter[1] != 2*(num_haps-1) || case_counter[2] != 1) {
+			//					printf("bw s= %d : (%d,%d) case counts: 0:%d 1:%d 2:%d \n", s, states[s].first, states[s].second,case_counter[0], case_counter[1], case_counter[2]);
+			//				}
+			//			}
+			//			// if prob sum is wrong
+			//			// over s
+			//			if(abs(prob_test-1.0) > 0.00001) {
+			//				printf("bw m = % d !! Probtest = %f !! \n", m, prob_test);
+			//			}
 
 
 
@@ -651,8 +657,15 @@ void HaplotypePhaserSym::GetMLHaplotypes(int * ml_states){
  *
  * for m in {0 ... num_markers-1}
  *
+ * print: print stats to file, where stats contains one row for every marker
+ * every row has 44 values:
+ * 10 lowest posterior genotype probabilities
+ * 10 states corresponding to lowest genotype probabilities
+ * to highest posterior genotype probabilities
+ * 10 states corresponding to higest genotype probabilities
+ *
  */
-vector<vector<double>>  HaplotypePhaserSym::GetPosteriorStats(const char * filename){
+vector<vector<double>>  HaplotypePhaserSym::GetPosteriorStats(const char * filename, bool print){
 	vector<vector<double>> stats;
 	vector<vector<double>> geno_probs;
 
@@ -682,7 +695,7 @@ vector<vector<double>>  HaplotypePhaserSym::GetPosteriorStats(const char * filen
 			posteriors[s] = s_forward[m][s] * s_backward[m][s] / norm;
 			sum += posteriors[s];
 
-//			cout << "Wtf3 " <<  posteriors[s] << " " <<  s_forward[m][s] << " " << s_backward[m][s] << "\n";
+			//			cout << "Wtf3 " <<  posteriors[s] << " " <<  s_forward[m][s] << " " << s_backward[m][s] << "\n";
 
 			//////////genotype probability/////////////////
 			int ref_hap1 = states[s].first;
@@ -697,9 +710,9 @@ vector<vector<double>>  HaplotypePhaserSym::GetPosteriorStats(const char * filen
 			int hapcode1 = haplotypes(ref_hap1,m);
 			int hapcode2 = haplotypes(ref_hap2,m);
 
-//			if(hapcode1 == 1 || hapcode2 == 1) {
-//				printf("HAPCODE 0 at %d \n", m);
-//			};
+			//			if(hapcode1 == 1 || hapcode2 == 1) {
+			//				printf("HAPCODE 0 at %d \n", m);
+			//			};
 
 			int geno_code;
 
@@ -749,9 +762,9 @@ vector<vector<double>>  HaplotypePhaserSym::GetPosteriorStats(const char * filen
 
 	}
 
-
-	writeVectorToCSV(filename, stats, "w");
-
+	if (print) {
+			(filename, stats, "w");
+	}
 
 	return stats;
 }
@@ -1196,15 +1209,15 @@ HaplotypePair HaplotypePhaserSym::PrintGenotypesToFile(vector<vector<double>> & 
  * Print the given genotypes to a VCF.
  *
  */
-void HaplotypePhaserSym::PrintGenotypesToVCF(vector<vector<int>> & genotypes, const char * out_file, const char * sample_file){
-//	std::vector<String> h1;
-//	std::vector<String> h2;
+void HaplotypePhaserSym::PrintGenotypesToVCF(vector<vector<int>> & genotypes, const char * out_file, const char * sample_file, const char * vcf_template ){
+	//	std::vector<String> h1;
+	//	std::vector<String> h2;
 
 	//hapcodes 00, 10, 11  represent geno_codes 0,1,2
-//	int hapcode1;
-//	int hapcode2;
-//	int max_geno_code;
-//	float max_geno_prob;
+	//	int hapcode1;
+	//	int hapcode2;
+	//	int max_geno_code;
+	//	float max_geno_prob;
 
 	VcfRecord record_template;
 
@@ -1214,25 +1227,27 @@ void HaplotypePhaserSym::PrintGenotypesToVCF(vector<vector<int>> & genotypes, co
 	VcfFileReader reader;
 	VcfHeader header_read;
 
-	reader.open("/home/kristiina/Projects/haplotyperProject/phaser/template_GT.vcf", header_read);
+	reader.open(vcf_template, header_read);
 	reader.readRecord(record_template);
 	reader.close();
 
 	reader.open(sample_file, header_read);
+	record_template.getGenotypeInfo().addStoreField("GT");
+
 
 	int num_samples = header_read.getNumSamples();
 
-//	record_template.getGenotypeInfo().addStoreField("GT");
+	//	record_template.getGenotypeInfo().addStoreField("GT");
 
 
-//	printf("BEFORE pos %d  num samples: %d\n", record_template.get1BasedPosition(), record_template.getGenotypeInfo().getNumSamples());
+	//	printf("BEFORE pos %d  num samples: %d\n", record_template.get1BasedPosition(), record_template.getGenotypeInfo().getNumSamples());
 	//	reader.close();
 	//	record_template.reset();
 	//	record_template.getGenotypeInfo().setGT(0,0,0);
 	//	printf("AFTER pos %d  num samples: %d\n", record_template.get1BasedPosition(), record_template.getGenotypeInfo().getNumSamples());
 
 
-//	header_read.appendMeta	Line("##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotypez\">");
+	//	header_read.appendMeta	Line("##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotypez\">");
 
 	VcfFileWriter writer;
 	writer.open((string(out_file) + ".vcf.gz").c_str(), header_read, InputFile::BGZF);
@@ -1257,15 +1272,15 @@ void HaplotypePhaserSym::PrintGenotypesToVCF(vector<vector<int>> & genotypes, co
 
 			int succ;
 
-//			if (genotypes[sample][m] == 0) {
-//				succ = record_template.getGenotypeInfo().setString("GL",sample, "1,0,0");
-//			}
-//			if (genotypes[sample][m] == 1) {
-//				succ = record_template.getGenotypeInfo().setString("GL",sample, "0,1,0");
-//			}
-//			if (genotypes[sample][m] == 2) {
-//				succ = record_template.getGenotypeInfo().setString("GL",sample, "0,0,1");
-//			}
+			//			if (genotypes[sample][m] == 0) {
+			//				succ = record_template.getGenotypeInfo().setString("GL",sample, "1,0,0");
+			//			}
+			//			if (genotypes[sample][m] == 1) {
+			//				succ = record_template.getGenotypeInfo().setString("GL",sample, "0,1,0");
+			//			}
+			//			if (genotypes[sample][m] == 2) {
+			//				succ = record_template.getGenotypeInfo().setString("GL",sample, "0,0,1");
+			//			}
 
 			if (genotypes[sample][m] == 0) {
 				succ = record_template.getGenotypeInfo().setString("GT",sample, "0/0");

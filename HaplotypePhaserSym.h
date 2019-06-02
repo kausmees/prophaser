@@ -177,8 +177,8 @@ public:
 
 	~HaplotypePhaserSym();
 	void LoadData(const String &ref_file, const String &sample_file, int sample_index, const String &map_file);
-	void LoadReferenceData(const String &ref_file);
-	void LoadSampleData(const String &sample_file, const char * map_file,  int sample_index);
+	void LoadReferenceData(const String &ref_file, const char * map_file);
+	void LoadSampleData(const String &sample_file,  int sample_index);
 	void setDistanceCode(int c);
 
 
@@ -228,12 +228,12 @@ public:
 	void CalcScaledForward();
 	void CalcScaledBackward();
 	void GetMLHaplotypes(int * ml_states);
-	vector<vector<double>> GetPosteriorStats(const char * filename);
+	vector<vector<double>> GetPosteriorStats(const char * filename, bool print);
 	vector<vector<double>> GetPosteriorStatsSpecial(const char * filename);
 	vector<vector<double>>  ReadPosteriorStats(const char * filename);
 
 	HaplotypePair PrintGenotypesToFile(vector<vector<double>> & stats, const char * out_file, const char * sample_file);
-	void PrintGenotypesToVCF(vector<vector<int>> & ml_genotypes, const char * out_file, const char * sample_file);
+	void PrintGenotypesToVCF(vector<vector<int>> & ml_genotypes, const char * out_file, const char * sample_file, const char * vcf_template);
 
 	HaplotypePair PrintHaplotypesToFile(const char * out_file,  const char * sample_file);
 
