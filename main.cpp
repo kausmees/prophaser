@@ -1,5 +1,5 @@
 #include <chrono>
-//#include "HaplotypePhaserSym.h"
+#include "HaplotypePhaserSym.h"
 #include "HaplotypePhaser.h"
 #include "Parameters.h"
 #include "Pedigree.h"
@@ -12,6 +12,8 @@ int main(int argc, char ** argv){
 	String s_file;
 	String r_file;
 	String map_file;
+	String algo;
+
 	double Ne;
 	double error;
 
@@ -28,7 +30,6 @@ int main(int argc, char ** argv){
 	long_parameters.addDouble("Ne", &Ne);
 	long_parameters.addDouble("Error", &error);
 
-
 	parameter_list.Add(new LongParameters("Options",long_parameters.getLongParameterList()));
 	parameter_list.Read(argc, argv);
 	parameter_list.Status();
@@ -40,37 +41,16 @@ int main(int argc, char ** argv){
 	dir = !dir.IsEmpty() ? dir : "../../Data/1KGData/vcfs/chrom20/";
 	res_dir = !res_dir.IsEmpty() ? res_dir : "./Results/";
 	map_file = !map_file.IsEmpty() ? map_file : "/home/kristiina/Projects/Data/1KGData/vcfs/chrom20/maps/5_snps_interpolated_HapMap2_map_20";
+	algo = !algo.IsEmpty() ? algo : "sym";
 
 
-//	HaplotypePhaserSym phaser;
-	HaplotypePhaser phaser;
+// TODO implement base class and have algorithm choice in parameters
 
+//	HaplotypePhaser phaser;
+//	string suffix = ".full";
 
-// /////
-//	vector<ChromosomePair> states;
-//
-//	for(int i = 0; i < 5; i++) {
-//		for(int j = 0; j < 5; j++) {
-//			states.push_back(ChromosomePair(i,j));
-//		}
-//	}
-//
-//	printf("Num in vec: %d \n", states.size());
-//
-//	for (int s1 = 0; s1 < states.size(); s1++) {
-//		for (int s2 = 0; s2 < states.size(); s2++) {
-//
-//			int eq = states[s1].TransitionCase(states[s2]);
-//			printf("%d %d | %d %d ==> %d\n", states[s1].first, states[s1].second, states[s2].first, states[s2].second, eq);
-//		}
-//
-//	}
-//
-//		return 0;
-//	////
-
-
-
+	HaplotypePhaserSym phaser;
+	string suffix = ".sym";
 
 	phaser.Ne = Ne;
 	phaser.error = error;
@@ -180,21 +160,8 @@ int main(int argc, char ** argv){
 	};
 
 
-//	phaser.PrintGenotypesToVCF(ml_genotypes, (result_file + ".genos").c_str(), sample_file.c_str(), vcf_template.c_str());
-//	phaser.PrintHaplotypesToVCF(ml_states, (result_file + ".phased").c_str(), sample_file.c_str(), vcf_template.c_str());
-
-	phaser.PrintGenotypesToVCF(ml_genotypes, (result_file + ".genos.full").c_str(), sample_file.c_str(), vcf_template.c_str());
-	phaser.PrintHaplotypesToVCF(ml_states, (result_file + ".phased.full").c_str(), sample_file.c_str(), vcf_template.c_str());
-
-
-
-//	for(int sample = 0; sample < num_samples; sample ++) {
-//		printf("sample %d \n", sample);
-//		for(int marker = 0; marker < 10; marker ++) {
-//			printf("%d ", ml_states[sample][marker]);
-//		}
-//		printf("\n");
-//	}
+	phaser.PrintGenotypesToVCF(ml_genotypes, (result_file + ".genos" + suffix).c_str(), sample_file.c_str(), vcf_template.c_str());
+	phaser.PrintHaplotypesToVCF(ml_states, (result_file + ".phased" +suffix).c_str(), sample_file.c_str(), vcf_template.c_str());
 
 
 	end = std::chrono::steady_clock::now();

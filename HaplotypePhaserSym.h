@@ -28,63 +28,25 @@ typedef Eigen::Matrix<int, Dynamic,Dynamic, RowMajor> rowmajdyn;
  * Represents the reference haplotypes at a loci as an unordered pair.
  *
  */
-struct ChromosomePair {
+struct UnorderedChromosomePair {
 	int first;
 	int second;
 
-	ChromosomePair(int a, int b) {
+	UnorderedChromosomePair(int a, int b) {
 		first = std::min(a,b);
 		second = std::max(a,b);
 	}
 
-	int NumEquals(ChromosomePair other) {
-
-		int num = 0;
-
-		if(first == second) {
-			if(first == other.first) {
-				num += 1;
-			}
-			if(first == other.second) {
-				num += 1;
-			}
-			return num;
-		}
-
-		else {
-			if (first == other.first) {
-				num += 1;
-
-			}
-			else {
-				if(first == other.second) {
-					num += 1;
-				}
-			}
-			if (second == other.first) {
-				num += 1;
-
-			}
-			else {
-				if(second == other.second) {
-					num += 1;
-				}
-			}
-		}
-
-		return num;
-	};
-
-
 	/**
 	 *
-	 * Number of values that exist in oth pairs (0,1 or 2).
+	 * Number of values that exist in both pairs (0,1 or 2).
 	 *
 	 * Represents the transition cases when states are unordered pairs.
-	 * Assumed that if the same haplotype exists in both pairs, then there is no switch.
+	 * Assumed that if the same haplotype exists in both pairs, then there is no switch for that one.
 	 *
+	 * TODO this implementation is probably pretty slow
 	 */
-	int NumEquals2(ChromosomePair other) {
+	int NumEqual(UnorderedChromosomePair other) {
 
 		int num = 0;
 
@@ -116,16 +78,6 @@ struct ChromosomePair {
 		return num;
 	}
 
-
-
-	//
-	// About 2 times longer time than NumEquals2
-	int NumEquals3(ChromosomePair other) {
-
-
-		return (first==second) * ((first==other.first) + (first == other.second)) +
-			   (first!=second) * ((first==other.first) + ((first!=other.first)*(first==other.second)) + (second==other.first) + ((second!=other.first)*(second==other.second)));
-	};
 };
 
 /**
@@ -153,7 +105,7 @@ public:
 
 	std::vector<double> distances;
 
-	vector<ChromosomePair> states;
+	vector<UnorderedChromosomePair> states;
 
 	// Number of reference haplotypes that will be considered when handling one sample
 	// The num_haps first haplotypes in the matrix haplotypes will be used.
@@ -194,12 +146,9 @@ public:
 	vector<vector<double>> GetPosteriorStats(const char * filename, bool print);
 	vector<vector<double>>  ReadPosteriorStats(const char * filename);
 
-//	HaplotypePair PrintGenotypesToFile(vector<vector<double>> & stats, const char * out_file, const char * sample_file);
 	void PrintGenotypesToVCF(vector<vector<int>> & ml_genotypes, const char * out_file, const char * sample_file, const char * vcf_template);
-
 	void PrintHaplotypesToVCF(vector<vector<int>> & ml_genotypes, const char * out_file, const char * sample_file, const char * vcf_template);
 
-//	void PrintReferenceHaplotypes(int * ml_states, const char * out_file);
 
 };
 

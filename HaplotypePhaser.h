@@ -48,7 +48,7 @@ struct ChromosomePair {
 	 *
 	 * cases:
 	 *
-	 * 0: both switch
+	 * 0: both chromosomes switch reference
 	 * 1: one switches
 	 * 2: no switch
 	 */
