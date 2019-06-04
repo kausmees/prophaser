@@ -40,7 +40,7 @@ void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, vecto
 int GetMarkerPos(int marker_id);
 void LoadGeneticMap(const char * file_name, const Pedigree &ped, vector<double> &thetas);
 
-
+void writeVectorToCSV(const char* file_name, std::vector<vector<double>> v, const char* opentype);
 }
 
 

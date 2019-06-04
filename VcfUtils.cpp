@@ -68,9 +68,9 @@ void LoadReferenceMarkers(const String &file_name){
 			//printf("ref str = %s  num = %d \n", ref_base.c_str(), ref);
 			//printf("alt str = %s  num = %d \n", alt_base.c_str(), alt);
 		}
-//		else{
-//			printf("Excluding marker: %s \n ", marker_name);
-//		}
+		//		else{
+		//			printf("Excluding marker: %s \n ", marker_name);
+		//		}
 	}
 	unphased_marker_subset.resize(Pedigree::markerCount,0);
 	reader.close();
@@ -348,24 +348,24 @@ void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, vecto
 			sample_gls[marker_id*3] = pow(10,gls[0]);
 			sample_gls[marker_id*3+1] = pow(10,gls[1]);
 			sample_gls[marker_id*3+2] = pow(10,gls[2]);
-//
+			//
 
 
 
-//			// TEMPORARY FOR CAMILLE DATA
-//			if(gls[0] == 0.0) {
-//				gls[0] = 0.00000001;
-//			}
-//			if(gls[1] == 0.0) {
-//				gls[1] = 0.00000001;
-//			}
-//			if(gls[2] == 0.0) {
-//				gls[2] = 0.00000001;
-//			}
-//			// Non-logged GLs in sample file
-//			sample_gls[marker_id*3] = gls[0];
-//			sample_gls[marker_id*3+1] = gls[1];
-//			sample_gls[marker_id*3+2] = gls[2];
+			//			// TEMPORARY FOR CAMILLE DATA
+			//			if(gls[0] == 0.0) {
+			//				gls[0] = 0.00000001;
+			//			}
+			//			if(gls[1] == 0.0) {
+			//				gls[1] = 0.00000001;
+			//			}
+			//			if(gls[2] == 0.0) {
+			//				gls[2] = 0.00000001;
+			//			}
+			//			// Non-logged GLs in sample file
+			//			sample_gls[marker_id*3] = gls[0];
+			//			sample_gls[marker_id*3+1] = gls[1];
+			//			sample_gls[marker_id*3+2] = gls[2];
 
 
 
@@ -405,8 +405,7 @@ void LoadGeneticMap(const char *file_name, const Pedigree &ped, vector<double> &
 	double prev_dist;
 	char marker_name [256];
 	int result;
-	//TODO dont hardcode Ne
-	//	double pop_const = 4*11418;
+
 	FILE * mapstream = fopen(file_name, "r");
 
 	map_pos = -1;
@@ -424,14 +423,27 @@ void LoadGeneticMap(const char *file_name, const Pedigree &ped, vector<double> &
 		}
 		else{
 			distances[i] = distances[i-1];
-			printf("WARNING: Marker %d is not present in crossover file. \n", GetMarkerPos(i));
+			printf("WARNING: Marker %d is not present in map file. \n", GetMarkerPos(i));
 			continue;
 		}
 	}
-
 	distances[0] = 0.01;
 };
 
+
+void writeVectorToCSV(const char * file_name, std::vector<vector<double>> v, const char* opentype){
+	FILE * csvout = fopen(file_name, opentype);
+
+	for(auto vector : v) {
+		for (auto elem : vector) {
+			std::string s = std::to_string(elem);
+			fwrite(s.c_str(), sizeof(char), s.length(), csvout);
+			putc(',', csvout);
+		}
+		putc('\n',csvout);
+	}
+	fclose(csvout);
+};
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 

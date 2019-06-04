@@ -79,11 +79,10 @@ class HaplotypePhaser {
 
 public:
 
-//	char ** haplotypes;
-//	char ** genotypes;
-
 	int prob_precision = 10;
-	int curr_hap;
+
+	// the current chromosome that forward-backward is performed along. 0 or 1
+	int curr_chrom;
 	MatrixXc haplotypes;
 
 
@@ -91,10 +90,10 @@ public:
 	Pedigree ped;
 	float error;
 	float Ne;
-
+	double pop_const;
 	std::vector<double> distances;
 
-	vector<ChromosomePair> states;
+//	vector<ChromosomePair> states;
 
 	// Number of reference haplotypes that will be considered when handling one sample
 	// The num_haps first haplotypes in the matrix haplotypes will be used.
@@ -102,9 +101,20 @@ public:
 
 
 	~HaplotypePhaser();
-	void LoadReferenceData(const String &ref_file, const char * map_file);
+	void LoadReferenceData(const String &ref_file, String &map_file);
 	void LoadSampleData(const String &sample_file,  int sample_index);
 
+
+
+
+	MatrixXd L;
+	VectorXd u;
+	VectorXd x;
+
+	VectorXd coefs_p0;
+	VectorXd coefs_p1;
+	double p0;
+	double p1;
 
 	//private:
 
@@ -119,21 +129,54 @@ public:
 	double * normalizers;
 
 
+	VectorXi allele_counts;
+	int * ml_states_c1;
+	int * ml_states_c2;
+
+	int * ml_alleles_c1;
+	int * ml_alleles_c2;
+
+	MatrixXd all_posteriors;
+
 	void AllocateMemory();
 
+	void CalcAlleleCounts();
 	void CalcEmissionProbs(int marker, double * probs);
 
+	void CalcEmissionProbsMarginalized(int marker, double * probs);
+	void CalcEmissionProbsIntegrated(int marker, double * probs);
+	void CalcEmissionProbsMla(int marker, double * probs);
+
+
 	void InitPriorScaledForward();
+	void InitPriorScaledForwardMarginalized();
+
 	void InitPriorScaledBackward();
 
-	void CalcScaledForward();
-	void CalcScaledBackward();
+	void CalcScaledForwardFixed();
+	void CalcScaledForwardSeparate();
+	void CalcScaledForwardIntegrated();
+	void CalcScaledForwardMarginalized();
+
+	void CalcMarginalStateProbs(int marker);
+
+	void CalcScaledBackwardFixed();
+	void CalcScaledBackwardIntegrated();
+	void CalcScaledBackwardMarginalized();
+	void CalcScaledBackwardSeparate();
+
 	void GetMLHaplotypes(int * ml_states);
-	vector<vector<double>> GetPosteriorStats(const char * filename, bool print);
+	vector<vector<double>> GetPosteriorStats(const char * filename, bool ml_state, bool print);
+	vector<vector<double>> GetPosteriorStatsMarginalized(const char * filename, bool print);
+
 	vector<vector<double>>  ReadPosteriorStats(const char * filename);
 
 	void PrintGenotypesToVCF(vector<vector<int>> & ml_genotypes, const char * out_file, const char * sample_file, const char * vcf_template);
-	void PrintHaplotypesToVCF(vector<vector<int>> & ml_genotypes, const char * out_file, const char * sample_file, const char * vcf_template);
+	void PrintMLSHaplotypesToVCF(vector<vector<int>> & ml_states_h1,vector<vector<int>> & ml_states_h2, const char * out_file, const char * sample_file, const char * vcf_template);
+	void PrintMLAHaplotypesToVCF( vector<vector<int>> & ml_alleles_h1, vector<vector<int>> & ml_alleles_h2, const char * out_file, const char * sample_file, const char * vcf_template);
+
+
+
 
 };
 

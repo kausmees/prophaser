@@ -16,6 +16,9 @@ int main(int argc, char ** argv){
 
 	double Ne;
 	double error;
+	int n_iter;
+	bool geno_mls;
+
 
 	ParameterList parameter_list;
 	LongParamContainer long_parameters;
@@ -29,6 +32,12 @@ int main(int argc, char ** argv){
 	long_parameters.addGroup("Parameters");
 	long_parameters.addDouble("Ne", &Ne);
 	long_parameters.addDouble("Error", &error);
+	long_parameters.addInt("Iterations", &n_iter);
+	long_parameters.addString("Algorithm", &algo);
+	// use most likely states of other haplotype to calculate posterior genotype probability for current haplotype (false: use most likley allele)
+	long_parameters.addBool("Geno_mls", &geno_mls);
+
+
 
 	parameter_list.Add(new LongParameters("Options",long_parameters.getLongParameterList()));
 	parameter_list.Read(argc, argv);
@@ -37,21 +46,33 @@ int main(int argc, char ** argv){
 	// Defaults
 	Ne = Ne ? Ne : 11418.0;
 	error = error ? error : 0.001;
-
-	dir = !dir.IsEmpty() ? dir : "../../Data/1KGData/vcfs/chrom20/";
-	res_dir = !res_dir.IsEmpty() ? res_dir : "./Results/";
-	map_file = !map_file.IsEmpty() ? map_file : "/home/kristiina/Projects/Data/1KGData/vcfs/chrom20/maps/5_snps_interpolated_HapMap2_map_20";
-	algo = !algo.IsEmpty() ? algo : "sym";
+	n_iter = n_iter ? n_iter : 3;
+	geno_mls = geno_mls ? geno_mls : false;
 
 
-// TODO implement base class and have algorithm choice in parameters
+	dir = !dir.IsEmpty() ? dir : "./";
+	res_dir = !res_dir.IsEmpty() ? res_dir : "./";
+	algo = !algo.IsEmpty() ? algo : "fixed";
 
-//	HaplotypePhaser phaser;
-//	string suffix = ".full";
 
-	HaplotypePhaserSym phaser;
-	string suffix = ".sym";
+	if (!(!algo.Compare("fixed") || !algo.Compare("separate") || !algo.Compare("integrated"))) {
+		printf("No such algorithm \n ");
+		return -1;
+	};
 
+	string geno_mlss;
+	if (geno_mls) {
+		geno_mlss = "gmls";
+	}else {
+		geno_mlss = "gmla";
+	}
+
+
+	string a = algo.c_str();
+	string suffix = ".ls."+a+"."+geno_mlss+"."+to_string(n_iter);
+
+
+	HaplotypePhaser phaser;
 	phaser.Ne = Ne;
 	phaser.error = error;
 
@@ -68,18 +89,20 @@ int main(int argc, char ** argv){
 
 	printf("Reference file : %s \n", ref_file.c_str());
 	printf("Map file : %s \n", map_file.c_str());
-	printf("Writing to : %s \n\n", result_file.c_str());
 	//
 	printf("With: \nNe %f \n", phaser.Ne);
 	printf("error %f \n", phaser.error);
-
+	printf("algorithm %s \n", algo.c_str());
 
 	printf("\nTemplate vcf: %s \n\n ", vcf_template.c_str());
+
+	printf("----------------\n");
+	printf("Writing to : %s \n\n", (result_file+suffix).c_str());
 
 
 	////////////////////////////////////////// phasing start //////////////////////////////////////////////////////////////
 
-	phaser.LoadReferenceData(r_file.c_str(), map_file.c_str());
+	phaser.LoadReferenceData(r_file.c_str(), map_file);
 
 	VcfFileReader reader;
 	VcfHeader header_read;
@@ -91,8 +114,13 @@ int main(int argc, char ** argv){
 	// n_samples x n_markers array of most likely genotypes
 	vector<vector<int>> ml_genotypes;
 
-	// n_samples x n_markers array of most likely states
-	vector<vector<int>> ml_states;
+	// n_samples x n_markers array of most likely states for each chromosome
+	vector<vector<int>> ml_states_h1;
+	vector<vector<int>> ml_states_h2;
+
+	// n_samples x n_markers array of most likely alleles for each chromosome
+	vector<vector<int>> ml_alleles_h1;
+	vector<vector<int>> ml_alleles_h2;
 
 
 	chrono::steady_clock::time_point begin1;
@@ -111,35 +139,100 @@ int main(int argc, char ** argv){
 
 		cout << "Haplotypes:\n" << phaser.haplotypes.block(0,0,4,10) << endl;
 
+		phaser.CalcAlleleCounts();
+		cout << "Allele counts:\n" << phaser.allele_counts.segment(0, 10) << endl;
+
+
 		cout << "Sample GLs:\n" << endl;
 		for (int m = 0; m < 4 ; m++) {
 			printf("--- marker %d : %f %f %f \n" , m, phaser.sample_gls[m*3], phaser.sample_gls[m*3 +1 ], phaser.sample_gls[m*3+2]);
 		}
 
 		begin = chrono::steady_clock::now();
-		cout << "Starting Forward \n";
-		phaser.CalcScaledForward();
+		cout << "Starting Forward haplotype 1\n";
+		phaser.CalcScaledForwardMarginalized();
 
 		end= std::chrono::steady_clock::now();
 
 		cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
 
 		begin = chrono::steady_clock::now();
-		cout << "Starting Backward \n";
-		phaser.CalcScaledBackward();
+		cout << "Starting Backward haplotype 1 \n";
+		//	phaser.CalcScaledBackward();
+		phaser.CalcScaledBackwardMarginalized();
 
 
 		end= std::chrono::steady_clock::now();
 		cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
 		begin = chrono::steady_clock::now();
-		cout << "Starting Stats \n";
+		cout << "Starting Stats haplotype 1\n";
 
-		vector<vector<double>> stats = phaser.GetPosteriorStats((result_file+"_"+to_string(sample)+"_stats").c_str(), true);
-		cout << "Done Stats \n";
+		vector<vector<double>> stats_marginalized = phaser.GetPosteriorStatsMarginalized((result_file+"_stats_h1").c_str(), false);
+		cout << "Done Stats h1\n";
+
+
+
+
+		vector<vector<double>> stats;
+
+		for (int n = 1; n < n_iter; n++) {
+			cout << "Starting iteration " << n << "\n";
+
+			int hap = (n % 2) + 1;
+
+			phaser.curr_chrom = hap;
+
+
+			if (!algo.Compare("fixed")) {
+				cout << "Starting Forward haplotype " << hap << "\n";
+				phaser.CalcScaledForwardFixed();
+				end= std::chrono::steady_clock::now();
+				cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
+				begin = chrono::steady_clock::now();
+				cout << "Starting Backward haplotype " << hap << "\n";
+				phaser.CalcScaledBackwardFixed();
+			}
+
+			if (!algo.Compare("separate")) {
+				cout << "Starting Forward haplotype " << hap << "\n";
+				phaser.CalcScaledForwardSeparate();
+				end= std::chrono::steady_clock::now();
+				cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
+				begin = chrono::steady_clock::now();
+				cout << "Starting Backward haplotype " << hap << "\n";
+				phaser.CalcScaledBackwardSeparate();
+			}
+
+			if (!algo.Compare("integrated")) {
+				cout << "Starting Forward haplotype " << hap << "\n";
+				phaser.CalcScaledForwardIntegrated();
+				end= std::chrono::steady_clock::now();
+				cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
+				begin = chrono::steady_clock::now();
+				cout << "Starting Backward haplotype " << hap << "\n";
+				phaser.CalcScaledBackwardIntegrated();
+			}
+
+
+			end= std::chrono::steady_clock::now();
+			cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
+			begin = chrono::steady_clock::now();
+			cout << "Starting Stats haplotype" << hap << "\n";
+			stats = phaser.GetPosteriorStats((result_file+"_stats").c_str(), geno_mls, false);
+			cout << "Done Stats \n";
+
+		};
+
 
 		// push back a vector for this sample
 		ml_genotypes.push_back({});
-		ml_states.push_back({});
+		ml_states_h1.push_back({});
+		ml_states_h2.push_back({});
+
+		ml_alleles_h1.push_back({});
+		ml_alleles_h2.push_back({});
+
+
 
 		for(int m = 0; m < phaser.num_markers; m++) {
 			float max_geno_prob = 0.0;
@@ -151,7 +244,14 @@ int main(int argc, char ** argv){
 				};
 			};
 			ml_genotypes[sample].push_back(max_geno_code);
-			ml_states[sample].push_back(stats[m][39]);
+
+			ml_states_h1[sample].push_back(phaser.ml_states_c1[m]);
+			ml_states_h2[sample].push_back(phaser.ml_states_c2[m]);
+
+			ml_alleles_h1[sample].push_back(phaser.ml_alleles_c1[m]);
+			ml_alleles_h2[sample].push_back(phaser.ml_alleles_c2[m]);
+
+
 		};
 
 		end = std::chrono::steady_clock::now();
@@ -159,9 +259,9 @@ int main(int argc, char ** argv){
 
 	};
 
-
-	phaser.PrintGenotypesToVCF(ml_genotypes, (result_file + ".genos" + suffix).c_str(), sample_file.c_str(), vcf_template.c_str());
-	phaser.PrintHaplotypesToVCF(ml_states, (result_file + ".phased" +suffix).c_str(), sample_file.c_str(), vcf_template.c_str());
+	phaser.PrintGenotypesToVCF(ml_genotypes, (result_file + suffix + ".genos").c_str(), sample_file.c_str(), vcf_template.c_str());
+	phaser.PrintMLSHaplotypesToVCF(ml_states_h1, ml_states_h2, (result_file + suffix + ".phased.MLS" ).c_str(), sample_file.c_str(), vcf_template.c_str());
+	phaser.PrintMLAHaplotypesToVCF(ml_alleles_h1, ml_alleles_h2, (result_file + suffix + ".phased.MLA").c_str(), sample_file.c_str(), vcf_template.c_str());
 
 
 	end = std::chrono::steady_clock::now();
