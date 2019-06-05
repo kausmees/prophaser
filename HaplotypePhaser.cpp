@@ -1250,7 +1250,7 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStatsMarginalized(const cha
 
 		}
 
-		vector<size_t> res = sort_indexes(posteriors);
+		vector<size_t> res = VcfUtils::sort_indexes(posteriors);
 
 
 		//add lowest probabilities to stats[m] - in increasing order
@@ -1460,7 +1460,7 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 		}
 
 
-		vector<size_t> res = sort_indexes(posteriors);
+		vector<size_t> res = VcfUtils::sort_indexes(posteriors);
 
 		//add lowest elements to stats[m]
 		for(int i = 0; i < 10; i++) {

@@ -6,14 +6,9 @@
 #include <vector>
 #include <chrono>
 #include <algorithm>
-
-#include "Pedigree.h"
-#include "VcfUtils.h"
-#include <vector>
-#include <chrono>
-#include <algorithm>
 #include <Eigen/Dense>
 #include <math.h>
+#include <iomanip>
 
 
 
@@ -64,8 +59,8 @@ struct ChromosomePair {
 
 		}
 
-	return num;
-}
+		return num;
+	}
 
 
 };
@@ -93,7 +88,7 @@ public:
 	double pop_const;
 	std::vector<double> distances;
 
-//	vector<ChromosomePair> states;
+	//	vector<ChromosomePair> states;
 
 	// Number of reference haplotypes that will be considered when handling one sample
 	// The num_haps first haplotypes in the matrix haplotypes will be used.

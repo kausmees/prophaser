@@ -1,5 +1,4 @@
 #include <chrono>
-#include "HaplotypePhaserSym.h"
 #include "HaplotypePhaser.h"
 #include "Parameters.h"
 #include "Pedigree.h"
