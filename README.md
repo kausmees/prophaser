@@ -14,7 +14,7 @@ Using normalized forward-backward algorithm for hidden markov models explained i
 >https://pdfs.semanticscholar.org/54dc/c2a758e7fa34b8c2ef19826f39f16c4d1731.pdf
 
 
-#### build ####
+## build ##
 
 build using makefile
 
@@ -26,10 +26,10 @@ http://eigen.tuxfamily.org/index.php?title=Main_Page
 these need to be downloaded and the path to them updated in makefile
 
 
-#### branches ####
-two of the branches are "current": master och linear_state
+## branches ##
+two of the branches are "current": master and linear_state
 
-##### master #####
+### master ###
 there are two versions, implemented in the classes HaplotypePhaser and HaplotypePhaserSym
 which one is used needs to be selected in main.cpp by commenting/uncommenting the pairs of lines:
 
@@ -53,11 +53,17 @@ Removing symmetry in the state space by considering states as unordered pairs in
 This rougly halves the size of the state space, and seems to give only slightly higher errors.
 
 
+These both output two VCF files, one with phased haplotypes (.phased) and one with the most likely genotypes, calculated by summing together all the posterior state probabilities for each genotype (.genos). Genos gives much better imputation performance.
 
-##### linear_state #####
-Version where forward-backward is performed over one chromosome at a time. Much faster, but less correct.
 
-There are 3 ways implemented of handling the "other chromsome" while calculating probabilities for the current chromosomes.
+**If the directory specified for output does not exist, the run will fail. Thats why my bash script creates the results directory.**
+
+
+### linear_state ###
+Branch where forward-backward is performed over one chromosome at a time. Much faster, but less correct. 
+
+There are many different options for this code, mainly to do with how to handle the "other chromosome" while calculating probabilities for the current chromosome. There are 3 ways implemented now:
+
 These are specified using the command line argument --algorithm
 
 #### fixed ####
@@ -65,6 +71,8 @@ These are specified using the command line argument --algorithm
 #### separate ####
 
 #### integrated ####
+
+There is also the command line option *--Geno_mls* which affects how the most likely genotypes are calulated: turning this option on means  
 
 
 I'm not sure these are correct always in terms of the definition of pdfs and so on.
