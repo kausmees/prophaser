@@ -56,7 +56,7 @@ This rougly halves the size of the state space, and seems to give only slightly 
 These both output two VCF files, one with phased haplotypes (.phased) and one with the most likely genotypes, calculated by summing together all the posterior state probabilities for each genotype (.genos). Genos gives much better imputation performance.
 
 
-**If the directory specified for output does not exist, the run will fail. Thats why my bash script creates the results directory.**
+**If the directory specified for output does not exist, the run will fail. Thats why my example bash script creates the results directory.**
 
 
 ### linear_state ###
