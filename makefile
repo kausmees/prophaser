@@ -13,14 +13,14 @@ LFLAGS = -static -static-libgcc -static-libstdc++ -fopenmp -g -o
 
 SOURCES=$(wildcard *.cpp)
 OBJECTS=$(SOURCES:.cpp=.o)
-TARGET=phase_sym
+TARGET=phase
 
 all: $(TARGET)
 
 
 $(TARGET): $(OBJECTS)
 	$(CC) $(LFLAGS) $@ $^  -L../../haplotyperProject/libStatGen -lStatGen -lz 
-#	$(CC) $(LFLAGS) $@ $^ ../../haplotyperProject/genoUtils/GenoUtils.o -L../../haplotyperProject/libStatGen -lStatGen_debug -lz 
+#	$(CC) $(LFLAGS) $@ $^  -L../../haplotyperProject/libStatGen -lStatGen_debug -lz 
 %.o: %.cpp %.h
 	$(CC) $(CFLAGS) -g $< -I ../../haplotyperProject/libStatGen/include/ -I ../../../Programs/eigen-eigen-5a0156e40feb/
 	
