@@ -20,6 +20,9 @@ void HaplotypePhaser::AllocateMemory(){
 
 	num_markers = Pedigree::markerCount;
 
+
+	pop_const = (4.0 * Ne) / 100.0;
+
 	// Number of reference inds.
 	num_ref_inds = ped.count;
 	num_inds = num_ref_inds +1;
@@ -58,17 +61,19 @@ void HaplotypePhaser::AllocateMemory(){
 /**
  * Load reference data from specified file.
  *
- * Load genetic distances from map file.
+ * Load genetic distances from map file if specified.
  *
  */
-void HaplotypePhaser::LoadReferenceData(const String &ref_file, const char * map_file){
+void HaplotypePhaser::LoadReferenceData(const String &ref_file, String &map_file){
 	VcfUtils::LoadReferenceMarkers(ref_file);
 	VcfUtils::LoadReferenceIndividuals(ped,ref_file);
 	AllocateMemory();
 	VcfUtils::LoadHaplotypes(ref_file, ped, haplotypes);
-	VcfUtils::LoadGeneticMap(map_file, ped, distances);
-
+	if(!map_file.IsEmpty()) {
+		VcfUtils::LoadGeneticMap(map_file.c_str(), ped, distances);
+	};
 };
+
 
 /**
  * Load sample data from vcf.
@@ -194,10 +199,9 @@ void HaplotypePhaser::InitPriorScaledBackward(){
 
 void HaplotypePhaser::CalcScaledForward(){
 	double * emission_probs = new double[num_states];
-	double c;
+	double c, c1,c2;
 	double probs[3];
 	double scaled_dist;
-	double pop_const = (4.0 * Ne) / 100.0;
 
 	InitPriorScaledForward();
 
@@ -207,12 +211,16 @@ void HaplotypePhaser::CalcScaledForward(){
 
 		scaled_dist = 1-exp(-(distances[m] * pop_const)/num_haps);
 
+		c1 = scaled_dist/num_haps;
+		c2 = 1 - scaled_dist;
+
 		//both_switch
-		probs[0] = pow(scaled_dist/num_haps, 2);
+		probs[0] = pow(c1, 2);
 		//one switch
-		probs[1] =  (((1 - scaled_dist) * scaled_dist) / num_haps) + pow(scaled_dist/num_haps, 2);
+		probs[1] =  (c2*c1) + pow(c1, 2);
 		// no switch
-		probs[2] = pow(1 - scaled_dist, 2) + ((2 * (1 - scaled_dist) * scaled_dist) / num_haps) + (pow(scaled_dist,2) / pow(num_haps,2));
+		probs[2] = pow(c2, 2) + (2*c2*c1) + pow(c1, 2);
+
 
 #pragma omp parallel for schedule(dynamic,32)
 		for(int s = 0; s < num_states; s++){
@@ -258,19 +266,23 @@ void HaplotypePhaser::CalcScaledBackward(){
 	double * emission_probs = new double[num_states];
 	double probs[3];
 	double scaled_dist;
-	double pop_const = (4.0 * Ne) / 100.0;
+	double c1,c2;
 
 	InitPriorScaledBackward();
 
 	for(int m = num_markers-2; m >= 0; m--){
 		scaled_dist = 1-exp(-(distances[m+1] * pop_const)/num_haps);
 
+		c1 = scaled_dist/num_haps;
+		c2 = 1 - scaled_dist;
+
 		//both_switch
-		probs[0] = pow(scaled_dist/num_haps, 2);
+		probs[0] = pow(c1, 2);
 		//one switch
-		probs[1] =  (((1 - scaled_dist) * scaled_dist) / num_haps) + pow(scaled_dist/num_haps, 2);
+		probs[1] =  (c2*c1) + pow(c1, 2);
 		// no switch
-		probs[2] = pow(1 - scaled_dist, 2) + ((2 * (1 - scaled_dist) * scaled_dist) / num_haps) + (pow(scaled_dist,2) / pow(num_haps,2));
+		probs[2] = pow(c2, 2) + (2*c2*c1) + pow(c1, 2);
+
 
 		CalcEmissionProbs(m+1, emission_probs);
 
@@ -381,7 +393,7 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 		}
 
 
-		vector<size_t> res = sort_indexes(posteriors);
+		vector<size_t> res = VcfUtils::sort_indexes(posteriors);
 
 		//add lowest elements to stats[m]
 		for(int i = 0; i < 10; i++) {
@@ -406,7 +418,7 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 
 	if (print) {
 		printf("Writing stats to %s \n", filename);
-		writeVectorToCSV(filename, stats, "w");
+		VcfUtils::writeVectorToCSV(filename, stats, "w");
 
 	}
 
@@ -551,7 +563,6 @@ void HaplotypePhaser::PrintGenotypesToVCF(vector<vector<int>> & genotypes, const
 	reader.open(vcf_template, header_read);
 	reader.readRecord(record_template);
 
-	printf("Reading from template %s \n", vcf_template);
 
 	int num_samples = header_read.getNumSamples();
 
@@ -629,8 +640,8 @@ void HaplotypePhaser::PrintGenotypesToVCF(vector<vector<int>> & genotypes, const
  */
 void HaplotypePhaser::PrintHaplotypesToVCF(vector<vector<int>> & ml_states, const char * out_file, const char * sample_file, const char * vcf_template){
 
-	std::vector<String> h1;
-	std::vector<String> h2;
+//	std::vector<String> h1;
+//	std::vector<String> h2;
 
 	int ref_hap1;
 	int ref_hap2;
@@ -642,8 +653,6 @@ void HaplotypePhaser::PrintHaplotypesToVCF(vector<vector<int>> & ml_states, cons
 
 	reader.open(vcf_template, header_read);
 	reader.readRecord(record_template);
-
-	printf("Reading from template %s \n", vcf_template);
 
 
 

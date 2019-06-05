@@ -23,9 +23,11 @@ void HaplotypePhaserSym::AllocateMemory(){
 
 	num_markers = Pedigree::markerCount;
 
+
+	pop_const = (4.0 * Ne) / 100.0;
+
 	// Number of reference inds.
 	num_ref_inds = ped.count;
-
 	num_inds = num_ref_inds +1;
 
 	printf("Num inds tot: %d \n", num_inds);
@@ -62,17 +64,19 @@ void HaplotypePhaserSym::AllocateMemory(){
 /**
  * Load reference data from specified file.
  *
- * Load genetic distances from map file.
+ * Load genetic distances from map file if specified.
  *
  */
-void HaplotypePhaserSym::LoadReferenceData(const String &ref_file, const char * map_file){
+void HaplotypePhaserSym::LoadReferenceData(const String &ref_file, String &map_file){
 	VcfUtils::LoadReferenceMarkers(ref_file);
 	VcfUtils::LoadReferenceIndividuals(ped,ref_file);
 	AllocateMemory();
 	VcfUtils::LoadHaplotypes(ref_file, ped, haplotypes);
-	VcfUtils::LoadGeneticMap(map_file, ped, distances);
-
+	if(!map_file.IsEmpty()) {
+		VcfUtils::LoadGeneticMap(map_file.c_str(), ped, distances);
+	};
 };
+
 
 /**
  * Load sample data from vcf.
@@ -213,8 +217,6 @@ void HaplotypePhaserSym::CalcScaledForward(){
 	printf("Num h = %d \n", num_haps);
 	printf("Num markers = %d \n", num_markers);
 
-
-	double pop_const = (4.0 * Ne) / 100.0;
 
 	InitPriorScaledForward();
 
@@ -375,7 +377,6 @@ void HaplotypePhaserSym::CalcScaledBackward(){
 	double same_1 = (num_haps-1);
 
 
-	double pop_const = (4.0 * Ne) / 100.0;
 
 	InitPriorScaledBackward();
 
@@ -584,7 +585,7 @@ vector<vector<double>>  HaplotypePhaserSym::GetPosteriorStats(const char * filen
 		}
 
 
-		vector<size_t> res = sort_indexes(posteriors);
+		vector<size_t> res = VcfUtils::sort_indexes(posteriors);
 
 		//add lowest elements to stats[m]
 		for(int i = 0; i < 10; i++) {
@@ -609,7 +610,7 @@ vector<vector<double>>  HaplotypePhaserSym::GetPosteriorStats(const char * filen
 
 	if (print) {
 		printf("Writing stats to %s \n", filename);
-		writeVectorToCSV(filename, stats, "w");
+		VcfUtils::writeVectorToCSV(filename, stats, "w");
 
 	}
 
@@ -755,12 +756,6 @@ void HaplotypePhaserSym::PrintGenotypesToVCF(vector<vector<int>> & genotypes, co
 
 	reader.open(vcf_template, header_read);
 	reader.readRecord(record_template);
-//	reader.close();
-
-	printf("Reading from template %s \n", vcf_template);
-
-
-//	reader.open(sample_file, header_read);
 
 
 	int num_samples = header_read.getNumSamples();
@@ -839,8 +834,8 @@ void HaplotypePhaserSym::PrintGenotypesToVCF(vector<vector<int>> & genotypes, co
  */
 void HaplotypePhaserSym::PrintHaplotypesToVCF(vector<vector<int>> & ml_states, const char * out_file, const char * sample_file, const char * vcf_template){
 
-	std::vector<String> h1;
-	std::vector<String> h2;
+//	std::vector<String> h1;
+//	std::vector<String> h2;
 
 	int ref_hap1;
 	int ref_hap2;
@@ -854,8 +849,6 @@ void HaplotypePhaserSym::PrintHaplotypesToVCF(vector<vector<int>> & ml_states, c
 
 	reader.open(vcf_template, header_read);
 	reader.readRecord(record_template);
-
-	printf("Reading from template %s \n", vcf_template);
 
 
 	int num_samples = header_read.getNumSamples();
@@ -873,16 +866,16 @@ void HaplotypePhaserSym::PrintHaplotypesToVCF(vector<vector<int>> & ml_states, c
 	for(int sample = 0; sample < num_samples; sample++) {
 		hapstrings.push_back({});
 
-		h1.clear();
-		h2.clear();
+//		h1.clear();
+//		h2.clear();
 
 		// First marker. order does not matter
 		ref_hap1 = states[ml_states[sample][0]].first;
 		ref_hap2 = states[ml_states[sample][0]].second;
 
 
-		h1.push_back(Pedigree::GetMarkerInfo(0)->GetAlleleLabel(haplotypes(ref_hap1,0)+1));
-		h2.push_back(Pedigree::GetMarkerInfo(0)->GetAlleleLabel(haplotypes(ref_hap2,0)+1));
+//		h1.push_back(Pedigree::GetMarkerInfo(0)->GetAlleleLabel(haplotypes(ref_hap1,0)+1));
+//		h2.push_back(Pedigree::GetMarkerInfo(0)->GetAlleleLabel(haplotypes(ref_hap2,0)+1));
 
 		prev_ref_hap1 = ref_hap1;
 		prev_ref_hap2 = ref_hap2;
@@ -946,8 +939,8 @@ void HaplotypePhaserSym::PrintHaplotypesToVCF(vector<vector<int>> & ml_states, c
 			prev_ref_hap1 = ref_hap1;
 			prev_ref_hap2 = ref_hap2;
 
-			h1.push_back(Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes(ref_hap1,m)+1));
-			h2.push_back(Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes(ref_hap2,m)+1));
+//			h1.push_back(Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes(ref_hap1,m)+1));
+//			h2.push_back(Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes(ref_hap2,m)+1));
 
 			////////////////////////
 

@@ -102,6 +102,19 @@ void LoadReferenceIndividuals(Pedigree &ped, const String &ref_file) {
 
 };
 
+void writeVectorToCSV(const char * file_name, std::vector<vector<double>> v, const char* opentype){
+	FILE * csvout = fopen(file_name, opentype);
+
+	for(auto vector : v) {
+		for (auto elem : vector) {
+			std::string s = std::to_string(elem);
+			fwrite(s.c_str(), sizeof(char), s.length(), csvout);
+			putc(',', csvout);
+		}
+		putc('\n',csvout);
+	}
+	fclose(csvout);
+};
 
 
 /**
@@ -390,6 +403,67 @@ int GetMarkerPos(int marker_id){
 	std::string marker_name = Pedigree::GetMarkerInfo(marker_id)->name.c_str();
 	std::size_t delim = marker_name.find(":");
 	return std::stoi(marker_name.substr(delim+1));
+}
+
+/**
+ * Get the format of genotype likelihoods specified in header.
+ * Return forst occurrence of "GL" or "PL" found.
+ * Assumes at most one specified.
+ * Returns "" if neither specified.
+ */
+std::string get_likelihood_format(VcfHeader& header) {
+	std::string line;
+	int index;
+	int lines = header.getNumMetaLines();
+	for(int i = 0; i < lines; i++) {
+		line = header.getMetaLine(i);
+		index = line.find("ID=GL,");
+		if(index > -1) {
+			return "GL";
+		}
+		index = line.find("ID=PL,");
+		if(index > -1) {
+			return "PL";
+		}
+
+	}
+	return "";
+};
+
+
+vector<double> get_GL(VcfHeader& header, VcfRecord& record, int sample) {
+	vector<double> gl_vals;
+	string lformat = get_likelihood_format(header);
+
+
+	std::string sub00, sub01, sub11;
+	const string * likelihood = record.getGenotypeInfo().getString(lformat,sample);
+
+	if(*likelihood == "" || *likelihood == ".") {
+		//TODO throw error or handle somehow
+		printf("ERROR: INDIVIDUAL WITH NO LIKELIHOOD FOUND \n");
+	}
+
+	std::istringstream iss(*likelihood);
+
+	double gl_00;
+	double gl_01;
+	double gl_11;
+
+	std::getline(iss, sub00, ',');
+	std::getline(iss, sub01, ',');
+	std::getline(iss, sub11, ',');
+
+	gl_00 = (lformat == "PL") ? atof(sub00.c_str())/-10.0 : atof(sub00.c_str());
+	gl_01 = (lformat == "PL") ? atof(sub01.c_str())/-10.0 : atof(sub01.c_str());
+	gl_11 = (lformat == "PL") ? atof(sub11.c_str())/-10.0 : atof(sub11.c_str());
+
+	gl_vals.push_back(gl_00);
+	gl_vals.push_back(gl_01);
+	gl_vals.push_back(gl_11);
+
+	return gl_vals;
+
 }
 
 /**

@@ -91,6 +91,7 @@ public:
 	Pedigree ped;
 	float error;
 	float Ne;
+	double pop_const;
 
 	std::vector<double> distances;
 
@@ -102,7 +103,7 @@ public:
 
 
 	~HaplotypePhaser();
-	void LoadReferenceData(const String &ref_file, const char * map_file);
+	void LoadReferenceData(const String &ref_file, String &map_file);
 	void LoadSampleData(const String &sample_file,  int sample_index);
 
 
