@@ -183,7 +183,7 @@ void HaplotypePhaser::InitPriorScaledForward(){
 
 	for(int s = 0; s < num_states; s++){
 		s_forward[0][s] = (prior*emission_probs[s]) * normalizers[0];
-	};
+	}
 
 	delete [] emission_probs;
 };
@@ -192,20 +192,68 @@ void HaplotypePhaser::InitPriorScaledBackward(){
 
 	for(int s = 0; s < num_states; s++){
 		s_backward[num_markers-1][s] = normalizers[num_markers-1];
-	};
+	}
 };
 
 
+struct HapSummer
+{
+	const int num_haps;
+	const int num_states;
+
+	vector<double> hapSums[2];
+
+	void reset() {
+		for (auto& hapSum : hapSums) {
+			hapSum.assign(num_haps, 0);
+		}
+	}
+
+	HapSummer(int num_haps, int num_states) :
+		num_haps(num_haps), num_states(num_states) {
+		reset();
+	}
+
+	void sum(double* table, const vector<ChromosomePair>& states, double* doEmissions) {
+		reset();
+
+		// 1024 entries means touching 8192 bytes of forward data
+		// double additions should be atomic, let's hope that all works out (big chance?)
+#pragma omp parallel for schedule(dynamic,1024)
+		for (int j = 0; j < num_states; j++) {
+			const ChromosomePair& cp = states[j];
+			const double val = doEmissions ? table[j] * doEmissions[j] : table[j];
+			hapSums[0][cp.first] += val;
+			hapSums[1][cp.second] += val;
+		}
+	}
+
+	const array<double, 3> caseProbs(double* table, int s, const ChromosomePair cp) {
+		const double diagonal = table[s];
+		const double halfmatch = hapSums[0][cp.first] + hapSums[1][cp.second] - 2 * diagonal;
+		// Nothing special really happens when cp.first == cp.second... RIGHT???
+		const double therest = 1.0 - diagonal - halfmatch;
+
+		return { therest, halfmatch, diagonal };
+	}
+
+	const vector<double>& operator[](int index) {
+		return hapSums[index];
+	}
+};
 
 void HaplotypePhaser::CalcScaledForward(){
 	double * emission_probs = new double[num_states];
 	double c, c1,c2;
 	double probs[3];
 	double scaled_dist;
+	HapSummer hapSum(num_haps, num_states);
 
 	InitPriorScaledForward();
 
-	for(int m = 1; m < num_markers; m++){
+	
+	for(int m = 1; m < num_markers; m++){			
+		hapSum.sum(s_forward[m - 1], states, nullptr);
 		CalcEmissionProbs(m, emission_probs);
 		c = 0.0;
 
@@ -221,18 +269,20 @@ void HaplotypePhaser::CalcScaledForward(){
 		// no switch
 		probs[2] = pow(c2, 2) + (2*c2*c1) + pow(c1, 2);
 
+		// Based on normalization scheme, sum over all previous forwards is always 1
+		// Let's precalc sum over all halves in first and second half of pair
+		printf("%d\n", m);
 
-#pragma omp parallel for schedule(dynamic,32)
+#pragma omp parallel for schedule(dynamic,1024)
 		for(int s = 0; s < num_states; s++){
+			const ChromosomePair& cp = states[s];
 			double sum = 0.0;
-
-
 			double prob_test = 0.0;
-#pragma GCC ivdep
-			for(int j = 0; j < num_states; j++){
-				int chrom_case = (states[s]).TransitionCase(states[j]);
 
-				sum += s_forward[m-1][j] * probs[chrom_case];
+			const array<double, 3> allcases = hapSum.caseProbs(s_forward[m - 1], s, cp);
+			for (int chrom_case = 0; chrom_case < 3; chrom_case++) {
+
+				sum += allcases[chrom_case] * probs[chrom_case];
 				prob_test +=probs[chrom_case];
 
 			}
@@ -267,12 +317,16 @@ void HaplotypePhaser::CalcScaledBackward(){
 	double probs[3];
 	double scaled_dist;
 	double c1,c2;
+	HapSummer hapSum(num_haps, num_states);
 
 	InitPriorScaledBackward();
 
 	for(int m = num_markers-2; m >= 0; m--){
+		CalcEmissionProbs(m + 1, emission_probs);
+		hapSum.sum(s_backward[m + 1], states, emission_probs);
 		scaled_dist = 1-exp(-(distances[m+1] * pop_const)/num_haps);
 
+		// TODO: Shared between both, refactor into helper
 		c1 = scaled_dist/num_haps;
 		c2 = 1 - scaled_dist;
 
@@ -281,23 +335,22 @@ void HaplotypePhaser::CalcScaledBackward(){
 		//one switch
 		probs[1] =  (c2*c1) + pow(c1, 2);
 		// no switch
-		probs[2] = pow(c2, 2) + (2*c2*c1) + pow(c1, 2);
+		probs[2] = pow(c2, 2) + (2*c2*c1) + pow(c1, 2);		
 
-
-		CalcEmissionProbs(m+1, emission_probs);
-
-#pragma omp parallel for
+#pragma omp parallel for schedule(dynamic,1024)
 		for(int s = 0; s < num_states; s++){
+			const ChromosomePair& cp = states[s];
 			double sum = 0.0;
 
-#pragma GCC ivdep
-			for(int j = 0; j < num_states; j++){
+			const array<double, 3> allcases = hapSum.caseProbs(s_backward[m + 1], s, cp);
 
-				int chrom_case = (states[s]).TransitionCase(states[j]);
+			for (int chrom_case = 0; chrom_case < 3; chrom_case++) {
 
-				sum +=  s_backward[m+1][j]* probs[chrom_case] * emission_probs[j];
+				sum += allcases[chrom_case] * probs[chrom_case];
 
 			}
+
+			// TODO: Isn't this reuse of normalizers exceedingly weird?
 			s_backward[m][s] = sum * normalizers[m];
 		}
 	}
