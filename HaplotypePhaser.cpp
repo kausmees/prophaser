@@ -219,7 +219,7 @@ struct HapSummer
 
 		// 1024 entries means touching 8192 bytes of forward data
 		// double additions should be atomic, let's hope that all works out (big chance?)
-#pragma omp parallel for schedule(dynamic,1024)
+#pragma omp parallel for schedule(dynamic,131072)
 		for (int j = 0; j < num_states; j++) {
 			const ChromosomePair& cp = states[j];
 			const double val = doEmissions ? table[j] * doEmissions[j] : table[j];
@@ -271,31 +271,18 @@ void HaplotypePhaser::CalcScaledForward(){
 
 		// Based on normalization scheme, sum over all previous forwards is always 1
 		// Let's precalc sum over all halves in first and second half of pair
-		printf("%d\n", m);
+		if (m % 1000 == 0) fprintf(stderr, "%d\n", m);
 
-#pragma omp parallel for schedule(dynamic,1024)
+#pragma omp parallel for schedule(dynamic,131072)
 		for(int s = 0; s < num_states; s++){
 			const ChromosomePair& cp = states[s];
-			double sum = 0.0;
-			double prob_test = 0.0;
+			double sum = 0.0;		
 
 			const array<double, 3> allcases = hapSum.caseProbs(s_forward[m - 1], s, cp);
 			for (int chrom_case = 0; chrom_case < 3; chrom_case++) {
-
 				sum += allcases[chrom_case] * probs[chrom_case];
-				prob_test +=probs[chrom_case];
-
 			}
 			s_forward[m][s] =  emission_probs[s] * sum;
-
-			// prob is p(trans j -> s) . so P(s|j)
-			//				 conditioning on j
-			// expect sum over s P(s|j) = 1. But its symmetric, so can check that sum over j = 1
-
-			if(abs(prob_test-1.0) > 0.0001) {
-				printf("!! Probtest = %f !! \n", prob_test);
-			}
-
 		}
 
 		for(int s = 0; s < num_states; s++){
