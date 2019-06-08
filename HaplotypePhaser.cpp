@@ -428,7 +428,7 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 		for(int i = 0; i < 3 ; i++) {
 			check_sum += geno_probs[m][i];
 		}
-		if(abs(check_sum - 1.0) > 0.000001 ) {
+		if(abs(check_sum - 1.0) > 0.000001 || !isfinite(check_sum)) {
 			printf("!!!!!!!!!!!!!!!!!!!!!!!!!Sum of all geno probs is %f at marker %d !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1\n ", check_sum, m);
 		}
 
