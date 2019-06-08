@@ -35,8 +35,11 @@ void LoadReferenceMarkers(const String &file_name){
 
 		std::stringstream ss;
 		ss << record.getChromStr() << ":" << record.get1BasedPosition();
-		marker_name = ss.str().c_str();
+		std::string markerstring = ss.str();
 		ss.clear();
+
+		marker_name = markerstring.c_str();
+		
 		//TODO should use sprintf instead, faster? know chrom and pos wont be non-null terminated
 		// or large to cause buffer overflow issues?
 		//sprintf(marker_id, "%s:%d",record.getChromStr(), record.get1BasedPosition());
@@ -102,16 +105,17 @@ void LoadReferenceIndividuals(Pedigree &ped, const String &ref_file) {
 
 };
 
-void writeVectorToCSV(const char * file_name, std::vector<vector<double>> v, const char* opentype){
+void writeVectorToCSV(const char * file_name, const std::vector<vector<double>>& v, const char* opentype){
 	FILE * csvout = fopen(file_name, opentype);
 
-	for(auto vector : v) {
+	for(const auto& vector : v) {
 		for (auto elem : vector) {
 			std::string s = std::to_string(elem);
 			fwrite(s.c_str(), sizeof(char), s.length(), csvout);
 			putc(',', csvout);
 		}
 		putc('\n',csvout);
+		fflush(csvout);
 	}
 	fclose(csvout);
 };
@@ -213,8 +217,8 @@ void LoadHaplotypes(const String &file_name, const Pedigree &ped, MatrixXc & hap
 	while(reader.readRecord(record)){
 		std::stringstream ss;
 		ss << record.getChromStr() << ":" << record.get1BasedPosition();
-
-		marker_name = ss.str().c_str();
+		std::string markers = ss.str();
+		marker_name = markers.c_str();
 		int marker_id = Pedigree::LookupMarker(marker_name);
 		if(marker_id >= 0){
 			for (int ind = 0; ind < ped.count; ind++) {
@@ -260,9 +264,11 @@ void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, vecto
 	while(reader.readRecord(record)){
 		num_total_markers += 1;
 
+		// TODO: This pattern could be factored out...
 		std::stringstream ss;
 		ss << record.getChromStr() << ":" << record.get1BasedPosition();
-		marker_name = ss.str().c_str();
+		std::string markers = ss.str();
+		marker_name = markers.c_str();
 
 		int marker_id = Pedigree::LookupMarker(marker_name);
 

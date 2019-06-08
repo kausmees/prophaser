@@ -7,6 +7,7 @@
 #include "Pedigree.h"
 //#include "GenoUtils.h"
 #include <Eigen/Dense>
+#include <numeric>
 
 #include <algorithm>
 #include "VcfFileWriter.h"
@@ -56,7 +57,7 @@ void FillSampleHaplotypes(const Pedigree &ped, MatrixXc & haplotypes, int index)
 void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, vector<double> & genotypes, int sample_ind_file);
 int GetMarkerPos(int marker_id);
 void LoadGeneticMap(const char * file_name, const Pedigree &ped, vector<double> &thetas);
-void writeVectorToCSV(const char* file_name, std::vector<vector<double>> v, const char* opentype);
+void writeVectorToCSV(const char* file_name, const std::vector<vector<double>>& v, const char* opentype);
 vector<double> get_GL(VcfHeader& header, VcfRecord& record, int sample);
 std::string get_likelihood_format(VcfHeader& header);
 }
