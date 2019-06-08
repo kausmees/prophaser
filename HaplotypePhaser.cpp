@@ -7,7 +7,8 @@
 
 
 HaplotypePhaser::~HaplotypePhaser(){
-	delete [] normalizers;
+	delete [] normalizersf;
+	delete [] normalizersb;
 
 	FreeDoubleMatrix(s_forward, num_markers);
 	FreeDoubleMatrix(s_backward, num_markers);
@@ -54,8 +55,8 @@ void HaplotypePhaser::AllocateMemory(){
 	s_forward = AllocateDoubleMatrix(num_markers, num_states);
 	s_backward = AllocateDoubleMatrix(num_markers, num_states);
 
-	normalizers = new double[num_markers];
-
+	normalizersf = new double[num_markers];
+	normalizersb = new double[num_markers];
 };
 
 /**
@@ -179,19 +180,20 @@ void HaplotypePhaser::InitPriorScaledForward(){
 		c1 += emission_probs[s];
 	};
 
-	normalizers[0] = 1.0/(prior*c1);
+	normalizersf[0] = 1.0/(prior*c1);
 
 	for(int s = 0; s < num_states; s++){
-		s_forward[0][s] = (prior*emission_probs[s]) * normalizers[0];
+		s_forward[0][s] = (prior*emission_probs[s]) * normalizersf[0];
 	}
 
 	delete [] emission_probs;
 };
 
 void HaplotypePhaser::InitPriorScaledBackward(){
-
+	double prior = 1.0 / num_states;
+	normalizersb[num_markers - 1] = 1.0 / prior;
 	for(int s = 0; s < num_states; s++){
-		s_backward[num_markers-1][s] = normalizers[num_markers-1];
+		s_backward[num_markers-1][s] = normalizersb[num_markers-1];
 	}
 };
 
@@ -228,8 +230,8 @@ struct HapSummer
 		}
 	}
 
-	const array<double, 3> caseProbs(double* table, int s, const ChromosomePair cp) {
-		const double diagonal = table[s];
+	const array<double, 3> caseProbs(double* table, double* doEmissions, int s, const ChromosomePair cp) {
+		const double diagonal = doEmissions ? table[s] * doEmissions[s] : table[s];
 		const double halfmatch = hapSums[0][cp.first] + hapSums[1][cp.second] - 2 * diagonal;
 		// Nothing special really happens when cp.first == cp.second... RIGHT???
 		const double therest = 1.0 - diagonal - halfmatch;
@@ -278,7 +280,7 @@ void HaplotypePhaser::CalcScaledForward(){
 			const ChromosomePair& cp = states[s];
 			double sum = 0.0;		
 
-			const array<double, 3> allcases = hapSum.caseProbs(s_forward[m - 1], s, cp);
+			const array<double, 3> allcases = hapSum.caseProbs(s_forward[m - 1], 0, s, cp);
 			for (int chrom_case = 0; chrom_case < 3; chrom_case++) {
 				sum += allcases[chrom_case] * probs[chrom_case];
 			}
@@ -288,10 +290,10 @@ void HaplotypePhaser::CalcScaledForward(){
 		for(int s = 0; s < num_states; s++){
 			c+= s_forward[m][s];
 		}
-		normalizers[m] = 1.0/c;
+		normalizersf[m] = 1.0/c;
 
 		for(int s = 0; s < num_states; s++){
-			s_forward[m][s] = s_forward[m][s] * normalizers[m];
+			s_forward[m][s] = s_forward[m][s] * normalizersf[m];
 		}
 	}
 
@@ -303,12 +305,13 @@ void HaplotypePhaser::CalcScaledBackward(){
 	double * emission_probs = new double[num_states];
 	double probs[3];
 	double scaled_dist;
-	double c1,c2;
+	double c, c1,c2;
 	HapSummer hapSum(num_haps, num_states);
 
 	InitPriorScaledBackward();
 
 	for(int m = num_markers-2; m >= 0; m--){
+		c = 0;
 		CalcEmissionProbs(m + 1, emission_probs);
 		hapSum.sum(s_backward[m + 1], states, emission_probs);
 		scaled_dist = 1-exp(-(distances[m+1] * pop_const)/num_haps);
@@ -329,7 +332,7 @@ void HaplotypePhaser::CalcScaledBackward(){
 			const ChromosomePair& cp = states[s];
 			double sum = 0.0;
 
-			const array<double, 3> allcases = hapSum.caseProbs(s_backward[m + 1], s, cp);
+			const array<double, 3> allcases = hapSum.caseProbs(s_backward[m + 1], emission_probs, s, cp);
 
 			for (int chrom_case = 0; chrom_case < 3; chrom_case++) {
 
@@ -338,7 +341,16 @@ void HaplotypePhaser::CalcScaledBackward(){
 			}
 
 			// TODO: Isn't this reuse of normalizers exceedingly weird?
-			s_backward[m][s] = sum * normalizers[m];
+			s_backward[m][s] = sum;
+		}
+
+		for (int s = 0; s < num_states; s++) {
+			c += s_backward[m][s];
+		}
+		normalizersb[m] = 1.0 / c;
+
+		for (int s = 0; s < num_states; s++) {
+			s_backward[m][s] = s_backward[m][s] * normalizersb[m];
 		}
 	}
 	delete [] emission_probs;

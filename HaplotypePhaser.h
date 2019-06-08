@@ -117,7 +117,8 @@ public:
 
 	double ** s_backward;
 	double ** s_forward;
-	double * normalizers;
+	double * normalizersf = 0;
+	double * normalizersb = 0;
 
 
 	void AllocateMemory();
