@@ -23,7 +23,7 @@ using Eigen::VectorXd;
 using Eigen::MatrixXi;
 using Eigen::RowMajor;
 using Eigen::Dynamic;
-using Eigen::Matrix;
+//using Eigen::Matrix;
 
 using namespace Eigen;
 
@@ -70,6 +70,84 @@ struct ChromosomePair {
 
 };
 
+template<class T>
+class StepMemoizer
+{
+	vector<double*> mainTable;
+	vector<double*> auxTable;
+	T* parent;
+	int num_markers;
+	bool dirup;
+	int step;
+	int auxAnchor = -1;	
+	int totalAnchor;
+	using gent = void (T::*)(int, const double*, double*);
+	gent generator;
+	
+
+public:
+	StepMemoizer() = default;
+
+	// TODO: Copy assignment is dangerous.
+	StepMemoizer(T* parent, int num_markers, int num_states, bool dirup, int step, gent generator) : parent(parent), num_markers(num_markers), dirup(dirup), step(step), generator(generator) {
+		auxTable.resize(step - 1);
+		for (double*& t : auxTable) {
+			t = new double[num_states];
+		}
+
+		int numElems = (num_markers - 1) / step + 1;
+		mainTable.resize(numElems);
+		for (double*& t : mainTable) {
+			t = new double[num_states];
+		}
+
+		totalAnchor = dirup ? 0 : num_markers - 1;
+	}
+
+	double* operator [](int i) {
+		const int dir = dirup ? 1 : -1;
+		const int i2 = totalAnchor + i * dir;
+
+		const int anchor = i2 / step;
+		const int auxIndex = (i2 % step) - 1;
+		if (auxIndex == -1) {
+			return mainTable[anchor];
+		}
+
+		if (anchor != auxAnchor) {
+			double* prev = mainTable[anchor];
+			for (int j = 0; j < auxTable.size(); j++) {
+				int jorig = totalAnchor + (anchor * step + j + 1) * dir;
+				if (jorig < 0 || jorig >= num_markers) break;
+				(parent->*generator)(jorig, prev, auxTable[j]);
+				prev = auxTable[j];
+			}
+			auxAnchor = anchor;
+		}
+
+		return auxTable[auxIndex];
+	}
+
+	void fillAllButFirst() {
+		int dir = dirup ? 1 : -1;
+		for (int j = 1; j < mainTable.size(); j++) {
+			int jorig = totalAnchor + (j * step) * dir;			
+
+			// Will trigger auxTable filling as needewd
+			(parent->*generator)(jorig, (*this)[jorig - dir], mainTable[j]);
+		}
+	}
+
+	~StepMemoizer() {
+		for (double* t : mainTable) {
+			delete[] t;
+		}
+		for (double* t : auxTable) {
+			delete[] t;
+		}
+	}
+};
+
 /**
 
 Main haplotype phasing and imputation functionality.
@@ -114,9 +192,11 @@ public:
 
 	int num_ref_inds;
 	int num_inds;
+	void CalcSingleScaledForward(int marker, const double* prev, double* now);
+	void CalcSingleScaledBackward(int marker, const double* prev, double* now);
 
-	double ** s_backward;
-	double ** s_forward;
+	StepMemoizer<HaplotypePhaser> s_forward;
+	StepMemoizer<HaplotypePhaser> s_backward;
 	double * normalizersf = 0;
 	double * normalizersb = 0;
 

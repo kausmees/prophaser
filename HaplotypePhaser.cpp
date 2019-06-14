@@ -9,10 +9,6 @@
 HaplotypePhaser::~HaplotypePhaser(){
 	delete [] normalizersf;
 	delete [] normalizersb;
-
-	FreeDoubleMatrix(s_forward, num_markers);
-	FreeDoubleMatrix(s_backward, num_markers);
-
 }
 
 
@@ -51,12 +47,12 @@ void HaplotypePhaser::AllocateMemory(){
 
 
 	sample_gls.resize(num_markers*3);
-
-	s_forward = AllocateDoubleMatrix(num_markers, num_states);
-	s_backward = AllocateDoubleMatrix(num_markers, num_states);
-
 	normalizersf = new double[num_markers];
 	normalizersb = new double[num_markers];
+
+	// <decltype(CalcSingleScaledForwardObj)>
+	new(&s_forward) StepMemoizer<HaplotypePhaser>(this, num_markers, num_states, true, 128, &HaplotypePhaser::CalcSingleScaledForward);
+	new(&s_backward) StepMemoizer<HaplotypePhaser>(this, num_markers, num_states, false, 128, &HaplotypePhaser::CalcSingleScaledBackward);
 };
 
 /**
@@ -216,7 +212,7 @@ struct HapSummer
 		reset();
 	}
 
-	void sum(double* table, const vector<ChromosomePair>& states, double* doEmissions) {
+	void sum(const double* table, const vector<ChromosomePair>& states, double* doEmissions) {
 		reset();
 
 		// 1024 entries means touching 8192 bytes of forward data
@@ -230,7 +226,7 @@ struct HapSummer
 		}
 	}
 
-	const array<double, 3> caseProbs(double* table, double* doEmissions, int s, const ChromosomePair cp) {
+	const array<double, 3> caseProbs(const double* table, double* doEmissions, int s, const ChromosomePair cp) {
 		const double diagonal = doEmissions ? table[s] * doEmissions[s] : table[s];
 		const double halfmatch = hapSums[0][cp.first] + hapSums[1][cp.second] - 2 * diagonal;
 		// Nothing special really happens when cp.first == cp.second... RIGHT???
@@ -244,117 +240,121 @@ struct HapSummer
 	}
 };
 
-void HaplotypePhaser::CalcScaledForward(){
-	double * emission_probs = new double[num_states];
-	double c, c1,c2;
+void HaplotypePhaser::CalcSingleScaledForward(int m, const double* prev, double* now) {
+	double* emission_probs = new double[num_states];
+	double c, c1, c2;
 	double probs[3];
 	double scaled_dist;
 	HapSummer hapSum(num_haps, num_states);
 
-	InitPriorScaledForward();
+	hapSum.sum(prev, states, nullptr);
+	CalcEmissionProbs(m, emission_probs);
+	c = 0.0;
 
-	
-	for(int m = 1; m < num_markers; m++){			
-		hapSum.sum(s_forward[m - 1], states, nullptr);
-		CalcEmissionProbs(m, emission_probs);
-		c = 0.0;
+	scaled_dist = 1 - exp(-(distances[m] * pop_const) / num_haps);
 
-		scaled_dist = 1-exp(-(distances[m] * pop_const)/num_haps);
+	c1 = scaled_dist / num_haps;
+	c2 = 1 - scaled_dist;
 
-		c1 = scaled_dist/num_haps;
-		c2 = 1 - scaled_dist;
+	//both_switch
+	probs[0] = pow(c1, 2);
+	//one switch
+	probs[1] = (c2 * c1) + pow(c1, 2);
+	// no switch
+	probs[2] = pow(c2, 2) + (2 * c2 * c1) + pow(c1, 2);
 
-		//both_switch
-		probs[0] = pow(c1, 2);
-		//one switch
-		probs[1] =  (c2*c1) + pow(c1, 2);
-		// no switch
-		probs[2] = pow(c2, 2) + (2*c2*c1) + pow(c1, 2);
-
-		// Based on normalization scheme, sum over all previous forwards is always 1
-		// Let's precalc sum over all halves in first and second half of pair
-		if (m % 1000 == 0) fprintf(stderr, "%d\n", m);
+	// Based on normalization scheme, sum over all previous forwards is always 1
+	// Let's precalc sum over all halves in first and second half of pair
+	if (m % 1000 == 0) fprintf(stderr, "%d\n", m);
 
 #pragma omp parallel for schedule(dynamic,131072)
-		for(int s = 0; s < num_states; s++){
-			const ChromosomePair& cp = states[s];
-			double sum = 0.0;		
+	for (int s = 0; s < num_states; s++) {
+		const ChromosomePair& cp = states[s];
+		double sum = 0.0;
 
-			const array<double, 3> allcases = hapSum.caseProbs(s_forward[m - 1], 0, s, cp);
-			for (int chrom_case = 0; chrom_case < 3; chrom_case++) {
-				sum += allcases[chrom_case] * probs[chrom_case];
-			}
-			s_forward[m][s] =  emission_probs[s] * sum;
+		const array<double, 3> allcases = hapSum.caseProbs(prev, 0, s, cp);
+		for (int chrom_case = 0; chrom_case < 3; chrom_case++) {
+			sum += allcases[chrom_case] * probs[chrom_case];
 		}
-
-		for(int s = 0; s < num_states; s++){
-			c+= s_forward[m][s];
-		}
-		normalizersf[m] = 1.0/c;
-
-		for(int s = 0; s < num_states; s++){
-			s_forward[m][s] = s_forward[m][s] * normalizersf[m];
-		}
+		now[s] = emission_probs[s] * sum;
 	}
 
-	delete [] emission_probs;
+	for (int s = 0; s < num_states; s++) {
+		c += now[s];
+	}
+	normalizersf[m] = 1.0 / c;
 
+	for (int s = 0; s < num_states; s++) {
+		now[s] = now[s] * normalizersf[m];
+	}
+
+	delete[] emission_probs;
 }
 
-void HaplotypePhaser::CalcScaledBackward(){
-	double * emission_probs = new double[num_states];
-	double probs[3];
-	double scaled_dist;
-	double c, c1,c2;
-	HapSummer hapSum(num_haps, num_states);
 
+void HaplotypePhaser::CalcScaledForward(){
+	InitPriorScaledForward();
+	s_forward.fillAllButFirst();	
+}
+
+void HaplotypePhaser::CalcSingleScaledBackward(int m, const double* prev, double* now) {
 	InitPriorScaledBackward();
 
-	for(int m = num_markers-2; m >= 0; m--){
-		c = 0;
-		CalcEmissionProbs(m + 1, emission_probs);
-		hapSum.sum(s_backward[m + 1], states, emission_probs);
-		scaled_dist = 1-exp(-(distances[m+1] * pop_const)/num_haps);
+	double* emission_probs = new double[num_states];
+	double probs[3];
+	double scaled_dist;
+	double c, c1, c2;
+	HapSummer hapSum(num_haps, num_states);
 
-		// TODO: Shared between both, refactor into helper
-		c1 = scaled_dist/num_haps;
-		c2 = 1 - scaled_dist;
+	c = 0;
+	CalcEmissionProbs(m + 1, emission_probs);
+	hapSum.sum(prev, states, emission_probs);
+	scaled_dist = 1 - exp(-(distances[m + 1] * pop_const) / num_haps);
 
-		//both_switch
-		probs[0] = pow(c1, 2);
-		//one switch
-		probs[1] =  (c2*c1) + pow(c1, 2);
-		// no switch
-		probs[2] = pow(c2, 2) + (2*c2*c1) + pow(c1, 2);		
+	// TODO: Shared between both, refactor into helper
+	c1 = scaled_dist / num_haps;
+	c2 = 1 - scaled_dist;
+
+	//both_switch
+	probs[0] = pow(c1, 2);
+	//one switch
+	probs[1] = (c2 * c1) + pow(c1, 2);
+	// no switch
+	probs[2] = pow(c2, 2) + (2 * c2 * c1) + pow(c1, 2);
 
 #pragma omp parallel for schedule(dynamic,1024)
-		for(int s = 0; s < num_states; s++){
-			const ChromosomePair& cp = states[s];
-			double sum = 0.0;
+	for (int s = 0; s < num_states; s++) {
+		const ChromosomePair& cp = states[s];
+		double sum = 0.0;
 
-			const array<double, 3> allcases = hapSum.caseProbs(s_backward[m + 1], emission_probs, s, cp);
+		const array<double, 3> allcases = hapSum.caseProbs(prev, emission_probs, s, cp);
 
-			for (int chrom_case = 0; chrom_case < 3; chrom_case++) {
+		for (int chrom_case = 0; chrom_case < 3; chrom_case++) {
 
-				sum += allcases[chrom_case] * probs[chrom_case];
+			sum += allcases[chrom_case] * probs[chrom_case];
 
-			}
-
-			// TODO: Isn't this reuse of normalizers exceedingly weird?
-			s_backward[m][s] = sum;
 		}
 
-		for (int s = 0; s < num_states; s++) {
-			c += s_backward[m][s];
-		}
-		normalizersb[m] = 1.0 / c;
-
-		for (int s = 0; s < num_states; s++) {
-			s_backward[m][s] = s_backward[m][s] * normalizersb[m];
-		}
+		now[s] = sum;
 	}
-	delete [] emission_probs;
+
+	for (int s = 0; s < num_states; s++) {
+		c += now[s];
+	}
+	normalizersb[m] = 1.0 / c;
+
+	for (int s = 0; s < num_states; s++) {
+		now[s] = now[s] * normalizersb[m];
+	}
+
+	delete[] emission_probs;
 }
+
+void HaplotypePhaser::CalcScaledBackward() {
+	InitPriorScaledBackward();
+	s_backward.fillAllButFirst();
+}
+
 
 
 /**

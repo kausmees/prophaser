@@ -1,5 +1,5 @@
 #include <chrono>
-#include "HaplotypePhaserSym.h"
+//#include "HaplotypePhaserSym.h"
 #include "HaplotypePhaser.h"
 #include "Parameters.h"
 #include "Pedigree.h"
@@ -43,11 +43,11 @@ int main(int argc, char ** argv){
 
 // TODO implement base class and have algorithm choice in parameters
 
-//	HaplotypePhaser phaser;
-//	string suffix = ".full";
+	HaplotypePhaser phaser;
+	string suffix = ".full";
 
-	HaplotypePhaserSym phaser;
-	string suffix = ".sym";
+//	HaplotypePhaserSym phaser;
+//	string suffix = ".sym";
 
 	phaser.Ne = Ne;
 	phaser.error = error;
