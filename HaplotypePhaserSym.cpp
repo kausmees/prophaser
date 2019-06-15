@@ -278,7 +278,7 @@ void HaplotypePhaserSym::CalcScaledForward(){
 		//		// the fixed j over which to test the sum over s - this j defines a pdf
 		//		int testj = 90;
 
-#pragma omp parallel for schedule(dynamic,32)
+#pragma omp for schedule(dynamic,32)
 		for(int s = 0; s < num_states; s++){
 
 			double sum = 0.0;
@@ -418,7 +418,7 @@ void HaplotypePhaserSym::CalcScaledBackward(){
 
 
 
-#pragma omp parallel for
+#pragma omp for
 		for(int s = 0; s < num_states; s++){
 			double sum = 0.0;
 			//			int marker_c1 = s / num_haps;
