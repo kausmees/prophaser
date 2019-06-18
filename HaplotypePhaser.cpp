@@ -267,7 +267,7 @@ void HaplotypePhaser::CalcSingleScaledForward(int m, const double* prev, double*
 	// Let's precalc sum over all halves in first and second half of pair
 	if (m % 1000 == 0) fprintf(stderr, "%d\n", m);
 
-#pragma omp parallel for schedule(dynamic,131072)
+#pragma omp parallel for schedule(dynamic,131072) reduction(+ : c)
 	for (int s = 0; s < num_states; s++) {
 		const ChromosomePair& cp = states[s];
 		double sum = 0.0;
@@ -277,13 +277,12 @@ void HaplotypePhaser::CalcSingleScaledForward(int m, const double* prev, double*
 			sum += allcases[chrom_case] * probs[chrom_case];
 		}
 		now[s] = emission_probs[s] * sum;
-	}
-
-	for (int s = 0; s < num_states; s++) {
 		c += now[s];
 	}
+
 	normalizersf[m] = 1.0 / c;
 
+#pragma omp parallel for schedule(dynamic,131072)
 	for (int s = 0; s < num_states; s++) {
 		now[s] = now[s] * normalizersf[m];
 	}
@@ -322,7 +321,7 @@ void HaplotypePhaser::CalcSingleScaledBackward(int m, const double* prev, double
 	// no switch
 	probs[2] = pow(c2, 2) + (2 * c2 * c1) + pow(c1, 2);
 
-#pragma omp parallel for schedule(dynamic,1024)
+#pragma omp parallel for schedule(dynamic,131072) reduction(+ : c)
 	for (int s = 0; s < num_states; s++) {
 		const ChromosomePair& cp = states[s];
 		double sum = 0.0;
@@ -336,13 +335,12 @@ void HaplotypePhaser::CalcSingleScaledBackward(int m, const double* prev, double
 		}
 
 		now[s] = sum;
-	}
-
-	for (int s = 0; s < num_states; s++) {
 		c += now[s];
 	}
+
 	normalizersb[m] = 1.0 / c;
 
+#pragma omp parallel for schedule(dynamic,131072)
 	for (int s = 0; s < num_states; s++) {
 		now[s] = now[s] * normalizersb[m];
 	}
@@ -399,11 +397,14 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 		posteriors.resize(num_states, -1);
 
 		double norm = 0.0;
+#pragma omp parallel for schedule(dynamic,131072) reduction(+ : norm)
 		for(int i = 0; i < num_states; i++) {
 			norm += s_forward[m][i] * s_backward[m][i];
 		}
 
 		double sum = 0.0;
+		double* geno_probs_m = &geno_probs[m][0];
+#pragma omp parallel for schedule(dynamic,131072) reduction(+ : sum) reduction(+ : geno_probs_m[:3])
 		for(int s = 0; s < num_states; s++) {
 			posteriors[s] = s_forward[m][s] * s_backward[m][s] / norm;
 			sum += posteriors[s];
@@ -411,7 +412,7 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 			//////////genotype probability/////////////////
 			int ref_hap1 = states[s].first;
 			int ref_hap2 = states[s].second;
-
+				
 
 			// AGCT allele
 			// String allele1 = Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap1][m]+1);
@@ -431,7 +432,7 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 				geno_code = (hapcode1 == 0) ? 0 : 2;
 			}
 
-			geno_probs[m][geno_code] += posteriors[s];
+			geno_probs_m[geno_code] += posteriors[s];
 
 		}
 
