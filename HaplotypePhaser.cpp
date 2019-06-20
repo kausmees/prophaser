@@ -104,7 +104,7 @@ void HaplotypePhaser::CalcEmissionProbs(int marker, double * probs) {
 	double case_4 = (1 - error) * error;
 	double case_5 = pow(error,2);
 
-
+#pragma omp parallel for schedule(dynamic,131072)
 	for (int state = 0; state < num_states; state++) {
 
 		ChromosomePair chrom_state = states[state];
@@ -397,16 +397,18 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 		posteriors.resize(num_states, -1);
 
 		double norm = 0.0;
+		const double* s_forward_m = &s_forward[m][0];
+		const double* s_backward_m = &s_backward[m][0];
 #pragma omp parallel for schedule(dynamic,131072) reduction(+ : norm)
 		for(int i = 0; i < num_states; i++) {
-			norm += s_forward[m][i] * s_backward[m][i];
+			norm += s_forward_m[i] * s_backward_m[i];
 		}
 
 		double sum = 0.0;
 		double* geno_probs_m = &geno_probs[m][0];
 #pragma omp parallel for schedule(dynamic,131072) reduction(+ : sum) reduction(+ : geno_probs_m[:3])
 		for(int s = 0; s < num_states; s++) {
-			posteriors[s] = s_forward[m][s] * s_backward[m][s] / norm;
+			posteriors[s] = s_forward_m[s] * s_backward_m[s] / norm;
 			sum += posteriors[s];
 
 			//////////genotype probability/////////////////
@@ -446,7 +448,7 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 		}
 
 
-		vector<size_t> res = VcfUtils::sort_indexes(posteriors);
+		/*vector<size_t> res = VcfUtils::sort_indexes(posteriors);
 
 		//add lowest elements to stats[m]
 		for(int i = 0; i < 10; i++) {
@@ -460,7 +462,9 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 		}
 		for(int i = 0; i < 10; i++) {
 			stats[m][30 + i] = res[posteriors.size() - 10 + i];
-		}
+			}*/
+		// TODO: Replace by partial_sort_copy directly on pointers to objects, will need condition that preserves ordering to maintain stability
+		// Just commented out to improve performance when stats not actually needed
 
 		stats[m][40] = sum / posteriors.size();
 		stats[m][41] = geno_probs[m][0];
