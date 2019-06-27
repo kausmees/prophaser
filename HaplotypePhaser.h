@@ -65,9 +65,50 @@ struct ChromosomePair {
 		}
 
 	return num;
-}
+	}
 
 
+};
+
+template<class T>
+class StepJustForward
+{
+  double* __restrict table[2];
+  T* parent;
+  int lastIndex;
+  
+  using gent = void (T::*)(int, const double* __restrict, double* __restrict);
+  gent generator;
+
+ public:
+  StepJustForward() = default;
+
+ StepJustForward(T* parent, int num_states, gent generator) : parent(parent), generator(generator) {
+    for (double* __restrict& t : table) {
+      t = new double[num_states];
+    }
+    lastIndex = 0;
+  }
+
+  ~StepJustForward() {
+    for (double* t : table) {
+      delete[] t;
+    }
+    
+  }
+
+  double* __restrict operator [](int i) {
+    if (!(i == lastIndex || i == lastIndex + 1 || i == lastIndex - 1)) {
+      fprintf(stderr, "Invalid index %d following %d\n", i, lastIndex);
+      std::terminate();
+    }
+    if (i > lastIndex) {
+      (parent->*generator)(i, table[(i - 1) % 2], table[i % 2]);
+      lastIndex = i;
+    }
+
+    return table[i % 2];
+  }
 };
 
 template<class T>
@@ -81,7 +122,7 @@ class StepMemoizer
 	int step;
 	int auxAnchor = -1;	
 	int totalAnchor;
-	using gent = void (T::*)(int, const double*, double*);
+	using gent = void (T::*)(int, const double* __restrict, double* __restrict);
 	gent generator;
 	
 
@@ -91,20 +132,20 @@ public:
 	// TODO: Copy assignment is dangerous.
 	StepMemoizer(T* parent, int num_markers, int num_states, bool dirup, int step, gent generator) : parent(parent), num_markers(num_markers), dirup(dirup), step(step), generator(generator) {
 		auxTable.resize(step - 1);
-		for (double*& t : auxTable) {
+		for (double* __restrict& t : auxTable) {
 			t = new double[num_states];
 		}
 
 		int numElems = (num_markers - 1) / step + 1;
 		mainTable.resize(numElems);
-		for (double*& t : mainTable) {
+		for (double* __restrict& t : mainTable) {
 			t = new double[num_states];
 		}
 
 		totalAnchor = dirup ? 0 : num_markers - 1;
 	}
 
-	double* operator [](int i) {
+	double* __restrict operator [](int i) {
 		const int dir = dirup ? 1 : -1;
 		const int i2 = totalAnchor + i * dir;
 
@@ -139,10 +180,10 @@ public:
 	}
 
 	~StepMemoizer() {
-		for (double* t : mainTable) {
+		for (double* __restrict t : mainTable) {
 			delete[] t;
 		}
-		for (double* t : auxTable) {
+		for (double* __restrict t : auxTable) {
 			delete[] t;
 		}
 	}
@@ -192,10 +233,10 @@ public:
 
 	int num_ref_inds;
 	int num_inds;
-	void CalcSingleScaledForward(int marker, const double* prev, double* now);
-	void CalcSingleScaledBackward(int marker, const double* prev, double* now);
+	void CalcSingleScaledForward(int marker, const double* __restrict prev, double* __restrict now);
+	void CalcSingleScaledBackward(int marker, const double* __restrict prev, double* __restrict now);
 
-	StepMemoizer<HaplotypePhaser> s_forward;
+	StepJustForward<HaplotypePhaser> s_forward;
 	StepMemoizer<HaplotypePhaser> s_backward;
 	double * normalizersf = 0;
 	double * normalizersb = 0;
@@ -214,7 +255,7 @@ public:
 	vector<vector<double>> GetPosteriorStats(const char * filename, bool print);
 	vector<vector<double>>  ReadPosteriorStats(const char * filename);
 
-	void PrintGenotypesToVCF(vector<vector<int>> & ml_genotypes, const char * out_file, const char * sample_file, const char * vcf_template);
+	void PrintGenotypesToVCF(vector<vector<int>> & ml_genotypes, const char * out_file, const char * sample_file, const char * vcf_template, int firstSample = 0, int lastSample = -1);
 	void PrintHaplotypesToVCF(vector<vector<int>> & ml_genotypes, const char * out_file, const char * sample_file, const char * vcf_template);
 
 };

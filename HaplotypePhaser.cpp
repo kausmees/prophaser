@@ -33,11 +33,12 @@ void HaplotypePhaser::AllocateMemory(){
 
 	num_states = pow(num_haps,2);
 
+	states.reserve(num_states);
 	for(int i = 0; i < num_haps; i++) {
 		for(int j = 0; j < num_haps; j++) {
 			states.push_back(ChromosomePair(i,j));
 		}
-	}
+		}
 
 	distances.resize(num_markers,0.01);
 
@@ -51,8 +52,8 @@ void HaplotypePhaser::AllocateMemory(){
 	normalizersb = new double[num_markers];
 
 	// <decltype(CalcSingleScaledForwardObj)>
-	new(&s_forward) StepMemoizer<HaplotypePhaser>(this, num_markers, num_states, true, 128, &HaplotypePhaser::CalcSingleScaledForward);
-	new(&s_backward) StepMemoizer<HaplotypePhaser>(this, num_markers, num_states, false, 128, &HaplotypePhaser::CalcSingleScaledBackward);
+	new(&s_forward) StepJustForward<HaplotypePhaser>(this, num_states, &HaplotypePhaser::CalcSingleScaledForward);
+	new(&s_backward) StepMemoizer<HaplotypePhaser>(this, num_markers, num_states, false, 100, &HaplotypePhaser::CalcSingleScaledBackward);
 };
 
 /**
@@ -84,6 +85,88 @@ void HaplotypePhaser::LoadSampleData(const String &sample_file, int sample_index
 
 };
 
+template<class Phaser>
+struct EmissionCalcer
+{
+  const Phaser& parent;
+  const int marker;
+  // 8 might help ensure alignment
+  __attribute__((aligned(16))) double glfactors[3][4];
+  const double* __restrict marker_gls;
+  const int8_t* __restrict haplotypes_raw;
+
+  EmissionCalcer<Phaser>(const Phaser& parent, int marker) : parent(parent), marker(marker)
+  {
+    const double error = parent.error;
+    double cases[6];
+    marker_gls = &parent.sample_gls[marker * 3];
+    haplotypes_raw = &parent.haplotypes(0, marker);
+
+    cases[1] = (pow(1 - error, 2) + pow(error, 2));
+    cases[2] = 2 * (1 - error) * error;
+    cases[3] = pow(1 - error, 2);
+    cases[4] = (1 - error) * error;
+    cases[5] = pow(error,2);
+
+    for (int hs = 0; hs < 3; hs++)
+      {
+	double* glfactor = glfactors[hs];
+	// case1: g = 0
+	if(hs == 0){
+	  glfactor[0] = cases[3];
+	}
+	else {
+	  if(hs == 1){
+	    glfactor[0] = cases[4];
+	  }
+	  else{
+	    glfactor[0] = cases[5];
+	  }
+	}
+	
+	// case2: g = 1
+	if(hs == 1){
+	  glfactor[1] = cases[1];
+	}
+	else{
+	  glfactor[1] = cases[2];
+	}
+	
+	// case3: g = 2
+	if(hs == 2){
+	  glfactor[2] = cases[3];
+	} else{
+	  if(hs == 1){
+	    glfactor[2] = cases[4];
+	  }
+	  else{
+	    glfactor[2] = cases[5];
+	  }
+	}
+	glfactor[3] = 0;
+      }
+  }
+
+  double operator [] (const ChromosomePair& chrom_state) const
+  {
+    double sum = 0;
+
+
+
+
+    int hs =
+      haplotypes_raw[chrom_state.first] +
+      haplotypes_raw[chrom_state.second];
+
+	sum += marker_gls[0] * glfactors[hs][0];
+	sum += marker_gls[1] * glfactors[hs][1];
+	sum += marker_gls[2] * glfactors[hs][2];
+
+
+    return sum;
+  }
+};
+
 
 /**
  * Get the emission probability of the observed genotype likelihoods at marker
@@ -104,10 +187,10 @@ void HaplotypePhaser::CalcEmissionProbs(int marker, double * probs) {
 	double case_4 = (1 - error) * error;
 	double case_5 = pow(error,2);
 
-#pragma omp parallel for schedule(dynamic,131072)
+#pragma omp parallel for simd schedule(dynamic,131072)
 	for (int state = 0; state < num_states; state++) {
 
-		ChromosomePair chrom_state = states[state];
+		const ChromosomePair& chrom_state = states[state];
 
 		// Reference hapotype at chromosome 1 - fixed (0: REF 1: ALT)
 		h1 = haplotypes(chrom_state.first, marker);
@@ -166,7 +249,7 @@ void HaplotypePhaser::CalcEmissionProbs(int marker, double * probs) {
 
 
 void HaplotypePhaser::InitPriorScaledForward(){
-	double * emission_probs = new double[num_states];
+	double * emission_probs = &s_forward[0][0];
 	double prior = 1.0 / num_states;
 	double c1 = 0.0;
 
@@ -181,8 +264,6 @@ void HaplotypePhaser::InitPriorScaledForward(){
 	for(int s = 0; s < num_states; s++){
 		s_forward[0][s] = (prior*emission_probs[s]) * normalizersf[0];
 	}
-
-	delete [] emission_probs;
 };
 
 void HaplotypePhaser::InitPriorScaledBackward(){
@@ -199,12 +280,16 @@ struct HapSummer
 	const int num_haps;
 	const int num_states;
 
-	vector<double> hapSums[2];
+	vector<double> hapSumsv[2];
+  double* __restrict hapSums[2];
+  
 
 	void reset() {
-		for (auto& hapSum : hapSums) {
+		for (auto& hapSum : hapSumsv) {
 			hapSum.assign(num_haps, 0);
 		}
+		hapSums[0] = &hapSumsv[0][0];
+		hapSums[1] = &hapSumsv[0][0];
 	}
 
 	HapSummer(int num_haps, int num_states) :
@@ -212,43 +297,44 @@ struct HapSummer
 		reset();
 	}
 
-	void sum(const double* table, const vector<ChromosomePair>& states, double* doEmissions) {
+  void sum(const double* __restrict table, const vector<ChromosomePair>& states, EmissionCalcer<HaplotypePhaser>* doEmissions) {
 		reset();
 
 		// 1024 entries means touching 8192 bytes of forward data
 		// double additions should be atomic, let's hope that all works out (big chance?)
-#pragma omp parallel for schedule(dynamic,131072)
+#pragma omp parallel for simd schedule(dynamic,131072)
 		for (int j = 0; j < num_states; j++) {
 			const ChromosomePair& cp = states[j];
-			const double val = doEmissions ? table[j] * doEmissions[j] : table[j];
+			const double val = doEmissions ? table[j] * (*doEmissions)[cp] : table[j];
 			hapSums[0][cp.first] += val;
 			hapSums[1][cp.second] += val;
 		}
 	}
 
-	const array<double, 3> caseProbs(const double* table, double* doEmissions, int s, const ChromosomePair cp) {
-		const double diagonal = doEmissions ? table[s] * doEmissions[s] : table[s];
+  void caseProbs(double* __restrict out, const double* __restrict table, EmissionCalcer<HaplotypePhaser>* doEmissions, int s, const ChromosomePair cp) {
+    const double diagonal = doEmissions ? table[s] * (*doEmissions)[cp] : table[s];
 		const double halfmatch = hapSums[0][cp.first] + hapSums[1][cp.second] - 2 * diagonal;
 		// Nothing special really happens when cp.first == cp.second... RIGHT???
 		const double therest = 1.0 - diagonal - halfmatch;
 
-		return { therest, halfmatch, diagonal };
+		out[0] = therest;
+		out[1] = halfmatch;
+		out[2] = diagonal;
 	}
 
-	const vector<double>& operator[](int index) {
+	const double* __restrict operator[](int index) {
 		return hapSums[index];
 	}
 };
 
-void HaplotypePhaser::CalcSingleScaledForward(int m, const double* prev, double* now) {
-	double* emission_probs = new double[num_states];
+void HaplotypePhaser::CalcSingleScaledForward(int m, const double* __restrict prev, double* __restrict now) {
 	double c, c1, c2;
 	double probs[3];
 	double scaled_dist;
 	HapSummer hapSum(num_haps, num_states);
+	EmissionCalcer<HaplotypePhaser> emission_probs(*this, m);
 
 	hapSum.sum(prev, states, nullptr);
-	CalcEmissionProbs(m, emission_probs);
 	c = 0.0;
 
 	scaled_dist = 1 - exp(-(distances[m] * pop_const) / num_haps);
@@ -267,47 +353,48 @@ void HaplotypePhaser::CalcSingleScaledForward(int m, const double* prev, double*
 	// Let's precalc sum over all halves in first and second half of pair
 	if (m % 1000 == 0) fprintf(stderr, "%d\n", m);
 
-#pragma omp parallel for schedule(dynamic,131072) reduction(+ : c)
+#pragma omp parallel for simd schedule(dynamic,131072) reduction(+ : c)
 	for (int s = 0; s < num_states; s++) {
-		const ChromosomePair& cp = states[s];
+	  const ChromosomePair cp(s / num_haps, s % num_haps);
+	  //		const ChromosomePair& cp = states[s];
 		double sum = 0.0;
 
-		const array<double, 3> allcases = hapSum.caseProbs(prev, 0, s, cp);
-		for (int chrom_case = 0; chrom_case < 3; chrom_case++) {
+		double allcases[3];
+		hapSum.caseProbs(allcases, prev, 0, s, cp);
+			sum += allcases[0] * probs[0];
+			sum += allcases[1] * probs[1];
+			sum += allcases[2] * probs[2];
+			/*		for (int chrom_case = 0; chrom_case < 3; chrom_case++) {
 			sum += allcases[chrom_case] * probs[chrom_case];
-		}
-		now[s] = emission_probs[s] * sum;
-		c += now[s];
+			}*/
+			double val = emission_probs[cp] * sum;
+			now[s] = val;
+		c += val;
 	}
 
 	normalizersf[m] = 1.0 / c;
 
-#pragma omp parallel for schedule(dynamic,131072)
+#pragma omp parallel for simd schedule(dynamic,131072)
 	for (int s = 0; s < num_states; s++) {
 		now[s] = now[s] * normalizersf[m];
 	}
-
-	delete[] emission_probs;
 }
 
 
 void HaplotypePhaser::CalcScaledForward(){
 	InitPriorScaledForward();
-	s_forward.fillAllButFirst();	
+	//s_forward.fillAllButFirst();	
 }
 
-void HaplotypePhaser::CalcSingleScaledBackward(int m, const double* prev, double* now) {
-	InitPriorScaledBackward();
-
-	double* emission_probs = new double[num_states];
+void HaplotypePhaser::CalcSingleScaledBackward(int m, const double* __restrict prev, double* __restrict now) {
+	EmissionCalcer<HaplotypePhaser> emission_probs(*this, m);
 	double probs[3];
 	double scaled_dist;
 	double c, c1, c2;
 	HapSummer hapSum(num_haps, num_states);
 
 	c = 0;
-	CalcEmissionProbs(m + 1, emission_probs);
-	hapSum.sum(prev, states, emission_probs);
+	hapSum.sum(prev, states, &emission_probs);
 	scaled_dist = 1 - exp(-(distances[m + 1] * pop_const) / num_haps);
 
 	// TODO: Shared between both, refactor into helper
@@ -321,31 +408,32 @@ void HaplotypePhaser::CalcSingleScaledBackward(int m, const double* prev, double
 	// no switch
 	probs[2] = pow(c2, 2) + (2 * c2 * c1) + pow(c1, 2);
 
-#pragma omp parallel for schedule(dynamic,131072) reduction(+ : c)
+#pragma omp parallel for simd schedule(dynamic,131072) reduction(+ : c)
 	for (int s = 0; s < num_states; s++) {
-		const ChromosomePair& cp = states[s];
+	  const ChromosomePair cp(s / num_haps, s % num_haps);
 		double sum = 0.0;
 
-		const array<double, 3> allcases = hapSum.caseProbs(prev, emission_probs, s, cp);
+		double allcases[3];
+		hapSum.caseProbs(allcases, prev, &emission_probs, s, cp);
 
-		for (int chrom_case = 0; chrom_case < 3; chrom_case++) {
+		//		for (int chrom_case = 0; chrom_case < 3; chrom_case++) {
 
-			sum += allcases[chrom_case] * probs[chrom_case];
+			sum += allcases[0] * probs[0];
+			sum += allcases[1] * probs[1];
+			sum += allcases[2] * probs[2];
 
-		}
+			//}
 
 		now[s] = sum;
-		c += now[s];
+		c += sum;
 	}
 
 	normalizersb[m] = 1.0 / c;
 
-#pragma omp parallel for schedule(dynamic,131072)
+#pragma omp parallel for simd schedule(dynamic,131072)
 	for (int s = 0; s < num_states; s++) {
 		now[s] = now[s] * normalizersb[m];
 	}
-
-	delete[] emission_probs;
 }
 
 void HaplotypePhaser::CalcScaledBackward() {
@@ -377,9 +465,16 @@ void HaplotypePhaser::CalcScaledBackward() {
  * posterior probability of genotype 2
  *
  */
+template<class T> int countAlts(const T h)
+{
+  return (int) (h > 0);
+}
+
 vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename, bool print){
 	vector<vector<double>> stats;
 	vector<vector<double>> geno_probs;
+	vector<double> posteriors;
+	posteriors.resize(num_states, -1);
 
 	for(int m = 0; m < num_markers; m++) {
 		stats.push_back({});
@@ -393,27 +488,27 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 
 
 	for(int m = 0; m < num_markers; m++) {
-		vector<double> posteriors;
-		posteriors.resize(num_states, -1);
 
-		double norm = 0.0;
-		const double* s_forward_m = &s_forward[m][0];
-		const double* s_backward_m = &s_backward[m][0];
-#pragma omp parallel for schedule(dynamic,131072) reduction(+ : norm)
-		for(int i = 0; i < num_states; i++) {
-			norm += s_forward_m[i] * s_backward_m[i];
-		}
+		const double* __restrict__ s_forward_m = &s_forward[m][0];
+		const double* __restrict__ s_backward_m = &s_backward[m][0];
 
 		double sum = 0.0;
-		double* geno_probs_m = &geno_probs[m][0];
-#pragma omp parallel for schedule(dynamic,131072) reduction(+ : sum) reduction(+ : geno_probs_m[:3])
+		double geno_probs_m[4] = {0};
+		double* __restrict__ posteriors_raw = &posteriors[0];
+		const int num_states = this->num_states;
+		const auto* __restrict haplotypes = &this->haplotypes(0, m);
+#pragma omp parallel for simd schedule(dynamic,131072) reduction(+ : sum) reduction(+ : geno_probs_m[:4]) safelen(4)
 		for(int s = 0; s < num_states; s++) {
-			posteriors[s] = s_forward_m[s] * s_backward_m[s] / norm;
-			sum += posteriors[s];
+		  const int s2 = s;
+		  const double val = s_forward_m[s2] * s_backward_m[s2];
+		  
+		    posteriors_raw[s2] = val;
+		  
+			sum += val;
 
 			//////////genotype probability/////////////////
-			int ref_hap1 = states[s].first;
-			int ref_hap2 = states[s].second;
+			int ref_hap1 = s2 / num_haps;
+			int ref_hap2 = s2 % num_haps;
 				
 
 			// AGCT allele
@@ -421,31 +516,40 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 			// String allele2 = Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap2][m]+1);
 
 			// 00, 01, 10, 11
-			int hapcode1 = haplotypes(ref_hap1,m);
-			int hapcode2 = haplotypes(ref_hap2,m);
+			int hapcode1 = haplotypes[ref_hap1];
+			int hapcode2 = haplotypes[ref_hap2];
 
 
-			int geno_code;
+			int geno_code = countAlts(hapcode1) + countAlts(hapcode2);
 
-			if(hapcode1 != hapcode2) {
+			/*			if(hapcode1 != hapcode2) {
 				geno_code = 1;
 			}
 			else {
 				geno_code = (hapcode1 == 0) ? 0 : 2;
-			}
+				}*/
 
-			geno_probs_m[geno_code] += posteriors[s];
+			geno_probs_m[0] += val * (geno_code == 0);
+			geno_probs_m[1] += val * (geno_code == 1);
+			geno_probs_m[2] += val * (geno_code == 2);
+			/*						for (int z = 0; z < 4; z++) {			  
+			  geno_probs_m[z] += val * (geno_code == z);
+			  }*/
 
 		}
 
 		// check that the sum of genotype probabilities adds up to 1
-		float check_sum = 0.0;
+		double check_sum = 0.0;
 		for(int i = 0; i < 3 ; i++) {
+		  geno_probs[m][i] += geno_probs_m[i];
 			check_sum += geno_probs[m][i];
 		}
-		if(abs(check_sum - 1.0) > 0.000001 || !isfinite(check_sum)) {
-			printf("!!!!!!!!!!!!!!!!!!!!!!!!!Sum of all geno probs is %f at marker %d !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1\n ", check_sum, m);
+		for (int i = 0; i < 3; i++) {
+		  geno_probs[m][i] /= check_sum;
 		}
+		/*		if(abs(check_sum - 1.0) > 0.000001 || !isfinite(check_sum)) {
+			printf("!!!!!!!!!!!!!!!!!!!!!!!!!Sum of all geno probs is %f at marker %d !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1\n ", check_sum, m);
+			}*/
 
 
 		/*vector<size_t> res = VcfUtils::sort_indexes(posteriors);
@@ -612,7 +716,7 @@ vector<vector<double>>  HaplotypePhaser::ReadPosteriorStats(const char * filenam
  * Print the given genotypes to a VCF.
  *
  */
-void HaplotypePhaser::PrintGenotypesToVCF(vector<vector<int>> & genotypes, const char * out_file, const char * sample_file, const char * vcf_template ){
+void HaplotypePhaser::PrintGenotypesToVCF(vector<vector<int>> & genotypes, const char * out_file, const char * sample_file, const char * vcf_template, int firstSample, int lastSample ){
 	VcfRecord record_template;
 	VcfFileReader reader;
 	VcfHeader header_read;
@@ -630,6 +734,19 @@ void HaplotypePhaser::PrintGenotypesToVCF(vector<vector<int>> & genotypes, const
 	}
 	VcfFileWriter writer;
 	writer.open((string(out_file) + ".vcf.gz").c_str(), header_read, InputFile::BGZF);
+	if (lastSample == -1) {
+	  lastSample = num_samples;
+	}
+	else
+	  {
+	    for (int sample = 0; sample < num_samples; sample++) {
+	      int succ = record_template.getGenotypeInfo().setString("GT",sample, "./.");
+
+	      if (!succ) {
+		printf("ERROR IN INITING VCF for ind %d \n", sample);
+	      }
+	    }
+	  }
 
 	for(int m = 0; m < num_markers; m++) {
 
@@ -645,7 +762,7 @@ void HaplotypePhaser::PrintGenotypesToVCF(vector<vector<int>> & genotypes, const
 		record_template.setAlt((markerinfo->GetAlleleLabel(2)).c_str());
 		record_template.setQual(".");
 
-		for(int sample = 0; sample < num_samples; sample++) {
+		for(int sample = firstSample; sample < lastSample; sample++) {
 
 			int succ;
 
@@ -659,13 +776,13 @@ void HaplotypePhaser::PrintGenotypesToVCF(vector<vector<int>> & genotypes, const
 			//				succ = record_template.getGenotypeInfo().setString("GL",sample, "0,0,1");
 			//			}
 
-			if (genotypes[sample][m] == 0) {
+			if (genotypes[sample - firstSample][m] == 0) {
 				succ = record_template.getGenotypeInfo().setString("GT",sample, "0/0");
 			}
-			if (genotypes[sample][m] == 1) {
+			if (genotypes[sample - firstSample][m] == 1) {
 				succ = record_template.getGenotypeInfo().setString("GT",sample, "0/1");
 			}
-			if (genotypes[sample][m] == 2) {
+			if (genotypes[sample - firstSample][m] == 2) {
 				succ = record_template.getGenotypeInfo().setString("GT",sample, "1/1");
 			}
 
