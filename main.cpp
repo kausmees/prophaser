@@ -12,6 +12,7 @@ int main(int argc, char ** argv){
 	String s_file;
 	String r_file;
 	String map_file;
+	String sample;
 
 	double Ne;
 	double error;
@@ -24,6 +25,7 @@ int main(int argc, char ** argv){
 	long_parameters.addString("sample_file", &s_file);
 	long_parameters.addString("reference_file", &r_file);
 	long_parameters.addString("map", &map_file);
+	long_parameters.addString("sampleId", &sample);
 
 	long_parameters.addGroup("Parameters");
 	long_parameters.addDouble("Ne", &Ne);
@@ -99,8 +101,23 @@ int main(int argc, char ** argv){
 	chrono::steady_clock::time_point end;
 
 	begin1 = chrono::steady_clock::now();
+	int samplestart = 0;
+	int sampleend = num_samples;
 
-	for(int sample = 0; sample< num_samples; sample++) {
+	if (!sample.IsEmpty()) {
+	  int d = -1;
+	  sscanf(sample.c_str(), "%d", &d);
+	  if (d < 0 || d >= num_samples) {
+	    fprintf(stderr, "Invalid sample number %d (string %s)\n", d, sample.c_str());
+	    return -1;
+	  }
+	  samplestart = d;
+	  sampleend = d + 1;
+	      
+	  suffix += "_" + string(sample);
+	}
+
+	for(int sample = samplestart; sample< sampleend; sample++) {
 
 		cout << "\n\n------------- Starting sample " << sample << "-------------"<< endl;
 
@@ -149,8 +166,8 @@ int main(int argc, char ** argv){
 					max_geno_code = i;
 				};
 			};
-			ml_genotypes[sample].push_back(max_geno_code);
-			ml_states[sample].push_back(stats[m][39]);
+			ml_genotypes[sample - samplestart].push_back(max_geno_code);
+			//			ml_states[sample].push_back(stats[m][39]);
 		};
 
 		end = std::chrono::steady_clock::now();
@@ -159,8 +176,8 @@ int main(int argc, char ** argv){
 	};
 
 
-	phaser.PrintGenotypesToVCF(ml_genotypes, (result_file + suffix+ ".genos" ).c_str(), sample_file.c_str(), vcf_template.c_str());
-	phaser.PrintHaplotypesToVCF(ml_states, (result_file+ suffix + ".phased").c_str(), sample_file.c_str(), vcf_template.c_str());
+	phaser.PrintGenotypesToVCF(ml_genotypes, (result_file + suffix+ ".genos" ).c_str(), sample_file.c_str(), vcf_template.c_str(), samplestart, sampleend);
+	//	phaser.PrintHaplotypesToVCF(ml_states, (result_file+ suffix + ".phased").c_str(), sample_file.c_str(), vcf_template.c_str());
 
 
 	end = std::chrono::steady_clock::now();
