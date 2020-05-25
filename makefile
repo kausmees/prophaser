@@ -1,5 +1,5 @@
 ## Phaser
-CC = g++
+CC = g++-6
 CFLAGS = -std=c++14 -static -Ofast -g3 -Wall -c -fopenmp -msse2 -mavx
 LFLAGS = -static -static-libgcc -static-libstdc++ -fopenmp -g -o 
 
@@ -13,7 +13,7 @@ LFLAGS = -static -static-libgcc -static-libstdc++ -fopenmp -g -o
 
 SOURCES=$(wildcard *.cpp)
 OBJECTS=$(SOURCES:.cpp=.o)
-TARGET=phase
+TARGET=phase_mcmc
 
 all: $(TARGET)
 

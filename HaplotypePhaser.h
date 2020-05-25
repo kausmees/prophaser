@@ -162,10 +162,12 @@ public:
 
 	int prob_precision = 10;
 	int curr_hap;
+
 	MatrixXc haplotypes;
+	MatrixXf sample_gls;
 
 
-	vector <double> sample_gls;
+
 	Pedigree ped;
 	float error;
 	float Ne;
@@ -181,9 +183,7 @@ public:
 
 
 	~HaplotypePhaser();
-	void LoadReferenceData(const String &ref_file, String &map_file);
-	void LoadSampleData(const String &sample_file,  int sample_index);
-
+	void LoadData(const String &ref_file, const String &sample_file, const String &map_file);
 
 	//private:
 
@@ -191,7 +191,21 @@ public:
 	int num_markers;
 
 	int num_ref_inds;
+	int num_sample_inds;
+
 	int num_inds;
+
+
+	// index of the sample we are curently updating haplotype estimates for
+	int current_sample;
+	// index of current_sample's first haplotype in haplotypes matrix
+	int current_sample_hap_index;
+
+	int ChromStateToHaplotypeIndex(int chrom_state);
+	void UpdateCurrentSample(int sample);
+	void SetNumHaps(int num_haps);
+	void FillStates();
+
 	void CalcSingleScaledForward(int marker, const double* prev, double* now);
 	void CalcSingleScaledBackward(int marker, const double* prev, double* now);
 
@@ -211,8 +225,11 @@ public:
 	void CalcScaledForward();
 	void CalcScaledBackward();
 	void GetMLHaplotypes(int * ml_states);
+	vector<int>  GetMLStates();
 	vector<vector<double>> GetPosteriorStats(const char * filename, bool print);
 	vector<vector<double>>  ReadPosteriorStats(const char * filename);
+
+	void UpdateSampleHaplotypes(vector<int> ml_states);
 
 	void PrintGenotypesToVCF(vector<vector<int>> & ml_genotypes, const char * out_file, const char * sample_file, const char * vcf_template);
 	void PrintHaplotypesToVCF(vector<vector<int>> & ml_genotypes, const char * out_file, const char * sample_file, const char * vcf_template);

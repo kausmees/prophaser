@@ -16,6 +16,9 @@
 
 using Eigen::Dynamic;
 typedef Eigen::Matrix<int,Dynamic, Dynamic> MatrixXc;
+typedef Eigen::Matrix<float,Dynamic, Dynamic> MatrixXf;
+
+
 
 using namespace Eigen;
 using namespace std;
@@ -27,6 +30,8 @@ using namespace std;
 namespace VcfUtils {
 
 extern int max_pl;
+
+// TODO
 extern std::vector<int> unphased_marker_subset;
 
 //typedef std::set<std::vector<String>>
@@ -47,14 +52,10 @@ vector<size_t> sort_indexes(const vector<T> &v) {
 
 
 void LoadReferenceMarkers(const String &file_name);
-void LoadReferenceIndividuals(Pedigree &ped, const String &ref_file);
-void LoadSampleIndividual(Pedigree &ped, const String & sample_file, int sample_id);
-
-
-void LoadHaplotypes(const String &file_name, const Pedigree &ped, char** haplotypes);
-void LoadHaplotypes(const String &file_name, const Pedigree &ped, MatrixXc & haplotypes );
-void FillSampleHaplotypes(const Pedigree &ped, MatrixXc & haplotypes, int index);
-void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, vector<double> & genotypes, int sample_ind_file);
+void LoadIndividuals(Pedigree &ped, const String &ref_file);
+void LoadPhasedHaplotypes(const String &file_name, const Pedigree &ped, MatrixXc & haplotypes );
+void LoadUnphasedHaplotypes(const String &file_name, const Pedigree &ped, MatrixXc & haplotypes, int index);
+void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, MatrixXf & genotypes);
 int GetMarkerPos(int marker_id);
 void LoadGeneticMap(const char * file_name, const Pedigree &ped, vector<double> &thetas);
 void writeVectorToCSV(const char* file_name, const std::vector<vector<double>>& v, const char* opentype);

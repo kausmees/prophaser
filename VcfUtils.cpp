@@ -39,7 +39,7 @@ void LoadReferenceMarkers(const String &file_name){
 		ss.clear();
 
 		marker_name = markerstring.c_str();
-		
+
 		//TODO should use sprintf instead, faster? know chrom and pos wont be non-null terminated
 		// or large to cause buffer overflow issues?
 		//sprintf(marker_id, "%s:%d",record.getChromStr(), record.get1BasedPosition());
@@ -71,30 +71,30 @@ void LoadReferenceMarkers(const String &file_name){
 			//printf("ref str = %s  num = %d \n", ref_base.c_str(), ref);
 			//printf("alt str = %s  num = %d \n", alt_base.c_str(), alt);
 		}
-//		else{
-//			printf("Excluding marker: %s \n ", marker_name);
-//		}
+		//		else{
+		//			printf("Excluding marker: %s \n ", marker_name);
+		//		}
 	}
-	unphased_marker_subset.resize(Pedigree::markerCount,0);
+	unphased_marker_subset.resize(Pedigree::markerCount, 0);
 	reader.close();
 };
 
 /**
- * Add individuals from ref_file to the pedigree ped.
+ * Add individuals from filename to the pedigree ped.
  *
  */
-void LoadReferenceIndividuals(Pedigree &ped, const String &ref_file) {
+void LoadIndividuals(Pedigree &ped, const String &filename) {
 
 	VcfFileReader reader;
 	VcfHeader header;
-	reader.open(ref_file, header);
+	reader.open(filename, header);
 
 	int num_samples = header.getNumSamples();
 	//	printf("Num reference inds : %d \n", num_samples);
 
 	if(num_samples == 0) {
-		//TODO add exceptions
-		//		printf("ERROR: No reference individuals in file");
+		//	TODO add exception
+		printf("ERROR: No individuals in file: %s", filename);
 	}
 
 	for(int i = 0; i < num_samples; i++) {
@@ -104,6 +104,9 @@ void LoadReferenceIndividuals(Pedigree &ped, const String &ref_file) {
 	reader.close();
 
 };
+
+
+
 
 void writeVectorToCSV(const char * file_name, const std::vector<vector<double>>& v, const char* opentype){
 	FILE * csvout = fopen(file_name, opentype);
@@ -121,36 +124,29 @@ void writeVectorToCSV(const char * file_name, const std::vector<vector<double>>&
 };
 
 
-/**
- * Add individual sample_index from sample_file to pedigree.
- *
- */
-void LoadSampleIndividual(Pedigree &ped, const String &sample_file, int sample_index) {
-
-	VcfFileReader reader;
-	VcfHeader header;
-
-	reader.open(sample_file, header);
-
-	ped.AddPerson(header.getSampleName(sample_index), header.getSampleName(sample_index), "0", "0", 0, 1);
-
-	reader.close();
-
-};
-
 
 
 /**
  * Initialize the haplotypes of the samples to 0.
  *
- * index indicates the first index that contains a sample haplotype
+ * Index indicates the first index in haplotypes that contains sample data.
  *
  */
-void FillSampleHaplotypes(const Pedigree &ped, MatrixXc & haplotypes, int index) {
+void LoadUnphasedHaplotypes(const String &file_name, const Pedigree &ped, MatrixXc & haplotypes, int index) {
 
-	for (int hap = index; hap < ped.count*2; hap++) {
+	VcfFileReader reader;
+	VcfHeader header;
+	reader.open(file_name, header);
+
+	int num_samples = header.getNumSamples();
+
+	if (index + num_samples * 2 > haplotypes.rows()) {
+		printf("ERROR: Not enough space in haplotypes to fill %d rows for the unphased haplotypes. \n", num_samples * 2);
+	}
+
+	for (int hap = index; hap < haplotypes.rows(); hap++) {
 		for (int m = 0;  m < ped.markerCount; m++) {
-			haplotypes(hap,m) = 0;
+			haplotypes(hap, m) = 0;
 		}
 	}
 };
@@ -159,121 +155,102 @@ void FillSampleHaplotypes(const Pedigree &ped, MatrixXc & haplotypes, int index)
 
 
 /**
- * Load all alleles from file_name at markers present in pedigree into haplotypes.
+ * Load all haplotypes from file_name at markers present in pedigree into haplotypes.
  *
  * Assumes the file only contains samples that are phased at all markers, have no missing reference of alternative alleles,
  * and that the pedigree only contains monomorphic SNPs.
  *
- */
-void LoadHaplotypes(const String &file_name, const Pedigree &ped, char** haplotypes) {
-
-	//	printf("Loading haplotypes into phasing engine from file %s \n", file_name.c_str());
-	VcfFileReader reader;
-	VcfHeader header;
-	reader.open(file_name, header);
-
-	const char * marker_name;
-	VcfRecord record;
-
-	while(reader.readRecord(record)){
-		std::stringstream ss;
-		ss << record.getChromStr() << ":" << record.get1BasedPosition();
-
-		marker_name = ss.str().c_str();
-		int marker_id = Pedigree::LookupMarker(marker_name);
-		if(marker_id >= 0){
-			for (int ind = 0; ind < ped.count; ind++) {
-				int i0 = record.getGT(ind,0);
-				int i1 = record.getGT(ind,1);
-
-				haplotypes[ind*2][marker_id] = i0;
-				haplotypes[ind*2 + 1][marker_id] = i1;
-
-			}
-		}
-	}
-	reader.close();
-	//	printf("Done \n");
-};
-
-
-/**
- * Load all alleles from file_name at markers present in pedigree into haplotypes.
- *
- * Assumes the file only contains samples that are phased at all markers, have no missing reference of alternative alleles,
- * and that the pedigree only contains monomorphic SNPs.
+ * Haplotypes are loaded in the order they appear in file_name, to indices [0 - num_inds_in_file * 2 - 1] in haplotypes.
  *
  */
-void LoadHaplotypes(const String &file_name, const Pedigree &ped, MatrixXc & haplotypes ) {
+void LoadPhasedHaplotypes(const String &file_name, const Pedigree &ped, MatrixXc & haplotypes ) {
 
-	//	printf("Loading haplotypes into phasing engine from file %s \n", file_name.c_str());
+	//	printf("Loading haplotypes from file %s \n", file_name.c_str());
 	VcfFileReader reader;
 	VcfHeader header;
-	reader.open(file_name, header);
-
-	const char * marker_name;
 	VcfRecord record;
 
+	std::stringstream ss;
+	std::string markers;
+	const char * marker_name;
+	int allele0;
+	int allele1;
+	int marker_id;
+
+	reader.open(file_name, header);
+	int num_samples = header.getNumSamples();
+
 	while(reader.readRecord(record)){
-		std::stringstream ss;
+		ss.str("");
 		ss << record.getChromStr() << ":" << record.get1BasedPosition();
-		std::string markers = ss.str();
+		markers = ss.str();
 		marker_name = markers.c_str();
-		int marker_id = Pedigree::LookupMarker(marker_name);
+		marker_id = Pedigree::LookupMarker(marker_name);
+
 		if(marker_id >= 0){
-			for (int ind = 0; ind < ped.count; ind++) {
-				int i0 = record.getGT(ind,0);
-				int i1 = record.getGT(ind,1);
-
-				haplotypes(ind*2,marker_id) = i0;
-				haplotypes(ind*2 + 1,marker_id) = i1;
-
+			for (int ind = 0; ind < num_samples; ind++) {
+				allele0 = record.getGT(ind, 0);
+				allele1 = record.getGT(ind, 1);
+				haplotypes(ind * 2, marker_id) = allele0;
+				haplotypes(ind * 2 + 1, marker_id) = allele1;
 			}
 		}
 	}
 	reader.close();
-	//	printf("Done \n");
 };
 
 
 /**
- * Load genotypes of individual sample_index_file from file_name into last row of genotypes.
+ * Load genotypes of individual sample_index_file from file_name into sample_gls.
  * Markers present in pedigree but not in file_name are given genotype phreds 0.
  *
  * temproary: fill all other genotypes with 0
  */
-void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, vector<double> & sample_gls, int sample_index_file) {
+void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, MatrixXf & sample_gls) {
 	//	printf("Loading genotype likelihoods from file %s \n", file_name.c_str());
 
-	//	int sample_index_ped = ped.count-1;
-	//	std::string lformat;
-	//	const std::string *likelihood;
 	const char * marker_name;
 	//	int pl_00, pl_01, pl_11;
 	int num_common_markers = 0;
 	int num_total_markers = 0;
+	int marker_id;
+
+	std::stringstream ss;
+	std::string markers;
+	vector<double> gls;
+	String sample_ref_base;
+	String sample_alt_base;
+
+	MarkerInfo * mi;
+
+	String phased_ref_base;
+	String phased_alt_base;
+
+
 
 	//	std::string sub00, sub01, sub11;
 
 	VcfFileReader reader;
 	VcfHeader header;
-	reader.open(file_name, header);
 	VcfRecord record;
+
+	reader.open(file_name, header);
+	int num_samples = header.getNumSamples();
+
 
 
 	while(reader.readRecord(record)){
 		num_total_markers += 1;
-
-		// TODO: This pattern could be factored out...
-		std::stringstream ss;
+		ss.str("");
 		ss << record.getChromStr() << ":" << record.get1BasedPosition();
-		std::string markers = ss.str();
+		markers = ss.str();
 		marker_name = markers.c_str();
 
-		int marker_id = Pedigree::LookupMarker(marker_name);
+		marker_id = Pedigree::LookupMarker(marker_name);
 
+		// If the sample marker exists in the reference set
 		if(marker_id >= 0){
-			//			printf("DOING MARKER ID %d\n", marker_id);
+
 			// if marker is a monomorphic SNP with no missing bases
 			if(record.getNumRefBases() != 1 || record.getNumAlts() != 1) {
 				//TODO throw error
@@ -283,124 +260,48 @@ void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, vecto
 				continue;
 
 			}
-			String sample_ref_base = String(record.getRefStr()[0]);
-			String sample_alt_base = String(record.getAltStr()[0]);
 
-			MarkerInfo * mi = Pedigree::GetMarkerInfo(marker_id);
+			sample_ref_base = String(record.getRefStr()[0]);
+			sample_alt_base = String(record.getAltStr()[0]);
 
-			String phased_ref_base = mi->GetAlleleLabel(1);
-			String phased_alt_base = mi->GetAlleleLabel(2);
+			mi = Pedigree::GetMarkerInfo(marker_id);
+
+			phased_ref_base = mi->GetAlleleLabel(1);
+			phased_alt_base = mi->GetAlleleLabel(2);
+
+			// If the sample has a SNP present in the reference, but with different allels, we ignore it.
+			//TODO check how this affects imputation. this marker will behave as one we have no info on in sample,
+			//do we want it to be imputed as if it was missing in sample?
 
 			if(sample_ref_base != phased_ref_base || sample_alt_base != phased_alt_base){
-
 				//TODO throw error or warning
 				printf("ERROR: Sample alleles do not match phased reference's alles\n");
-				//TODO check how this affects imputation. this marker will behave as one we have no info on in sample,
-				//do we want it to be imputed as if it was missing in sample?
 				continue;
-
-
 			}
-
-			//			printf("PED REF = %s  SAMPLE REF = %s \n",  phased_ref_base.c_str(), sample_ref_base.c_str());
-			//			printf("PED ALT = %s  SAMPLE ALT = %s \n",  phased_alt_base.c_str(), sample_alt_base.c_str());
-
-			//
-			//			lformat = "GL";
-			//			//check if this record has GL or PL
-			//			likelihood = record.getGenotypeInfo().getString(lformat,0);
-			//			if(likelihood == NULL) {
-			//				lformat = "PL";
-			//				likelihood = record.getGenotypeInfo().getString(lformat,0);
-			//
-			//				if(likelihood == NULL) {
-			//					//TODO throw error
-			//					printf("ERROR: RECORD WITH NO PL OR GL FOUND\n");
-			//					//TODO check how this affects imputation. this marker will behave as one we have no info on in sample,
-			//					//do we want it to be imputed as if it was missing in sample?
-			//					continue;
-			//				}
-			//			}
-
-
-			// if VCF record has GL/PL but sample has missing field with :    then likelihood = "."
-			// if VCF record has GL/PL but sample has missing field with nothing    then likelihood = ""
-			// if VCF record does not have GL/PL then likelihood is NULL pointer
-			//			likelihood = record.getGenotypeInfo().getString(lformat,sample_index_file);
-			//
-			//			if(*likelihood == "" || *likelihood == ".") {
-			//				//TODO throw error
-			//				printf("ERROR: INDIVIDUAL WITH NO LIKELIHOOD FOUND \n");
-			//			}
-
-
-			//			std::istringstream iss(*likelihood);
-			//
-			//			std::getline(iss, sub00, ',');
-			//			std::getline(iss, sub01, ',');
-			//			std::getline(iss, sub11, ',');
-			//
-			//
-			//			pl_00 = (lformat == "PL") ? atoi(sub00.c_str()) : static_cast<int>(-10.0 * atof(sub00.c_str()));
-			//			pl_01 = (lformat == "PL") ? atoi(sub01.c_str()) : static_cast<int>(-10.0 * atof(sub01.c_str()));
-			//			pl_11 = (lformat == "PL") ? atoi(sub11.c_str()) : static_cast<int>(-10.0 * atof(sub11.c_str()));
-			//
-			//			if(pl_00 < 0 || pl_01 < 0 || pl_11 < 0) {
-			//				//TODO throw error
-			//				printf("ERROR: NEGATIVE PL \n");
-			//				//TODO check how this affects imputation. this marker will behave as one we have no info on in sample,
-			//				//do we want it to be imputed as if it was missing in sample?
-			//				continue;
-			//			}
-			//
-			//			pl_00 = std::min(pl_00, max_pl);
-			//			pl_01 = std::min(pl_01, max_pl);
-			//			pl_11 = std::min(pl_11, max_pl);
-
-			//			genotypes[sample_index_ped][marker_id*3] = pl_00;
-			//			genotypes[sample_index_ped][marker_id*3+1] = pl_01;
-			//			genotypes[sample_index_ped][marker_id*3+2] = pl_11;
-
-			vector<double> gls = get_GL(header, record, sample_index_file);
-
-			// OBS GL SHOULD BE log10(likelihood, so thould be this)
-			sample_gls[marker_id*3] = pow(10,gls[0]);
-			sample_gls[marker_id*3+1] = pow(10,gls[1]);
-			sample_gls[marker_id*3+2] = pow(10,gls[2]);
-//
-
-
-
-//			// TEMPORARY FOR CAMILLE DATA
-//			if(gls[0] == 0.0) {
-//				gls[0] = 0.00000001;
-//			}
-//			if(gls[1] == 0.0) {
-//				gls[1] = 0.00000001;
-//			}
-//			if(gls[2] == 0.0) {
-//				gls[2] = 0.00000001;
-//			}
-//			// Non-logged GLs in sample file
-//			sample_gls[marker_id*3] = gls[0];
-//			sample_gls[marker_id*3+1] = gls[1];
-//			sample_gls[marker_id*3+2] = gls[2];
-
-
 
 			unphased_marker_subset[marker_id] = 1;
 			num_common_markers += 1;
+
+			for (int s = 0; s < num_samples; s++){
+				gls = get_GL(header, record, s);
+
+				// GL = log10(likelihood), so thould be this for standard VCF data
+				sample_gls(s, marker_id * 3) = float(pow(10, gls[0]));
+				sample_gls(s, marker_id * 3 + 1) = float(pow(10, gls[1]));
+				sample_gls(s, marker_id * 3 + 2) = float(pow(10, gls[2]));
+			}
 		}
 	}
 	reader.close();
 
-	for(int marker_id = 0; marker_id < ped.markerCount; marker_id++){
-		if(!unphased_marker_subset[marker_id]){
-			sample_gls[marker_id*3] = 0.3333;
-			sample_gls[marker_id*3+1] = 0.3333;
-			sample_gls[marker_id*3+2] = 0.3333;
+	for (int s = 0; s < num_samples; s++){
+		for(int marker_id = 0; marker_id < ped.markerCount; marker_id++){
+			if(!unphased_marker_subset[marker_id]){
+				sample_gls(s, marker_id * 3) = 0.3333;
+				sample_gls(s, marker_id * 3 + 1) = 0.3333;
+				sample_gls(s, marker_id * 3 + 2) = 0.3333;
+			}
 		}
-
 	}
 	//	printf("Num reference markers : %d, Num sample markers: %d, %d of which are also in reference. \n", ped.markerCount, num_total_markers, num_common_markers);
 };
@@ -521,11 +422,8 @@ void LoadGeneticMap(const char *file_name, const Pedigree &ped, vector<double> &
 
 
 int max_pl = 255;
+
 std::vector<int> unphased_marker_subset;
-
-
-
-
 
 
 }

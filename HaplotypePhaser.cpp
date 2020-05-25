@@ -12,41 +12,60 @@ HaplotypePhaser::~HaplotypePhaser(){
 }
 
 
-void HaplotypePhaser::AllocateMemory(){
-	String::caseSensitive = false;
+/*
+ * Set the number of haplotypes to use when phasing a sample.
+ * The first num_haps haplotypes will be used.
+ *
+ */
+void HaplotypePhaser::SetNumHaps(int new_num_haps){
 
-	num_markers = Pedigree::markerCount;
+	num_haps = new_num_haps;
+	num_states = pow(num_haps, 2);
+	printf("num states: %d\n", num_states);
 
+	FillStates();
+}
 
-	pop_const = (4.0 * Ne) / 100.0;
-
-	// Number of reference inds.
-	num_ref_inds = ped.count;
-	num_inds = num_ref_inds +1;
-
-	printf("Num inds tot: %d \n", num_inds);
-
-
-	// Number of reference haplotypes that will be considered when handling one sample
-	// The num_haps first haplotypes in the matrix haplotypes will be used.
-	num_haps = num_ref_inds*2;
-
-	num_states = pow(num_haps,2);
+/*
+ * Create the states vector of ChromospomePairs corresponding to all pairs of reference haps,
+ * when using num_haps haplotypes.
+ *
+ * if the value of num_haps is changed, this must be called.
+ *
+ *
+ */
+void HaplotypePhaser::FillStates(){
+	states.clear();
 
 	for(int i = 0; i < num_haps; i++) {
 		for(int j = 0; j < num_haps; j++) {
 			states.push_back(ChromosomePair(i,j));
 		}
 	}
+}
 
-	distances.resize(num_markers,0.01);
+void HaplotypePhaser::AllocateMemory(){
+	String::caseSensitive = false;
+
+	pop_const = (4.0 * Ne) / 100.0;
+
+
+
+	distances.resize(num_markers, 0.01);
+
+
+	SetNumHaps((num_inds - 1) * 2);
 
 
 	// haplotypes(h,m) = 0/1 representing allele of haplotype h at marker m
-	haplotypes = MatrixXc(num_haps+2, num_markers);
+	haplotypes = MatrixXc(num_haps + 2, num_markers);
+
+	// sample_gls(s,:) = float array containing the 3 GLs of sample s at all markers, sequentially
+	sample_gls = MatrixXf(num_sample_inds, num_markers * 3);
 
 
-	sample_gls.resize(num_markers*3);
+
+
 	normalizersf = new double[num_markers];
 	normalizersb = new double[num_markers];
 
@@ -55,32 +74,71 @@ void HaplotypePhaser::AllocateMemory(){
 	new(&s_backward) StepMemoizer<HaplotypePhaser>(this, num_markers, num_states, false, 128, &HaplotypePhaser::CalcSingleScaledBackward);
 };
 
+
+void HaplotypePhaser::UpdateCurrentSample(int sample) {
+
+	current_sample = sample;
+	current_sample_hap_index = (num_ref_inds + sample) * 2;
+}
+
+
 /**
- * Load reference data from specified file.
+ * Load information about reference and sample individuals, and reference markers
+ * into pedigree from the specified files.
+ *
  *
  * Load genetic distances from map file if specified.
  *
  */
-void HaplotypePhaser::LoadReferenceData(const String &ref_file, String &map_file){
+void HaplotypePhaser::LoadData(const String &ref_file, const String &sample_file, const String &map_file){
 	VcfUtils::LoadReferenceMarkers(ref_file);
-	VcfUtils::LoadReferenceIndividuals(ped,ref_file);
+	VcfUtils::LoadIndividuals(ped,ref_file);
+	num_ref_inds = ped.count;
+	VcfUtils::LoadIndividuals(ped, sample_file);
+	num_sample_inds = ped.count - num_ref_inds;
+
+	num_inds = ped.count;
+	num_markers = Pedigree::markerCount;
+
+	printf("Num inds : %d  \nNum markers: %d\n", num_inds, num_markers);
+
 	AllocateMemory();
-	VcfUtils::LoadHaplotypes(ref_file, ped, haplotypes);
+	printf("After allocate \n");
+
+
+	VcfUtils::LoadPhasedHaplotypes(ref_file, ped, haplotypes);
+	printf("After load phased \n");
+
+	VcfUtils::LoadUnphasedHaplotypes(sample_file, ped, haplotypes, num_ref_inds * 2);
+	printf("After load unphased \n");
+
+	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls);
+	printf("Allocated liks \n");
+
 	if(!map_file.IsEmpty()) {
 		VcfUtils::LoadGeneticMap(map_file.c_str(), ped, distances);
 	};
 };
 
 
+
 /**
- * Load sample data from vcf.
+ * Translate a state representing a chromosome to an index in the haploytpes matrix.
  *
- * Overwrites sample_gls, assumed handling one sample at a time.
+ * If its a sample that comes after the current sample in haplotypes,
+ * we shift the indices 2 steps towards the end of matrix.
  *
  */
-void HaplotypePhaser::LoadSampleData(const String &sample_file, int sample_index){
-	VcfUtils::LoadSampleIndividual(ped, sample_file, sample_index);
-	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls, sample_index);
+int HaplotypePhaser::ChromStateToHaplotypeIndex(int chrom_state){
+
+	int newone = chrom_state + 2 * (chrom_state >= current_sample_hap_index);
+
+	if (newone != chrom_state) {
+		//		printf("!!!!!!!!! chrom_state  %d -> %d  whe ncurrent sample = % d \n", chrom_state, newone, current_sample);
+	}
+
+	return newone;
+
 
 };
 
@@ -110,50 +168,50 @@ void HaplotypePhaser::CalcEmissionProbs(int marker, double * probs) {
 		ChromosomePair chrom_state = states[state];
 
 		// Reference hapotype at chromosome 1 - fixed (0: REF 1: ALT)
-		h1 = haplotypes(chrom_state.first, marker);
+		h1 = haplotypes(ChromStateToHaplotypeIndex(chrom_state.first), marker);
 
 		// Reference hapotype at chromosome 2 (0: REF 1: ALT)
-		h2 = haplotypes(chrom_state.second,marker);
+		h2 = haplotypes(ChromStateToHaplotypeIndex(chrom_state.second), marker);
 
 		sum = 0.0;
 		// case1: g = 0
 
 		if(h1 == 0 and h2 == 0){
-			sum += case_3 *  sample_gls[marker * 3];
+			sum += case_3 *  sample_gls(current_sample, marker * 3);
 		}
 		else {
 			if((h1 == 0 and h2 == 1) or (h1 == 1 and h2 == 0)){
 
-				sum += case_4 * sample_gls[marker * 3];
+				sum += case_4 * sample_gls(current_sample, marker * 3);
 
 			}
 			else{
-				sum +=  case_5 *  sample_gls[marker * 3];
+				sum +=  case_5 *  sample_gls(current_sample, marker * 3);
 
 			}
 		}
 
 		// case2: g = 1
 		if((h1 == 0 and h2 == 1) or (h1 == 1 and h2 == 0)){
-			sum += case_1 *  sample_gls[marker * 3 + 1];
+			sum += case_1 *  sample_gls(current_sample, marker * 3 + 1);
 
 		}
 		else{
-			sum +=case_2 * sample_gls[marker * 3 + 1];
+			sum +=case_2 * sample_gls(current_sample, marker * 3 + 1);
 
 		}
 
 		// case3: g = 2
 		if(h1 == 1 and h2 == 1){
-			sum += case_3 * sample_gls[marker * 3 + 2];
+			sum += case_3 * sample_gls(current_sample, marker * 3 + 2);
 
 		} else{
 			if((h1 == 0 and h2 == 1) or (h1 == 1 and h2 == 0)){
-				sum += case_4 * sample_gls[marker * 3 + 2];
+				sum += case_4 * sample_gls(current_sample, marker * 3 + 2);
 
 			}
 			else{
-				sum += case_5 * sample_gls[marker * 3 + 2];
+				sum += case_5 * sample_gls(current_sample, marker * 3 + 2);
 
 			}
 		}
@@ -161,6 +219,8 @@ void HaplotypePhaser::CalcEmissionProbs(int marker, double * probs) {
 		probs[state] = sum;
 	}
 }
+
+
 
 
 
@@ -176,10 +236,10 @@ void HaplotypePhaser::InitPriorScaledForward(){
 		c1 += emission_probs[s];
 	};
 
-	normalizersf[0] = 1.0/(prior*c1);
+	normalizersf[0] = 1.0 / (prior * c1);
 
 	for(int s = 0; s < num_states; s++){
-		s_forward[0][s] = (prior*emission_probs[s]) * normalizersf[0];
+		s_forward[0][s] = (prior * emission_probs[s]) * normalizersf[0];
 	}
 
 	delete [] emission_probs;
@@ -265,7 +325,8 @@ void HaplotypePhaser::CalcSingleScaledForward(int m, const double* prev, double*
 
 	// Based on normalization scheme, sum over all previous forwards is always 1
 	// Let's precalc sum over all halves in first and second half of pair
-	if (m % 1000 == 0) fprintf(stderr, "%d\n", m);
+	//if (m % 1000 == 0) fprintf(stderr, "%d\n", m);
+
 
 #pragma omp parallel for schedule(dynamic,131072) reduction(+ : c)
 	for (int s = 0; s < num_states; s++) {
@@ -356,6 +417,9 @@ void HaplotypePhaser::CalcScaledBackward() {
 
 
 /**
+ *
+ * Calculate posterior probabilities based on the current values of s_forward and s_backward.
+ *
  * For every marker m, get the state with highest posterior probability at that location, given the entire observation sequence
  * (not most likely sequence of states)
  *
@@ -381,6 +445,15 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 	vector<vector<double>> stats;
 	vector<vector<double>> geno_probs;
 
+
+	int template_hap1;
+	int template_hap2;
+	int hapcode1;
+	int hapcode2;
+	int geno_code;
+	double sum;
+
+
 	for(int m = 0; m < num_markers; m++) {
 		stats.push_back({});
 		stats[m].resize(44,-1.0);
@@ -402,28 +475,28 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 			norm += s_forward[m][i] * s_backward[m][i];
 		}
 
-		double sum = 0.0;
+		sum = 0.0;
+
 		double* geno_probs_m = &geno_probs[m][0];
+
 #pragma omp parallel for schedule(dynamic,131072) reduction(+ : sum) reduction(+ : geno_probs_m[:3])
 		for(int s = 0; s < num_states; s++) {
 			posteriors[s] = s_forward[m][s] * s_backward[m][s] / norm;
 			sum += posteriors[s];
 
 			//////////genotype probability/////////////////
-			int ref_hap1 = states[s].first;
-			int ref_hap2 = states[s].second;
-				
+			template_hap1 = ChromStateToHaplotypeIndex(states[s].first);
+			template_hap2 = ChromStateToHaplotypeIndex(states[s].second);
+
 
 			// AGCT allele
 			// String allele1 = Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap1][m]+1);
 			// String allele2 = Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap2][m]+1);
 
 			// 00, 01, 10, 11
-			int hapcode1 = haplotypes(ref_hap1,m);
-			int hapcode2 = haplotypes(ref_hap2,m);
+			hapcode1 = haplotypes(template_hap1, m);
+			hapcode2 = haplotypes(template_hap2, m);
 
-
-			int geno_code;
 
 			if(hapcode1 != hapcode2) {
 				geno_code = 1;
@@ -436,14 +509,14 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 
 		}
 
-		// check that the sum of genotype probabilities adds up to 1
-		float check_sum = 0.0;
-		for(int i = 0; i < 3 ; i++) {
-			check_sum += geno_probs[m][i];
-		}
-		if(abs(check_sum - 1.0) > 0.000001 || !isfinite(check_sum)) {
-			printf("!!!!!!!!!!!!!!!!!!!!!!!!!Sum of all geno probs is %f at marker %d !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1\n ", check_sum, m);
-		}
+				// check that the sum of genotype probabilities adds up to 1
+				float check_sum = 0.0;
+				for(int i = 0; i < 3 ; i++) {
+					check_sum += geno_probs[m][i];
+				}
+				if(abs(check_sum - 1.0) > 0.000001 || !isfinite(check_sum)) {
+					printf("!!!!!!!!!!!!!!!!!!!!!!!!!Sum of all geno probs is %f at marker %d !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1\n ", check_sum, m);
+				}
 
 
 		vector<size_t> res = VcfUtils::sort_indexes(posteriors);
@@ -477,6 +550,60 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 
 	return stats;
 }
+
+
+/**
+ *
+ * Calculate posterior probabilities based on the current values of s_forward and s_backward.
+ *
+ * For every marker m, get the state with highest posterior probability at that location, given the entire observation sequence
+ * (not most likely sequence of states)
+ *
+ * Calculate array ml_states s.t.
+ * ml_states[m] = s_i that maximises P(Q_m = s_i | O_1 ... O_num_markers)
+ *
+ *
+ */
+vector<int>  HaplotypePhaser::GetMLStates(){
+
+	vector<int> ml_states(num_markers, -1);
+	vector<size_t> res;
+
+	double sum;
+	int maxPosteriorIndex;
+	vector<double> posteriors;
+	posteriors.resize(num_states, -1);
+	double norm;
+
+	for(int m = 0; m < num_markers; m++) {
+
+		norm = 0.0;
+#pragma omp parallel for schedule(dynamic,131072) reduction(+ : norm)
+		for(int i = 0; i < num_states; i++) {
+			norm += s_forward[m][i] * s_backward[m][i];
+		}
+
+		sum = 0.0;
+#pragma omp parallel for schedule(dynamic,131072) reduction(+ : sum)
+		for(int s = 0; s < num_states; s++) {
+			posteriors[s] = s_forward[m][s] * s_backward[m][s] / norm;
+			sum += posteriors[s];
+		}
+
+		// get the most likely state
+		// TODO first or last or some other way of chosing?
+		// first
+//		maxPosteriorIndex = max_element(posteriors.begin(),posteriors.end()) - posteriors.begin();
+		// last
+		maxPosteriorIndex = *max_element(posteriors.rbegin(), posteriors.rend());
+
+		ml_states[m] = maxPosteriorIndex;
+
+	}
+	return ml_states;
+}
+
+
 
 /**
  * Read stats from filename
@@ -605,6 +732,43 @@ vector<vector<double>>  HaplotypePhaser::ReadPosteriorStats(const char * filenam
 
 
 /**
+ * Update the current estimate of a sample's haploytpes according to the most likely states for this sample.
+ *
+ *
+ */
+void HaplotypePhaser::UpdateSampleHaplotypes(vector<int> ml_states) {
+
+	int template_hap1;
+	int template_hap2;
+	int hapcode1;
+	int hapcode2;
+
+
+	for (int m = 0;  m < ped.markerCount; m++) {
+
+		//////////genotype probability/////////////////
+		template_hap1 = ChromStateToHaplotypeIndex(states[ml_states[m]].first);
+		template_hap2 = ChromStateToHaplotypeIndex(states[ml_states[m]].second);
+
+
+		// AGCT allele
+		// String allele1 = Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap1][m]+1);
+		// String allele2 = Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap2][m]+1);
+
+		// 00, 01, 10, 11
+		hapcode1 = haplotypes(template_hap1, m);
+		hapcode2 = haplotypes(template_hap2, m);
+
+		haplotypes(current_sample_hap_index, m) = hapcode1;
+		haplotypes(current_sample_hap_index + 1, m) = hapcode2;
+
+	}
+};
+
+
+
+
+/**
  * Print the given genotypes to a VCF.
  *
  */
@@ -693,11 +857,11 @@ void HaplotypePhaser::PrintGenotypesToVCF(vector<vector<int>> & genotypes, const
  */
 void HaplotypePhaser::PrintHaplotypesToVCF(vector<vector<int>> & ml_states, const char * out_file, const char * sample_file, const char * vcf_template){
 
-//	std::vector<String> h1;
-//	std::vector<String> h2;
+	//	std::vector<String> h1;
+	//	std::vector<String> h2;
 
-	int ref_hap1;
-	int ref_hap2;
+	int template_hap1;
+	int template_hap2;
 
 
 	VcfRecord record_template;
@@ -708,7 +872,7 @@ void HaplotypePhaser::PrintHaplotypesToVCF(vector<vector<int>> & ml_states, cons
 	reader.readRecord(record_template);
 
 
-
+	int succ;
 	int num_samples = header_read.getNumSamples();
 
 	if (num_samples != record_template.getNumSamples()) {
@@ -720,45 +884,43 @@ void HaplotypePhaser::PrintHaplotypesToVCF(vector<vector<int>> & ml_states, cons
 	VcfFileWriter writer;
 	writer.open((string(out_file) + ".vcf.gz").c_str(), header_read, InputFile::BGZF);
 
-		for(int m = 0; m < num_markers; m++) {
-			MarkerInfo* markerinfo = Pedigree::GetMarkerInfo(m);
-			std::string marker_name = markerinfo->name.c_str();
-			std::size_t delim = marker_name.find(":");
-			string chrom =  marker_name.substr(0,delim);
-			int pos =  std::stoi(marker_name.substr(delim+1));
-			record_template.setChrom(chrom.c_str());
-			record_template.set1BasedPosition(pos);
-			record_template.setID(marker_name.c_str());
-			record_template.setRef((markerinfo->GetAlleleLabel(1)).c_str());
-			record_template.setAlt((markerinfo->GetAlleleLabel(2)).c_str());
-			record_template.setQual(".");
+	for(int m = 0; m < num_markers; m++) {
+		MarkerInfo* markerinfo = Pedigree::GetMarkerInfo(m);
+		std::string marker_name = markerinfo->name.c_str();
+		std::size_t delim = marker_name.find(":");
+		string chrom =  marker_name.substr(0,delim);
+		int pos =  std::stoi(marker_name.substr(delim+1));
+		record_template.setChrom(chrom.c_str());
+		record_template.set1BasedPosition(pos);
+		record_template.setID(marker_name.c_str());
+		record_template.setRef((markerinfo->GetAlleleLabel(1)).c_str());
+		record_template.setAlt((markerinfo->GetAlleleLabel(2)).c_str());
+		record_template.setQual(".");
 
-			for(int sample = 0; sample < num_samples; sample++) {
+		for(int sample = 0; sample < num_samples; sample++) {
 
-				int succ;
+			UpdateCurrentSample(sample);
 
-				ref_hap1 = states[ml_states[sample][m]].first;
-				ref_hap2 = states[ml_states[sample][m]].second;
+			template_hap1 = ChromStateToHaplotypeIndex(states[ml_states[sample][m]].first);
+			template_hap2 = ChromStateToHaplotypeIndex(states[ml_states[sample][m]].second);
 
-				std::stringstream ss;
-				ss << to_string(int(haplotypes(ref_hap1,m))) << "|" << to_string(int(haplotypes(ref_hap2,m)));
-				string GTstring = ss.str();
+			std::stringstream ss;
+			ss << to_string(int(haplotypes(template_hap1, m))) << "|" << to_string(int(haplotypes(template_hap2, m)));
+			string GTstring = ss.str();
 
-				succ = record_template.getGenotypeInfo().setString("GT",sample, GTstring);
+			succ = record_template.getGenotypeInfo().setString("GT", sample, GTstring);
 
-				if (!succ) {
-					printf("ERROR IN WRITING TO VCF for marker %d for ind %d \n", m, sample);
-				}
+			if (!succ) {
+				printf("ERROR IN WRITING TO VCF for marker %d for ind %d \n", m, sample);
 			}
-
-			writer.writeRecord(record_template);
-
 		}
-
-		printf("WROTE PHASED TO %s \n", out_file);
-
-		reader.close();
-		writer.close();
-
+		writer.writeRecord(record_template);
 	}
+
+	printf("WROTE PHASED TO %s \n", out_file);
+
+	reader.close();
+	writer.close();
+
+}
 

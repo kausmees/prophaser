@@ -69,9 +69,9 @@ void HaplotypePhaserSym::AllocateMemory(){
  */
 void HaplotypePhaserSym::LoadReferenceData(const String &ref_file, String &map_file){
 	VcfUtils::LoadReferenceMarkers(ref_file);
-	VcfUtils::LoadReferenceIndividuals(ped,ref_file);
+	VcfUtils::LoadIndividuals(ped,ref_file);
 	AllocateMemory();
-	VcfUtils::LoadHaplotypes(ref_file, ped, haplotypes);
+	VcfUtils::LoadPhasedHaplotypes(ref_file, ped, haplotypes);
 	if(!map_file.IsEmpty()) {
 		VcfUtils::LoadGeneticMap(map_file.c_str(), ped, distances);
 	};
@@ -85,8 +85,8 @@ void HaplotypePhaserSym::LoadReferenceData(const String &ref_file, String &map_f
  *
  */
 void HaplotypePhaserSym::LoadSampleData(const String &sample_file, int sample_index){
-	VcfUtils::LoadSampleIndividual(ped, sample_file, sample_index);
-	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls, sample_index);
+//	VcfUtils::LoadSampleIndividuals(ped, sample_file, sample_index);
+//	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls, sample_index);
 
 };
 
