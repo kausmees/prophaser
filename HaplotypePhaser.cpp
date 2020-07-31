@@ -397,6 +397,8 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 		posteriors.resize(num_states, -1);
 
 		double norm = 0.0;
+		double dummy = s_forward[m][0];
+		dummy = s_backward[m][0];
 #pragma omp parallel for schedule(dynamic,131072) reduction(+ : norm)
 		for(int i = 0; i < num_states; i++) {
 			norm += s_forward[m][i] * s_backward[m][i];
@@ -446,7 +448,7 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 		}
 
 
-		vector<size_t> res = VcfUtils::sort_indexes(posteriors);
+		/*		vector<size_t> res = VcfUtils::sort_indexes(posteriors);
 
 		//add lowest elements to stats[m]
 		for(int i = 0; i < 10; i++) {
@@ -460,7 +462,7 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 		}
 		for(int i = 0; i < 10; i++) {
 			stats[m][30 + i] = res[posteriors.size() - 10 + i];
-		}
+			}*/
 
 		stats[m][40] = sum / posteriors.size();
 		stats[m][41] = geno_probs[m][0];
