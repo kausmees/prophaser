@@ -11,7 +11,7 @@
 #include <algorithm>
 #include "VcfFileWriter.h"
 
-
+#include <numeric>
 
 using Eigen::Dynamic;
 typedef Eigen::Matrix<int,Dynamic, Dynamic> MatrixXc;
