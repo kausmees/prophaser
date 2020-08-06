@@ -215,7 +215,8 @@ public:
 	vector<vector<double>>  ReadPosteriorStats(const char * filename);
 
 	void PrintGenotypesToVCF(vector<vector<int>> & ml_genotypes, const char * out_file, const char * sample_file, const char * vcf_template);
-	void PrintHaplotypesToVCF(vector<vector<int>> & ml_genotypes, const char * out_file, const char * sample_file, const char * vcf_template);
+    void PrintPostGenotypesToVCF(vector<vector<int>> & ml_genotypes, vector<vector<vector<double>>> & ml_postprobs, const char * out_file, const char * sample_file, const char * vcf_template);
+    void PrintHaplotypesToVCF(vector<vector<int>> & ml_genotypes, const char * out_file, const char * sample_file, const char * vcf_template);
 
 };
 

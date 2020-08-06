@@ -468,6 +468,13 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 		stats[m][41] = geno_probs[m][0];
 		stats[m][42] = geno_probs[m][1];
 		stats[m][43] = geno_probs[m][2];
+//        if (m % 1000 == 0) {
+//            printf("\n");
+//            printf("\nposterior probability of genotype 0 at marker %d = %f", m, stats[m][41]);
+//            printf("\nposterior probability of genotype 1 at marker %d = %f", m, stats[m][42]);
+//            printf("\nposterior probability of genotype 2 at marker %d = %f", m, stats[m][43]);
+//            printf("\n");
+//        }
 
 	}
 
@@ -681,6 +688,93 @@ void HaplotypePhaser::PrintGenotypesToVCF(vector<vector<int>> & genotypes, const
 
 	reader.close();
 	writer.close();
+
+}
+
+
+
+/**
+ * Print the best-guess genotypes and the corresponding posterior genotypes probvabilities to a VCF.
+ *
+ */
+void HaplotypePhaser::PrintPostGenotypesToVCF(vector<vector<int>> & genotypes, vector<vector<vector<double>>> & postprobs, const char * out_file, const char * sample_file, const char * vcf_template){
+    VcfRecord record_template;
+    VcfFileReader reader;
+    VcfHeader header_read;
+
+    reader.open(vcf_template, header_read);
+    reader.readRecord(record_template);
+
+
+    int num_samples = header_read.getNumSamples();
+
+    if (num_samples != record_template.getNumSamples()) {
+        printf("!!!!! INCONSISTENT NUMBER OF SAMPLES when writing to VCF !!!!!\nSomething is probably wrong with the vcf template \n");
+        printf("num samples from header:  %d \n", num_samples);
+        printf("num samples in record:  %d \n", record_template.getNumSamples());
+    }
+    VcfFileWriter writer;
+    writer.open((string(out_file) + ".vcf.gz").c_str(), header_read, InputFile::BGZF);
+
+    for(int m = 0; m < num_markers; m++) {
+
+        MarkerInfo* markerinfo = Pedigree::GetMarkerInfo(m);
+        std::string marker_name = markerinfo->name.c_str();
+        std::size_t delim = marker_name.find(":");
+        string chrom =  marker_name.substr(0,delim);
+        int pos =  std::stoi(marker_name.substr(delim+1));
+        record_template.setChrom(chrom.c_str());
+        record_template.set1BasedPosition(pos);
+        record_template.setID(marker_name.c_str());
+        record_template.setRef((markerinfo->GetAlleleLabel(1)).c_str());
+        record_template.setAlt((markerinfo->GetAlleleLabel(2)).c_str());
+        record_template.setQual(".");
+
+        for(int sample = 0; sample < num_samples; sample++) {
+
+            int succ;
+            string s_postprobs;
+
+            s_postprobs = to_string(postprobs[sample][m][0]) + "," + to_string(postprobs[sample][m][1]) + "," + to_string(postprobs[sample][m][2]);
+//            if (m % 1000 == 0) {
+//                printf("Writing GP %s for samnple %d at marker %d\n", s_postprobs, sample, m);
+//            }
+            succ = record_template.getGenotypeInfo().setString("GP", sample, s_postprobs);
+
+            //			if (genotypes[sample][m] == 0) {
+            //				succ = record_template.getGenotypeInfo().setString("GL",sample, "1,0,0");
+            //			}
+            //			if (genotypes[sample][m] == 1) {
+            //				succ = record_template.getGenotypeInfo().setString("GL",sample, "0,1,0");
+            //			}
+            //			if (genotypes[sample][m] == 2) {
+            //				succ = record_template.getGenotypeInfo().setString("GL",sample, "0,0,1");
+            //			}
+
+            if (genotypes[sample][m] == 0) {
+                succ = record_template.getGenotypeInfo().setString("GT",sample, "0/0");
+            }
+            if (genotypes[sample][m] == 1) {
+                succ = record_template.getGenotypeInfo().setString("GT",sample, "0/1");
+            }
+            if (genotypes[sample][m] == 2) {
+                succ = record_template.getGenotypeInfo().setString("GT",sample, "1/1");
+            }
+
+
+            if (!succ) {
+                printf("ERROR IN WRITING TO VCF for marker %d for ind %d \n", m, sample);
+            }
+        }
+
+        writer.writeRecord(record_template);
+
+    }
+
+    printf("WROTE GENOS TO %s \n", out_file);
+
+    reader.close();
+    writer.close();
 
 }
 

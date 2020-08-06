@@ -23,9 +23,10 @@ niter=3
 mkdir -p $results_directory
 
 ./create_template_vcf.sh $indir $sample_file
+./create_template_vcf_gtgp.sh $indir $sample_file
 
 ##### assuming the master branch has been compiled to this executable
-./phase --results_directory $results_directory  --directory $indir --sample_file $sample_file --reference_file $ref_file --ne $ne --map $mapfile --error $error 
+./phase --results_directory $results_directory  --directory $indir --sample_file $sample_file --reference_file $ref_file --ne $ne --map $mapfile --error $error
 
 ##### assuming the linear-state branch has been compiled to this executable
 #./phase_linear_state --map $mapfile  --results_directory $results_directory  --directory $indir --sample_file $sample_file --reference_file $ref_file  --iterations  $niter --ne $ne --error $error --algorithm $algo

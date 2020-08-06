@@ -59,6 +59,7 @@ int main(int argc, char ** argv){
 	string result_file = string(res_dir) + sfilebase;
 
 	string vcf_template = string(dir) + sfilebase + ".template.vcf";
+    string vcf_template_gtgp = string(dir) + sfilebase + ".template_gtgp.vcf";
 
 	printf("Phasing file : %s \n", sample_file.c_str());
 	printf("----------------\n");
@@ -70,7 +71,8 @@ int main(int argc, char ** argv){
 	printf("error %f \n", phaser.error);
 	printf("algorithm %s \n", suffix.c_str());
 
-	printf("\nTemplate vcf: %s \n\n ", vcf_template.c_str());
+	printf("\nTemplate GT vcf: %s \n\n ", vcf_template.c_str());
+    printf("\nTemplate GT:GP vcf: %s \n\n ", vcf_template_gtgp.c_str());
 
 	printf("----------------\n");
 	printf("Writing to : %s \n\n", (result_file+suffix).c_str());
@@ -89,6 +91,9 @@ int main(int argc, char ** argv){
 
 	// n_samples x n_markers array of most likely genotypes
 	vector<vector<int>> ml_genotypes;
+
+    // n_samples x n_markers x 3 array of most posterior genotypes probabilities
+    vector<vector<vector<double>>> ml_postprobs;
 
 	// n_samples x n_markers array of most likely states
 	vector<vector<int>> ml_states;
@@ -139,10 +144,13 @@ int main(int argc, char ** argv){
 		// push back a vector for this sample
 		ml_genotypes.push_back({});
 		ml_states.push_back({});
+        ml_postprobs.push_back({});
 
 		for(int m = 0; m < phaser.num_markers; m++) {
 			float max_geno_prob = 0.0;
 			int max_geno_code;
+            ml_postprobs[sample].push_back({});
+            ml_postprobs[sample][m].resize(3);
 			for(int i = 0; i < 3; i++) {
 				if(stats[m][41+i] > max_geno_prob) {
 					max_geno_prob = stats[m][41+i];
@@ -150,6 +158,16 @@ int main(int argc, char ** argv){
 				};
 			};
 			ml_genotypes[sample].push_back(max_geno_code);
+
+			for(int g = 0; g < 3; g++) {
+                ml_postprobs[sample][m][g] = stats[m][41+g];
+            }
+//            if (m % 1000 == 0) {
+//                printf("\nSample %d", sample);
+//                printf("\nposterior probabilities RR,RA,AA at marker %d = %f,%f,%f", m, ml_postprobs[sample][m][0], ml_postprobs[sample][m][1], ml_postprobs[sample][m][2]);
+//                printf("\n");
+//            }
+
 			ml_states[sample].push_back(stats[m][39]);
 		};
 
@@ -160,7 +178,8 @@ int main(int argc, char ** argv){
 
 
 	phaser.PrintGenotypesToVCF(ml_genotypes, (result_file + suffix+ ".genos" ).c_str(), sample_file.c_str(), vcf_template.c_str());
-	phaser.PrintHaplotypesToVCF(ml_states, (result_file+ suffix + ".phased").c_str(), sample_file.c_str(), vcf_template.c_str());
+    phaser.PrintPostGenotypesToVCF(ml_genotypes, ml_postprobs, (result_file + suffix+ ".postgenos" ).c_str(), sample_file.c_str(), vcf_template_gtgp.c_str());
+    // phaser.PrintHaplotypesToVCF(ml_states, (result_file+ suffix + ".phased").c_str(), sample_file.c_str(), vcf_template.c_str()); # no longer relevant way of computing results
 
 
 	end = std::chrono::steady_clock::now();
