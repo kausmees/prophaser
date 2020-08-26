@@ -18,10 +18,9 @@ done
 
 echo $indlist
 
-metainfo='metainfo'
-bcftools view -h $indir$vcf_filestart.vcf.gz > $indir$metainfo
+bcftools view -h $indir$vcf_filestart.vcf.gz > $indir$vcf_filestart.metainfo
 # Write metainfo lines (all but the last one)
-sed -e '$ d' $indir$metainfo > $indir$vcf_filestart.template.vcf
+sed -e '$ d' $indir$vcf_filestart.metainfo > $indir$vcf_filestart.template.vcf
 # append the GT field format to header
 echo -e '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">' >> $indir$vcf_filestart.template.vcf
 # append header line
@@ -29,7 +28,7 @@ bcftools view -h $indir$vcf_filestart.vcf.gz | grep '#CHROM' >> $indir$vcf_files
 # append VCF body
 echo -e  "20	2355080	rs566601297	G	A	.	PASS	.	GT"$indlist >> $indir$vcf_filestart.template.vcf
 
-rm $indir$metainfo
+rm $indir$vcf_filestart.metainfo
 echo "wrote to " $indir$vcf_filestart.template.vcf
 
 

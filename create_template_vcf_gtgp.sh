@@ -18,10 +18,9 @@ done
 
 echo $indlist
 
-metainfo='metainfo'
-bcftools view -h $indir$vcf_filestart.vcf.gz > $indir$metainfo
+bcftools view -h $indir$vcf_filestart.vcf.gz > $indir$vcf_filestart.metainfo.gtgp
 # Write metainfo lines (all but the last one)
-sed -e '$ d' $indir$metainfo > $indir$vcf_filestart.template_gtgp.vcf
+sed -e '$ d' $indir$vcf_filestart.metainfo.gtgp > $indir$vcf_filestart.template_gtgp.vcf
 # append the GT and GP fields format to header
 echo -e '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">' >> $indir$vcf_filestart.template_gtgp.vcf
 echo -e '##FORMAT=<ID=GP,Number=G,Type=Float,Description="Estimated Genotype Probability">' >> $indir$vcf_filestart.template_gtgp.vcf
@@ -30,7 +29,7 @@ bcftools view -h $indir$vcf_filestart.vcf.gz | grep '#CHROM' >> $indir$vcf_files
 # append VCF body
 echo -e  "20	2355080	rs566601297	G	A	.	PASS	.	GT:GP"$indlist >> $indir$vcf_filestart.template_gtgp.vcf
 
-rm $indir$metainfo
+rm $indir$vcf_filestart.metainfo.gtgp
 echo "wrote to " $indir$vcf_filestart.template_gtgp.vcf
 
 
