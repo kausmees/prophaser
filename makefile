@@ -1,7 +1,9 @@
 ## Phaser
-CC = g++
-CFLAGS = -std=c++14 -static -Ofast -g3 -Wall -c -fopenmp -msse2 -mavx
-LFLAGS = -static -static-libgcc -static-libstdc++ -fopenmp -g -o 
+CC = gcc
+#CFLAGS = -std=c++14 -static -Ofast -g3 -Wall -c -fopenmp -msse2 -mavx
+CFLAGS = -std=c++14 -static -Ofast -g3 -Wall -c -fopenmp -DNDEBUG 
+# -static -static-libgcc -static-libstdc++ 
+LFLAGS = -fopenmp -g
 
 #CFLAGS = -std=c++14  -Ofast -g3 -Wall -c -fopenmp -msse2 -mavx
 #LFLAGS = -fopenmp -g -o 
@@ -14,19 +16,20 @@ LFLAGS = -static -static-libgcc -static-libstdc++ -fopenmp -g -o
 SOURCES=$(wildcard *.cpp)
 OBJECTS=$(SOURCES:.cpp=.o)
 TARGET=phase
+LIBSTATGEN=../libStatGen
 
 all: $(TARGET)
 
 
 $(TARGET): $(OBJECTS)
-	$(CC) $(LFLAGS) $@ $^  -L../../haplotyperProject/libStatGen -lStatGen -lz 
-#	$(CC) $(LFLAGS) $@ $^  -L../../haplotyperProject/libStatGen -lStatGen_debug -lz 
+	$(CC) $(LFLAGS) $@ $^  -L$(LIBSTATGEN) -lStatGen -lz 
+#	$(CC) $(LFLAGS) $@ $^  -L$(LIBSTATGEN) -lStatGen_debug -lz 
 %.o: %.cpp %.h
-	$(CC) $(CFLAGS) -g $< -I ../../haplotyperProject/libStatGen/include/ -I ../../../Programs/eigen-eigen-5a0156e40feb/
+	$(CC) $(CFLAGS) -g $< -I $(LIBSTATGEN)/include/ -I /usr/include/eigen3 #-I ../../../Programs/eigen-eigen-5a0156e40feb/
 	
 	
 %.o: %.cpp
-	 $(CC) $(CFLAGS) $< -I ../../haplotyperProject/libStatGen/include/  -I ../../../Programs/eigen-eigen-5a0156e40feb/
+	 $(CC) $(CFLAGS) $< -I $(LIBSTATGEN)/include/ -I /usr/include/eigen3 #-I ../../../Programs/eigen-eigen-5a0156e40feb/
 
 
 clean:

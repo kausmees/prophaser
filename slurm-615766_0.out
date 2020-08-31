@@ -1,0 +1,11 @@
+  Error: unknown switch `o'
+
+ Usage: perf mem record [<options>] [<command>]
+    or: perf mem record [<options>] -- <command> [<options>]
+
+    -e, --event <event>   event selector. use 'perf mem record -e list' to list available events
+    -K, --all-kernel      collect only kernel level data
+    -U, --all-user        collect only user level data
+    -v, --verbose         be more verbose (show counter open errors, etc)
+        --ldlat <n>       mem-loads latency
+

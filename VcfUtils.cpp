@@ -364,8 +364,11 @@ void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, vecto
 			vector<double> gls = get_GL(header, record, sample_index_file);
 
 			// OBS GL SHOULD BE log10(likelihood, so thould be this)
+			for (int i = 0; i < 3; i++) {
+			  if (gls[i] < -4.9) gls[i] = -30;
+			}
 			sample_gls[marker_id*3] = pow(10,gls[0]);
-			sample_gls[marker_id*3+1] = pow(10,gls[1]);
+			sample_gls[marker_id*3+1] = /*0.5 * */ pow(10,gls[1]);
 			sample_gls[marker_id*3+2] = pow(10,gls[2]);
 //
 

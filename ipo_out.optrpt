@@ -1,0 +1,1603 @@
+Intel(R) Advisor can now assist with vectorization and show optimization
+  report messages with your source code.
+See "https://software.intel.com/en-us/intel-advisor-xe" for details.
+
+Intel(R) C Intel(R) 64 Compiler for applications running on Intel(R) 64, Version 18.0.3.222 Build 20180410
+
+Compiler options: -fopenmp -g -qopt-report=5 -restrict -qopt-report-phase=vec -xSANDYBRIDGE -o phase -L../libStatGen -lStatGen -lz
+
+Begin optimization report for: main(int, char **)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_construct.h(102,4) inlined into main.cpp(112,6)
+   remark #15382: vectorization support: call to function operator delete(void *) cannot be vectorized   [ /usr/include/c++/4.8.5/ext/new_allocator.h(110,9) ]
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_construct.h(102,4) inlined into main.cpp(112,6)
+   remark #15382: vectorization support: call to function operator delete(void *) cannot be vectorized   [ /usr/include/c++/4.8.5/ext/new_allocator.h(110,9) ]
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+LOOP END
+
+LOOP BEGIN at main.cpp(131,3)
+   remark #15333: loop was not vectorized: exception handling for a call prevents vectorization   [ main.cpp(132,4) ]
+LOOP END
+
+LOOP BEGIN at HaplotypePhaser.h(160,33) inlined into main.cpp(145,10)
+   remark #15523: loop was not vectorized: loop control variable j was found, but loop iteration count cannot be computed before executing the loop
+LOOP END
+
+LOOP BEGIN at main.cpp(160,3)
+   remark #15523: loop was not vectorized: loop control variable m was found, but loop iteration count cannot be computed before executing the loop
+
+   LOOP BEGIN at main.cpp(163,4)
+      remark #15344: loop was not vectorized: vector dependence prevents vectorization
+      remark #15346: vector dependence: assumed ANTI dependence between max_geno_prob (164:5) and max_geno_prob (165:6)
+      remark #15346: vector dependence: assumed FLOW dependence between max_geno_prob (165:6) and max_geno_prob (164:5)
+      remark #15346: vector dependence: assumed ANTI dependence between max_geno_prob (164:5) and max_geno_prob (165:6)
+   LOOP END
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_construct.h(102,4) inlined into main.cpp(176,2)
+   remark #15382: vectorization support: call to function operator delete(void *) cannot be vectorized   [ /usr/include/c++/4.8.5/ext/new_allocator.h(110,9) ]
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_construct.h(102,4) inlined into main.cpp(186,2)
+   remark #15382: vectorization support: call to function operator delete(void *) cannot be vectorized   [ /usr/include/c++/4.8.5/ext/new_allocator.h(110,9) ]
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_construct.h(102,4) inlined into main.cpp(186,2)
+   remark #15382: vectorization support: call to function operator delete(void *) cannot be vectorized   [ /usr/include/c++/4.8.5/ext/new_allocator.h(110,9) ]
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+LOOP END
+
+
+Non-optimizable loops:
+
+
+LOOP BEGIN at main.cpp(120,2)
+   remark #15333: loop was not vectorized: exception handling for a call prevents vectorization   [ main.cpp(122,8) ]
+
+   LOOP BEGIN at HaplotypePhaser.h(174,33) inlined into main.cpp(145,10)
+      remark #15333: loop was not vectorized: exception handling for a call prevents vectorization   [ HaplotypePhaser.h(163,47) ]
+   LOOP END
+LOOP END
+===========================================================================
+
+Begin optimization report for: std::vector<std::vector<int, std::allocator<int>>, std::allocator<std::vector<int, std::allocator<int>>>>::_M_emplace_back_aux<std::remove_reference<std::vector<std::vector<int, std::allocator<int>>, std::allocator<std::vector<int, std::allocator<int>>>>::value_type &>::type>(std::vector<std::vector<int, std::allocator<int>>, std::allocator<std::vector<int, std::allocator<int>>>> *, std::remove_reference<std::vector<std::vector<int, std::allocator<int>>, std::allocator<std::vector<int, std::allocator<int>>>>::value_type &>::type &&)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_uninitialized.h(74,23) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(414,10)
+   remark #15382: vectorization support: call to function std::vector<int, std::allocator<int>>::vector(std::vector<int, std::allocator<int>> *, std::vector<int, std::allocator<int>> &&) cannot be vectorized   [ /usr/include/c++/4.8.5/bits/stl_construct.h(75,42) ]
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_construct.h(102,4) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(429,2)
+   remark #15382: vectorization support: call to function operator delete(void *) cannot be vectorized   [ /usr/include/c++/4.8.5/ext/new_allocator.h(110,9) ]
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+   remark #15346: vector dependence: assumed ANTI dependence between __first->_M_start (160:9) and call:operator delete(void *) (110:9)
+   remark #15346: vector dependence: assumed FLOW dependence between call:operator delete(void *) (110:9) and __first->_M_start (160:9)
+LOOP END
+===========================================================================
+
+Begin optimization report for: std::_Destroy<std::_Vector_base<std::vector<int, std::allocator<int>>, std::allocator<std::vector<int, std::allocator<int>>>>::pointer, std::vector<int, std::allocator<int>>>(std::_Vector_base<std::vector<int, std::allocator<int>>, std::allocator<std::vector<int, std::allocator<int>>>>::pointer, std::_Vector_base<std::vector<int, std::allocator<int>>, std::allocator<std::vector<int, std::allocator<int>>>>::pointer, std::allocator<std::vector<int, std::allocator<int>>> &)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_construct.h(102,4) inlined into /usr/include/c++/4.8.5/bits/stl_construct.h(152,7)
+   remark #15382: vectorization support: call to function operator delete(void *) cannot be vectorized   [ /usr/include/c++/4.8.5/ext/new_allocator.h(110,9) ]
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+   remark #15346: vector dependence: assumed ANTI dependence between __first->_M_start (160:9) and call:operator delete(void *) (110:9)
+   remark #15346: vector dependence: assumed FLOW dependence between call:operator delete(void *) (110:9) and __first->_M_start (160:9)
+LOOP END
+===========================================================================
+
+Begin optimization report for: VcfUtils::LoadGenotypeLikelihoods(const String &, const Pedigree &, std::vector<double, std::allocator<double>> &, int)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at VcfUtils.cpp(367,4)
+   remark #15389: vectorization support: reference gls.__b_St12_Vector_baseIdSaIdEE.__b_St12_Vector_baseIdSaIdEE.__b_St12_Vector_baseIdSaIdEE[i] has unaligned access   [ VcfUtils.cpp(368,28) ]
+   remark #15389: vectorization support: reference gls.__b_St12_Vector_baseIdSaIdEE.__b_St12_Vector_baseIdSaIdEE.__b_St12_Vector_baseIdSaIdEE[i] has unaligned access   [ VcfUtils.cpp(368,28) ]
+   remark #15381: vectorization support: unaligned access used inside loop body
+   remark #15305: vectorization support: vector length 2
+   remark #15309: vectorization support: normalized vectorization overhead 0.316
+   remark #15300: LOOP WAS VECTORIZED
+   remark #15450: unmasked unaligned unit stride loads: 1 
+   remark #15451: unmasked unaligned unit stride stores: 1 
+   remark #15475: --- begin vector cost summary ---
+   remark #15476: scalar cost: 21 
+   remark #15477: vector cost: 9.500 
+   remark #15478: estimated potential speedup: 1.360 
+   remark #15488: --- end vector cost summary ---
+LOOP END
+
+LOOP BEGIN at VcfUtils.cpp(367,4)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at VcfUtils.cpp(400,2)
+   remark #15335: loop was not vectorized: vectorization possible but seems inefficient. Use vector always directive or -vec-threshold0 to override 
+   remark #15329: vectorization support: non-unit strided store was emulated for the variable <sample_gls->_M_start[marker_id*3]>, masked, stride is 3   [ VcfUtils.cpp(402,14) ]
+   remark #15329: vectorization support: non-unit strided store was emulated for the variable <sample_gls->_M_start[marker_id*3+1]>, masked, stride is 3   [ VcfUtils.cpp(403,14) ]
+   remark #15329: vectorization support: non-unit strided store was emulated for the variable <sample_gls->_M_start[marker_id*3+2]>, masked, stride is 3   [ VcfUtils.cpp(404,14) ]
+   remark #15305: vectorization support: vector length 2
+   remark #15399: vectorization support: unroll factor set to 2
+   remark #15309: vectorization support: normalized vectorization overhead 0.013
+   remark #15450: unmasked unaligned unit stride loads: 1 
+   remark #15462: unmasked indexed (or gather) loads: 3 
+   remark #15475: --- begin vector cost summary ---
+   remark #15476: scalar cost: 22 
+   remark #15477: vector cost: 59.500 
+   remark #15478: estimated potential speedup: 0.360 
+   remark #15488: --- end vector cost summary ---
+LOOP END
+
+LOOP BEGIN at VcfUtils.cpp(400,2)
+<Remainder>
+LOOP END
+
+
+Non-optimizable loops:
+
+
+LOOP BEGIN at VcfUtils.cpp(264,2)
+   remark #15333: loop was not vectorized: exception handling for a call prevents vectorization   [ /usr/include/c++/4.8.5/istream(608,15) ]
+LOOP END
+===========================================================================
+
+Begin optimization report for: Eigen::operator<<<Eigen::Block<Eigen::Matrix<int8_t, -1, -1, 0, -1, -1>, -1, -1, false>>(std::ostream &, const Eigen::DenseBase<Eigen::Block<Eigen::Matrix<int8_t, -1, -1, 0, -1, -1>, -1, -1, false>> &)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at /sw/libs/Eigen/3.3.4/rackham/include/eigen3/Eigen/src/Core/AssignEvaluator.h(324,41) inlined into /sw/libs/Eigen/3.3.4/rackham/include/eigen3/Eigen/src/Core/IO.h(221,38)
+   remark #15523: loop was not vectorized: loop control variable outer was found, but loop iteration count cannot be computed before executing the loop
+
+   LOOP BEGIN at /sw/libs/Eigen/3.3.4/rackham/include/eigen3/Eigen/src/Core/AssignEvaluator.h(325,43) inlined into /sw/libs/Eigen/3.3.4/rackham/include/eigen3/Eigen/src/Core/IO.h(221,38)
+      remark #15523: loop was not vectorized: loop control variable inner was found, but loop iteration count cannot be computed before executing the loop
+   LOOP END
+LOOP END
+
+LOOP BEGIN at /sw/libs/Eigen/3.3.4/rackham/include/eigen3/Eigen/src/Core/IO.h(65,5) inlined into /sw/libs/Eigen/3.3.4/rackham/include/eigen3/Eigen/src/Core/IO.h(221,36)
+   remark #15333: loop was not vectorized: exception handling for a call prevents vectorization   [ /usr/include/c++/4.8.5/bits/basic_string.h(317,4) ]
+LOOP END
+===========================================================================
+
+Begin optimization report for: Eigen::internal::print_matrix<Eigen::internal::eval<Eigen::Block<Eigen::Matrix<int8_t, -1, -1, 0, -1, -1>, -1, -1, false>, Eigen::internal::traits<Eigen::Block<Eigen::Matrix<int8_t, -1, -1, 0, -1, -1>, -1, -1, false>>::StorageKind>::type>(std::ostream &, const Eigen::internal::eval<Eigen::Block<Eigen::Matrix<int8_t, -1, -1, 0, -1, -1>, -1, -1, false>, Eigen::internal::traits<Eigen::Block<Eigen::Matrix<int8_t, -1, -1, 0, -1, -1>, -1, -1, false>>::StorageKind>::type &, const Eigen::IOFormat &)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at /sw/libs/Eigen/3.3.4/rackham/include/eigen3/Eigen/src/Core/IO.h(171,30)
+   remark #15523: loop was not vectorized: loop control variable i was found, but loop iteration count cannot be computed before executing the loop
+LOOP END
+
+LOOP BEGIN at /sw/libs/Eigen/3.3.4/rackham/include/eigen3/Eigen/src/Core/IO.h(180,26)
+   remark #15523: loop was not vectorized: loop control variable i was found, but loop iteration count cannot be computed before executing the loop
+
+   LOOP BEGIN at /sw/libs/Eigen/3.3.4/rackham/include/eigen3/Eigen/src/Core/IO.h(187,28)
+      remark #15523: loop was not vectorized: loop control variable j was found, but loop iteration count cannot be computed before executing the loop
+   LOOP END
+LOOP END
+
+
+Non-optimizable loops:
+
+
+LOOP BEGIN at /sw/libs/Eigen/3.3.4/rackham/include/eigen3/Eigen/src/Core/IO.h(170,28)
+   remark #15333: loop was not vectorized: exception handling for a call prevents vectorization   [ /usr/include/c++/4.8.5/istream(608,15) ]
+LOOP END
+===========================================================================
+
+Begin optimization report for: HaplotypePhaser::GetPosteriorStats(std::vector<std::vector<double, std::allocator<double>>, std::allocator<std::vector<double, std::allocator<double>>>> *, HaplotypePhaser *, const char *, bool)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at HaplotypePhaser.cpp(479,2)
+   remark #15523: loop was not vectorized: loop control variable m was found, but loop iteration count cannot be computed before executing the loop
+LOOP END
+
+LOOP BEGIN at HaplotypePhaser.cpp(484,2)
+   remark #15523: loop was not vectorized: loop control variable m was found, but loop iteration count cannot be computed before executing the loop
+LOOP END
+
+LOOP BEGIN at HaplotypePhaser.cpp(490,2)
+   remark #15542: loop was not vectorized: inner loop was already vectorized
+
+   LOOP BEGIN at HaplotypePhaser.h(160,33) inlined into HaplotypePhaser.cpp(493,56)
+      remark #15523: loop was not vectorized: loop control variable j was found, but loop iteration count cannot be computed before executing the loop
+   LOOP END
+
+   LOOP BEGIN at HaplotypePhaser.cpp(543,3)
+      remark #15389: vectorization support: reference ((geno_probs.__b_St12_Vector_baseISt6vectorIdSaIdEESaIS2_EE.__b_St12_Vector_baseISt6vectorIdSaIdEESaIS2_EE.__b_St12_Vector_baseISt6vectorIdSaIdEESaIS2_EE+m*24)->_M_start)[i] has unaligned access   [ HaplotypePhaser.cpp(544,18) ]
+      remark #15389: vectorization support: reference ((geno_probs.__b_St12_Vector_baseISt6vectorIdSaIdEESaIS2_EE.__b_St12_Vector_baseISt6vectorIdSaIdEESaIS2_EE.__b_St12_Vector_baseISt6vectorIdSaIdEESaIS2_EE+m*24)->_M_start)[i] has unaligned access   [ HaplotypePhaser.cpp(544,18) ]
+      remark #15388: vectorization support: reference geno_probs_m[i] has aligned access   [ HaplotypePhaser.cpp(544,25) ]
+      remark #15389: vectorization support: reference ((geno_probs.__b_St12_Vector_baseISt6vectorIdSaIdEESaIS2_EE.__b_St12_Vector_baseISt6vectorIdSaIdEESaIS2_EE.__b_St12_Vector_baseISt6vectorIdSaIdEESaIS2_EE+m*24)->_M_start)[i] has unaligned access   [ HaplotypePhaser.cpp(545,30) ]
+      remark #15381: vectorization support: unaligned access used inside loop body
+      remark #15335: loop was not vectorized: vectorization possible but seems inefficient. Use vector always directive or -vec-threshold0 to override 
+      remark #15305: vectorization support: vector length 2
+      remark #15309: vectorization support: normalized vectorization overhead 1.647
+      remark #15448: unmasked aligned unit stride loads: 1 
+      remark #15450: unmasked unaligned unit stride loads: 2 
+      remark #15451: unmasked unaligned unit stride stores: 1 
+      remark #15475: --- begin vector cost summary ---
+      remark #15476: scalar cost: 13 
+      remark #15477: vector cost: 8.500 
+      remark #15478: estimated potential speedup: 0.670 
+      remark #15488: --- end vector cost summary ---
+   LOOP END
+
+   LOOP BEGIN at HaplotypePhaser.cpp(547,3)
+      remark #15389: vectorization support: reference ((geno_probs.__b_St12_Vector_baseISt6vectorIdSaIdEESaIS2_EE.__b_St12_Vector_baseISt6vectorIdSaIdEESaIS2_EE.__b_St12_Vector_baseISt6vectorIdSaIdEESaIS2_EE+m*24)->_M_start)[i] has unaligned access   [ HaplotypePhaser.cpp(548,18) ]
+      remark #15389: vectorization support: reference ((geno_probs.__b_St12_Vector_baseISt6vectorIdSaIdEESaIS2_EE.__b_St12_Vector_baseISt6vectorIdSaIdEESaIS2_EE.__b_St12_Vector_baseISt6vectorIdSaIdEESaIS2_EE+m*24)->_M_start)[i] has unaligned access   [ HaplotypePhaser.cpp(548,18) ]
+      remark #15381: vectorization support: unaligned access used inside loop body
+      remark #15305: vectorization support: vector length 2
+      remark #15309: vectorization support: normalized vectorization overhead 0.800
+      remark #15300: LOOP WAS VECTORIZED
+      remark #15450: unmasked unaligned unit stride loads: 1 
+      remark #15451: unmasked unaligned unit stride stores: 1 
+      remark #15475: --- begin vector cost summary ---
+      remark #15476: scalar cost: 34 
+      remark #15477: vector cost: 5.000 
+      remark #15478: estimated potential speedup: 1.960 
+      remark #15488: --- end vector cost summary ---
+   LOOP END
+
+   LOOP BEGIN at HaplotypePhaser.cpp(547,3)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at VcfUtils.cpp(111,27) inlined into HaplotypePhaser.cpp(582,3)
+   remark #15523: loop was not vectorized: loop control variable U48_V.U48_V was found, but loop iteration count cannot be computed before executing the loop
+
+   LOOP BEGIN at VcfUtils.cpp(112,20) inlined into HaplotypePhaser.cpp(582,3)
+      remark #15523: loop was not vectorized: loop control variable U4b_V.U4b_V was found, but loop iteration count cannot be computed before executing the loop
+   LOOP END
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_construct.h(102,4) inlined into HaplotypePhaser.cpp(586,2)
+   remark #15382: vectorization support: call to function operator delete(void *) cannot be vectorized   [ /usr/include/c++/4.8.5/ext/new_allocator.h(110,9) ]
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+LOOP END
+
+LOOP BEGIN at HaplotypePhaser.cpp(500,1)
+   remark #15389: vectorization support: reference at (500:1) has unaligned access
+   remark #15381: vectorization support: unaligned access used inside loop body
+   remark #15305: vectorization support: vector length 4
+   remark #15427: loop was completely unrolled
+   remark #15300: LOOP WAS VECTORIZED
+   remark #15451: unmasked unaligned unit stride stores: 1 
+   remark #15475: --- begin vector cost summary ---
+   remark #15476: scalar cost: 4 
+   remark #15477: vector cost: 1.750 
+   remark #15478: estimated potential speedup: 2.280 
+   remark #15488: --- end vector cost summary ---
+LOOP END
+
+LOOP BEGIN at HaplotypePhaser.cpp(501,3)
+   remark #15522: loop was not vectorized: loop control flow is too complex. Try using canonical loop form from OpenMP specification
+   remark #15442: entire loop may be executed in remainder
+   remark #15449: unmasked aligned unit stride stores: 1 
+   remark #15450: unmasked unaligned unit stride loads: 2 
+   remark #15462: unmasked indexed (or gather) loads: 2 
+   remark #15475: --- begin vector cost summary ---
+   remark #15476: scalar cost: 91 
+   remark #15477: vector cost: 60.250 
+   remark #15478: estimated potential speedup: 1.480 
+   remark #15482: vectorized math library calls: 2 
+   remark #15487: type converts: 5 
+   remark #15488: --- end vector cost summary ---
+
+   LOOP BEGIN at HaplotypePhaser.cpp(500,1)
+   <Peeled loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at HaplotypePhaser.cpp(500,1)
+      remark #15389: vectorization support: reference s_forward_m has unaligned access   [ HaplotypePhaser.cpp(503,24) ]
+      remark #15389: vectorization support: reference s_backward_m has unaligned access   [ HaplotypePhaser.cpp(503,42) ]
+      remark #15388: vectorization support: reference posteriors_raw has aligned access   [ HaplotypePhaser.cpp(505,7) ]
+      remark #15381: vectorization support: unaligned access used inside loop body
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <haplotypes>, part of index is nonlinearly computed   [ HaplotypePhaser.cpp(519,19) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <haplotypes>, part of index is nonlinearly computed   [ HaplotypePhaser.cpp(520,19) ]
+      remark #15305: vectorization support: vector length 4
+      remark #15309: vectorization support: normalized vectorization overhead 0.647
+      remark #15300: LOOP WAS VECTORIZED
+      remark #15442: entire loop may be executed in remainder
+      remark #15449: unmasked aligned unit stride stores: 1 
+      remark #15450: unmasked unaligned unit stride loads: 2 
+      remark #15462: unmasked indexed (or gather) loads: 2 
+      remark #15475: --- begin vector cost summary ---
+      remark #15476: scalar cost: 91 
+      remark #15477: vector cost: 60.250 
+      remark #15478: estimated potential speedup: 1.480 
+      remark #15482: vectorized math library calls: 2 
+      remark #15487: type converts: 5 
+      remark #15488: --- end vector cost summary ---
+   LOOP END
+
+   LOOP BEGIN at HaplotypePhaser.cpp(500,1)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at HaplotypePhaser.cpp(500,1)
+   remark #15389: vectorization support: reference geno_probs_m[$i1] has unaligned access
+   remark #15389: vectorization support: reference geno_probs_m[$i1] has unaligned access
+   remark #15389: vectorization support: reference at (500:1) has unaligned access
+   remark #15381: vectorization support: unaligned access used inside loop body
+   remark #15335: loop was not vectorized: vectorization possible but seems inefficient. Use vector always directive or -vec-threshold0 to override 
+   remark #15305: vectorization support: vector length 2
+   remark #15427: loop was completely unrolled
+   remark #15399: vectorization support: unroll factor set to 2
+   remark #15309: vectorization support: normalized vectorization overhead 0.273
+   remark #15450: unmasked unaligned unit stride loads: 2 
+   remark #15451: unmasked unaligned unit stride stores: 1 
+   remark #15475: --- begin vector cost summary ---
+   remark #15476: scalar cost: 6 
+   remark #15477: vector cost: 5.500 
+   remark #15478: estimated potential speedup: 0.850 
+   remark #15488: --- end vector cost summary ---
+LOOP END
+
+LOOP BEGIN at HaplotypePhaser.cpp(500,1)
+   remark #15389: vectorization support: reference at (500:1) has unaligned access
+   remark #15389: vectorization support: reference at (500:1) has unaligned access
+   remark #15389: vectorization support: reference at (500:1) has unaligned access
+   remark #15381: vectorization support: unaligned access used inside loop body
+   remark #15305: vectorization support: vector length 4
+   remark #15427: loop was completely unrolled
+   remark #15309: vectorization support: normalized vectorization overhead 0.692
+   remark #15300: LOOP WAS VECTORIZED
+   remark #15450: unmasked unaligned unit stride loads: 2 
+   remark #15451: unmasked unaligned unit stride stores: 1 
+   remark #15475: --- begin vector cost summary ---
+   remark #15476: scalar cost: 6 
+   remark #15477: vector cost: 3.250 
+   remark #15478: estimated potential speedup: 1.090 
+   remark #15488: --- end vector cost summary ---
+LOOP END
+===========================================================================
+
+Begin optimization report for: std::vector<std::vector<double, std::allocator<double>>, std::allocator<std::vector<double, std::allocator<double>>>>::_M_emplace_back_aux<std::remove_reference<std::vector<std::vector<double, std::allocator<double>>, std::allocator<std::vector<double, std::allocator<double>>>>::value_type &>::type>(std::vector<std::vector<double, std::allocator<double>>, std::allocator<std::vector<double, std::allocator<double>>>> *, std::remove_reference<std::vector<std::vector<double, std::allocator<double>>, std::allocator<std::vector<double, std::allocator<double>>>>::value_type &>::type &&)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_uninitialized.h(74,23) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(414,10)
+   remark #15382: vectorization support: call to function std::vector<double, std::allocator<double>>::vector(std::vector<double, std::allocator<double>> *, std::vector<double, std::allocator<double>> &&) cannot be vectorized   [ /usr/include/c++/4.8.5/bits/stl_construct.h(75,42) ]
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_construct.h(102,4) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(429,2)
+   remark #15382: vectorization support: call to function operator delete(void *) cannot be vectorized   [ /usr/include/c++/4.8.5/ext/new_allocator.h(110,9) ]
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+   remark #15346: vector dependence: assumed ANTI dependence between __first->_M_start (160:9) and call:operator delete(void *) (110:9)
+   remark #15346: vector dependence: assumed FLOW dependence between call:operator delete(void *) (110:9) and __first->_M_start (160:9)
+LOOP END
+===========================================================================
+
+Begin optimization report for: std::_Destroy<std::_Vector_base<std::vector<double, std::allocator<double>>, std::allocator<std::vector<double, std::allocator<double>>>>::pointer, std::vector<double, std::allocator<double>>>(std::_Vector_base<std::vector<double, std::allocator<double>>, std::allocator<std::vector<double, std::allocator<double>>>>::pointer, std::_Vector_base<std::vector<double, std::allocator<double>>, std::allocator<std::vector<double, std::allocator<double>>>>::pointer, std::allocator<std::vector<double, std::allocator<double>>> &)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_construct.h(102,4) inlined into /usr/include/c++/4.8.5/bits/stl_construct.h(152,7)
+   remark #15382: vectorization support: call to function operator delete(void *) cannot be vectorized   [ /usr/include/c++/4.8.5/ext/new_allocator.h(110,9) ]
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+   remark #15346: vector dependence: assumed ANTI dependence between __first->_M_start (160:9) and call:operator delete(void *) (110:9)
+   remark #15346: vector dependence: assumed FLOW dependence between call:operator delete(void *) (110:9) and __first->_M_start (160:9)
+LOOP END
+===========================================================================
+
+Begin optimization report for: std::vector<double, std::allocator<double>>::_M_fill_insert(std::vector<double, std::allocator<double>> *, std::vector<double, std::allocator<double>>::iterator, std::vector<double, std::allocator<double>>::size_type, const std::vector<double, std::allocator<double>>::value_type &)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(692,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(462,5)
+<Peeled loop for vectorization>
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(692,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(462,5)
+   remark #15388: vectorization support: reference *__first has aligned access   [ /usr/include/c++/4.8.5/bits/stl_algobase.h(693,3) ]
+   remark #15305: vectorization support: vector length 4
+   remark #15399: vectorization support: unroll factor set to 4
+   remark #15309: vectorization support: normalized vectorization overhead 1.083
+   remark #15300: LOOP WAS VECTORIZED
+   remark #15442: entire loop may be executed in remainder
+   remark #15449: unmasked aligned unit stride stores: 1 
+   remark #15475: --- begin vector cost summary ---
+   remark #15476: scalar cost: 3 
+   remark #15477: vector cost: 0.750 
+   remark #15478: estimated potential speedup: 3.390 
+   remark #15488: --- end vector cost summary ---
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(692,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(462,5)
+<Remainder loop for vectorization>
+   remark #15388: vectorization support: reference *__first has aligned access   [ /usr/include/c++/4.8.5/bits/stl_algobase.h(693,3) ]
+   remark #15305: vectorization support: vector length 4
+   remark #15309: vectorization support: normalized vectorization overhead 4.333
+   remark #15301: REMAINDER LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(692,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(462,5)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(467,5)
+<Peeled loop for vectorization>
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(467,5)
+   remark #15388: vectorization support: reference *__first has aligned access   [ /usr/include/c++/4.8.5/bits/stl_algobase.h(751,3) ]
+   remark #15305: vectorization support: vector length 4
+   remark #15399: vectorization support: unroll factor set to 4
+   remark #15309: vectorization support: normalized vectorization overhead 1.083
+   remark #15300: LOOP WAS VECTORIZED
+   remark #15442: entire loop may be executed in remainder
+   remark #15449: unmasked aligned unit stride stores: 1 
+   remark #15475: --- begin vector cost summary ---
+   remark #15476: scalar cost: 3 
+   remark #15477: vector cost: 0.750 
+   remark #15478: estimated potential speedup: 3.390 
+   remark #15488: --- end vector cost summary ---
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(467,5)
+<Remainder loop for vectorization>
+   remark #15388: vectorization support: reference *__first has aligned access   [ /usr/include/c++/4.8.5/bits/stl_algobase.h(751,3) ]
+   remark #15305: vectorization support: vector length 4
+   remark #15309: vectorization support: normalized vectorization overhead 4.333
+   remark #15301: REMAINDER LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(467,5)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(692,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(476,5)
+<Peeled loop for vectorization>
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(692,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(476,5)
+   remark #15388: vectorization support: reference *__first has aligned access   [ /usr/include/c++/4.8.5/bits/stl_algobase.h(693,3) ]
+   remark #15305: vectorization support: vector length 4
+   remark #15399: vectorization support: unroll factor set to 4
+   remark #15309: vectorization support: normalized vectorization overhead 1.083
+   remark #15300: LOOP WAS VECTORIZED
+   remark #15442: entire loop may be executed in remainder
+   remark #15449: unmasked aligned unit stride stores: 1 
+   remark #15475: --- begin vector cost summary ---
+   remark #15476: scalar cost: 3 
+   remark #15477: vector cost: 0.750 
+   remark #15478: estimated potential speedup: 3.390 
+   remark #15488: --- end vector cost summary ---
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(692,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(476,5)
+<Remainder loop for vectorization>
+   remark #15388: vectorization support: reference *__first has aligned access   [ /usr/include/c++/4.8.5/bits/stl_algobase.h(693,3) ]
+   remark #15305: vectorization support: vector length 4
+   remark #15309: vectorization support: normalized vectorization overhead 4.333
+   remark #15301: REMAINDER LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(692,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(476,5)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(489,5)
+<Peeled loop for vectorization>
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(489,5)
+   remark #15388: vectorization support: reference *__first has aligned access   [ /usr/include/c++/4.8.5/bits/stl_algobase.h(751,3) ]
+   remark #15305: vectorization support: vector length 4
+   remark #15399: vectorization support: unroll factor set to 4
+   remark #15309: vectorization support: normalized vectorization overhead 1.083
+   remark #15300: LOOP WAS VECTORIZED
+   remark #15442: entire loop may be executed in remainder
+   remark #15449: unmasked aligned unit stride stores: 1 
+   remark #15475: --- begin vector cost summary ---
+   remark #15476: scalar cost: 3 
+   remark #15477: vector cost: 0.750 
+   remark #15478: estimated potential speedup: 3.390 
+   remark #15488: --- end vector cost summary ---
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(489,5)
+<Remainder loop for vectorization>
+   remark #15388: vectorization support: reference *__first has aligned access   [ /usr/include/c++/4.8.5/bits/stl_algobase.h(751,3) ]
+   remark #15305: vectorization support: vector length 4
+   remark #15309: vectorization support: normalized vectorization overhead 4.333
+   remark #15301: REMAINDER LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(489,5)
+<Remainder loop for vectorization>
+LOOP END
+===========================================================================
+
+Begin optimization report for: std::vector<std::vector<double, std::allocator<double>>, std::allocator<std::vector<double, std::allocator<double>>>>::~vector(std::vector<std::vector<double, std::allocator<double>>, std::allocator<std::vector<double, std::allocator<double>>>> *)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_construct.h(102,4) inlined into /usr/include/c++/4.8.5/bits/stl_vector.h(416,9)
+   remark #15382: vectorization support: call to function operator delete(void *) cannot be vectorized   [ /usr/include/c++/4.8.5/ext/new_allocator.h(110,9) ]
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+   remark #15346: vector dependence: assumed ANTI dependence between __first->_M_start (160:9) and call:operator delete(void *) (110:9)
+   remark #15346: vector dependence: assumed FLOW dependence between call:operator delete(void *) (110:9) and __first->_M_start (160:9)
+LOOP END
+===========================================================================
+
+Begin optimization report for: std::vector<std::vector<int, std::allocator<int>>, std::allocator<std::vector<int, std::allocator<int>>>>::~vector(std::vector<std::vector<int, std::allocator<int>>, std::allocator<std::vector<int, std::allocator<int>>>> *)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_construct.h(102,4) inlined into /usr/include/c++/4.8.5/bits/stl_vector.h(416,9)
+   remark #15382: vectorization support: call to function operator delete(void *) cannot be vectorized   [ /usr/include/c++/4.8.5/ext/new_allocator.h(110,9) ]
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+   remark #15346: vector dependence: assumed ANTI dependence between __first->_M_start (160:9) and call:operator delete(void *) (110:9)
+   remark #15346: vector dependence: assumed FLOW dependence between call:operator delete(void *) (110:9) and __first->_M_start (160:9)
+LOOP END
+===========================================================================
+
+Begin optimization report for: StepJustForward<HaplotypePhaser>::~StepJustForward(StepJustForward<HaplotypePhaser> *)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at HaplotypePhaser.h(94,5)
+   remark #15382: vectorization support: call to function operator delete[](void *) cannot be vectorized   [ HaplotypePhaser.h(95,7) ]
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+   remark #15346: vector dependence: assumed ANTI dependence between *U9_V (94:18) and call:operator delete[](void *) (95:7)
+   remark #15346: vector dependence: assumed FLOW dependence between call:operator delete[](void *) (95:7) and *U9_V (94:18)
+LOOP END
+===========================================================================
+
+Begin optimization report for: HaplotypePhaser::LoadReferenceData(HaplotypePhaser *, const String &, String &)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at VcfUtils.cpp(100,2) inlined into HaplotypePhaser.cpp(67,2)
+   remark #15333: loop was not vectorized: exception handling for a call prevents vectorization   [ VcfUtils.cpp(101,24) ]
+LOOP END
+===========================================================================
+
+Begin optimization report for: VcfUtils::LoadReferenceMarkers(const String &)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at VcfUtils.cpp(32,2)
+   remark #15521: loop was not vectorized: loop control variable was not identified. Explicitly compute the iteration count before executing the loop or try using canonical loop form from OpenMP specification
+LOOP END
+===========================================================================
+
+Begin optimization report for: std::vector<int, std::allocator<int>>::_M_fill_insert(std::vector<int, std::allocator<int>> *, std::vector<int, std::allocator<int>>::iterator, std::vector<int, std::allocator<int>>::size_type, const std::vector<int, std::allocator<int>>::value_type &)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(692,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(462,5)
+<Peeled loop for vectorization>
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(692,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(462,5)
+   remark #15388: vectorization support: reference *__first has aligned access   [ /usr/include/c++/4.8.5/bits/stl_algobase.h(693,3) ]
+   remark #15305: vectorization support: vector length 4
+   remark #15309: vectorization support: normalized vectorization overhead 4.333
+   remark #15300: LOOP WAS VECTORIZED
+   remark #15442: entire loop may be executed in remainder
+   remark #15449: unmasked aligned unit stride stores: 1 
+   remark #15475: --- begin vector cost summary ---
+   remark #15476: scalar cost: 2 
+   remark #15477: vector cost: 0.750 
+   remark #15478: estimated potential speedup: 2.460 
+   remark #15488: --- end vector cost summary ---
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(692,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(462,5)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(467,5)
+<Peeled loop for vectorization>
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(467,5)
+   remark #15388: vectorization support: reference *__first has aligned access   [ /usr/include/c++/4.8.5/bits/stl_algobase.h(751,3) ]
+   remark #15305: vectorization support: vector length 4
+   remark #15309: vectorization support: normalized vectorization overhead 4.333
+   remark #15300: LOOP WAS VECTORIZED
+   remark #15442: entire loop may be executed in remainder
+   remark #15449: unmasked aligned unit stride stores: 1 
+   remark #15475: --- begin vector cost summary ---
+   remark #15476: scalar cost: 2 
+   remark #15477: vector cost: 0.750 
+   remark #15478: estimated potential speedup: 2.460 
+   remark #15488: --- end vector cost summary ---
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(467,5)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(692,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(476,5)
+<Peeled loop for vectorization>
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(692,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(476,5)
+   remark #15388: vectorization support: reference *__first has aligned access   [ /usr/include/c++/4.8.5/bits/stl_algobase.h(693,3) ]
+   remark #15305: vectorization support: vector length 4
+   remark #15309: vectorization support: normalized vectorization overhead 4.333
+   remark #15300: LOOP WAS VECTORIZED
+   remark #15442: entire loop may be executed in remainder
+   remark #15449: unmasked aligned unit stride stores: 1 
+   remark #15475: --- begin vector cost summary ---
+   remark #15476: scalar cost: 2 
+   remark #15477: vector cost: 0.750 
+   remark #15478: estimated potential speedup: 2.460 
+   remark #15488: --- end vector cost summary ---
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(692,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(476,5)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(489,5)
+<Peeled loop for vectorization>
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(489,5)
+   remark #15388: vectorization support: reference *__first has aligned access   [ /usr/include/c++/4.8.5/bits/stl_algobase.h(751,3) ]
+   remark #15305: vectorization support: vector length 4
+   remark #15309: vectorization support: normalized vectorization overhead 4.333
+   remark #15300: LOOP WAS VECTORIZED
+   remark #15442: entire loop may be executed in remainder
+   remark #15449: unmasked aligned unit stride stores: 1 
+   remark #15475: --- begin vector cost summary ---
+   remark #15476: scalar cost: 2 
+   remark #15477: vector cost: 0.750 
+   remark #15478: estimated potential speedup: 2.460 
+   remark #15488: --- end vector cost summary ---
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(489,5)
+<Remainder loop for vectorization>
+LOOP END
+===========================================================================
+
+Begin optimization report for: HaplotypePhaser::AllocateMemory(HaplotypePhaser *)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_uninitialized.h(74,23) inlined into HaplotypePhaser.cpp(36,9)
+<Multiversioned v1>
+   remark #15389: vectorization support: reference __cur->first has unaligned access   [ /usr/include/c++/4.8.5/bits/stl_construct.h(75,7) ]
+   remark #15389: vectorization support: reference __first._M_current->first has unaligned access   [ /usr/include/c++/4.8.5/bits/stl_construct.h(75,42) ]
+   remark #15389: vectorization support: reference __cur->first has unaligned access   [ /usr/include/c++/4.8.5/bits/stl_construct.h(75,7) ]
+   remark #15381: vectorization support: unaligned access used inside loop body
+   remark #15329: vectorization support: non-unit strided store was emulated for the variable <__cur->first>, stride is 2   [ /usr/include/c++/4.8.5/bits/stl_construct.h(75,7) ]
+   remark #15328: vectorization support: non-unit strided load was emulated for the variable <__cur->first>, stride is 2   [ /usr/include/c++/4.8.5/bits/stl_construct.h(75,7) ]
+   remark #15328: vectorization support: non-unit strided load was emulated for the variable <__first._M_current->first>, stride is 2   [ /usr/include/c++/4.8.5/bits/stl_construct.h(75,42) ]
+   remark #15329: vectorization support: non-unit strided store was emulated for the variable <__cur->second>, stride is 2   [ /usr/include/c++/4.8.5/bits/stl_construct.h(75,7) ]
+   remark #15328: vectorization support: non-unit strided load was emulated for the variable <__cur->second>, stride is 2   [ /usr/include/c++/4.8.5/bits/stl_construct.h(75,7) ]
+   remark #15328: vectorization support: non-unit strided load was emulated for the variable <__first._M_current->second>, stride is 2   [ /usr/include/c++/4.8.5/bits/stl_construct.h(75,42) ]
+   remark #15305: vectorization support: vector length 8
+   remark #15309: vectorization support: normalized vectorization overhead 0.140
+   remark #15300: LOOP WAS VECTORIZED
+   remark #15452: unmasked strided loads: 4 
+   remark #15453: unmasked strided stores: 2 
+   remark #15475: --- begin vector cost summary ---
+   remark #15476: scalar cost: 21 
+   remark #15477: vector cost: 11.620 
+   remark #15478: estimated potential speedup: 1.780 
+   remark #15488: --- end vector cost summary ---
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_uninitialized.h(74,23) inlined into HaplotypePhaser.cpp(36,9)
+<Remainder loop for vectorization, Multiversioned v1>
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_uninitialized.h(74,23) inlined into HaplotypePhaser.cpp(36,9)
+<Multiversioned v2>
+   remark #15304: loop was not vectorized: non-vectorizable loop instance from multiversioning
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_uninitialized.h(74,23) inlined into HaplotypePhaser.cpp(36,9)
+<Remainder, Multiversioned v2>
+LOOP END
+
+LOOP BEGIN at HaplotypePhaser.cpp(37,2)
+   remark #15523: loop was not vectorized: loop control variable i was found, but loop iteration count cannot be computed before executing the loop
+
+   LOOP BEGIN at HaplotypePhaser.cpp(38,3)
+      remark #15523: loop was not vectorized: loop control variable j was found, but loop iteration count cannot be computed before executing the loop
+   LOOP END
+LOOP END
+
+LOOP BEGIN at HaplotypePhaser.h(87,5) inlined into HaplotypePhaser.cpp(55,69)
+   remark #15523: loop was not vectorized: loop control variable U6_V was found, but loop iteration count cannot be computed before executing the loop
+LOOP END
+===========================================================================
+
+Begin optimization report for: std::vector<ChromosomePair, std::allocator<ChromosomePair>>::_M_emplace_back_aux<std::move_iterator<std::_Vector_base<ChromosomePair, std::allocator<ChromosomePair>>::pointer>::value_type>(std::vector<ChromosomePair, std::allocator<ChromosomePair>> *, std::move_iterator<std::_Vector_base<ChromosomePair, std::allocator<ChromosomePair>>::pointer>::value_type &&)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_uninitialized.h(74,23) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(414,10)
+<Multiversioned v1>
+   remark #15389: vectorization support: reference __cur->first has unaligned access   [ /usr/include/c++/4.8.5/bits/stl_construct.h(75,7) ]
+   remark #15389: vectorization support: reference __first._M_current->first has unaligned access   [ /usr/include/c++/4.8.5/bits/stl_construct.h(75,42) ]
+   remark #15389: vectorization support: reference __cur->first has unaligned access   [ /usr/include/c++/4.8.5/bits/stl_construct.h(75,7) ]
+   remark #15381: vectorization support: unaligned access used inside loop body
+   remark #15329: vectorization support: non-unit strided store was emulated for the variable <__cur->first>, stride is 2   [ /usr/include/c++/4.8.5/bits/stl_construct.h(75,7) ]
+   remark #15328: vectorization support: non-unit strided load was emulated for the variable <__cur->first>, stride is 2   [ /usr/include/c++/4.8.5/bits/stl_construct.h(75,7) ]
+   remark #15328: vectorization support: non-unit strided load was emulated for the variable <__first._M_current->first>, stride is 2   [ /usr/include/c++/4.8.5/bits/stl_construct.h(75,42) ]
+   remark #15329: vectorization support: non-unit strided store was emulated for the variable <__cur->second>, stride is 2   [ /usr/include/c++/4.8.5/bits/stl_construct.h(75,7) ]
+   remark #15328: vectorization support: non-unit strided load was emulated for the variable <__cur->second>, stride is 2   [ /usr/include/c++/4.8.5/bits/stl_construct.h(75,7) ]
+   remark #15328: vectorization support: non-unit strided load was emulated for the variable <__first._M_current->second>, stride is 2   [ /usr/include/c++/4.8.5/bits/stl_construct.h(75,42) ]
+   remark #15305: vectorization support: vector length 8
+   remark #15309: vectorization support: normalized vectorization overhead 0.181
+   remark #15300: LOOP WAS VECTORIZED
+   remark #15452: unmasked strided loads: 4 
+   remark #15453: unmasked strided stores: 2 
+   remark #15475: --- begin vector cost summary ---
+   remark #15476: scalar cost: 22 
+   remark #15477: vector cost: 11.750 
+   remark #15478: estimated potential speedup: 1.840 
+   remark #15488: --- end vector cost summary ---
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_uninitialized.h(74,23) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(414,10)
+<Remainder loop for vectorization, Multiversioned v1>
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_uninitialized.h(74,23) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(414,10)
+<Multiversioned v2>
+   remark #15304: loop was not vectorized: non-vectorizable loop instance from multiversioning
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_uninitialized.h(74,23) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(414,10)
+<Remainder, Multiversioned v2>
+LOOP END
+===========================================================================
+
+Begin optimization report for: StepMemoizer<HaplotypePhaser>::StepMemoizer(StepMemoizer<HaplotypePhaser> *, HaplotypePhaser *, int, int, bool, int, StepMemoizer<HaplotypePhaser>::gent)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at HaplotypePhaser.h(135,32)
+   remark #15523: loop was not vectorized: loop control variable U10_V.U10_V was found, but loop iteration count cannot be computed before executing the loop
+LOOP END
+
+LOOP BEGIN at HaplotypePhaser.h(141,32)
+   remark #15523: loop was not vectorized: loop control variable U13_V.U13_V was found, but loop iteration count cannot be computed before executing the loop
+LOOP END
+===========================================================================
+
+Begin optimization report for: VcfUtils::LoadHaplotypes(const String &, const Pedigree &, MatrixXc &)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at VcfUtils.cpp(224,4)
+   remark #15523: loop was not vectorized: loop control variable ind was found, but loop iteration count cannot be computed before executing the loop
+LOOP END
+
+
+Non-optimizable loops:
+
+
+LOOP BEGIN at VcfUtils.cpp(217,2)
+   remark #15333: loop was not vectorized: exception handling for a call prevents vectorization   [ /usr/include/c++/4.8.5/istream(608,15) ]
+LOOP END
+===========================================================================
+
+Begin optimization report for: VcfUtils::LoadGeneticMap(const char *, const Pedigree &, std::vector<double, std::allocator<double>> &)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at VcfUtils.cpp(499,2)
+   remark #15541: outer loop was not auto-vectorized: consider using SIMD directive
+
+   LOOP BEGIN at VcfUtils.cpp(501,3)
+      remark #15521: loop was not vectorized: loop control variable was not identified. Explicitly compute the iteration count before executing the loop or try using canonical loop form from OpenMP specification
+   LOOP END
+LOOP END
+===========================================================================
+
+Begin optimization report for: HaplotypePhaser::PrintGenotypesToVCF(HaplotypePhaser *, std::vector<std::vector<int, std::allocator<int>>, std::allocator<std::vector<int, std::allocator<int>>>> &, const char *, const char *, const char *, int, int)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at HaplotypePhaser.cpp(742,6)
+   remark #15523: loop was not vectorized: loop control variable sample was found, but loop iteration count cannot be computed before executing the loop
+LOOP END
+
+LOOP BEGIN at HaplotypePhaser.cpp(765,3)
+   remark #15333: loop was not vectorized: exception handling for a call prevents vectorization   [ HaplotypePhaser.cpp(780,56) ]
+LOOP END
+
+
+Non-optimizable loops:
+
+
+LOOP BEGIN at HaplotypePhaser.cpp(751,2)
+   remark #15333: loop was not vectorized: exception handling for a call prevents vectorization   [ HaplotypePhaser.cpp(753,28) ]
+LOOP END
+===========================================================================
+
+Begin optimization report for: HaplotypePhaser::~HaplotypePhaser(HaplotypePhaser *)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at HaplotypePhaser.h(94,5) inlined into HaplotypePhaser.cpp(12,1)
+   remark #15382: vectorization support: call to function operator delete[](void *) cannot be vectorized   [ HaplotypePhaser.h(95,7) ]
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+   remark #15346: vector dependence: assumed ANTI dependence between *U9_V (95:16) and call:operator delete[](void *) (95:7)
+   remark #15346: vector dependence: assumed FLOW dependence between call:operator delete[](void *) (95:7) and *U9_V (95:16)
+LOOP END
+===========================================================================
+
+Begin optimization report for: StepMemoizer<HaplotypePhaser>::~StepMemoizer(StepMemoizer<HaplotypePhaser> *)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at HaplotypePhaser.h(183,31)
+   remark #15382: vectorization support: call to function operator delete[](void *) cannot be vectorized   [ HaplotypePhaser.h(184,4) ]
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+LOOP END
+
+LOOP BEGIN at HaplotypePhaser.h(186,31)
+   remark #15382: vectorization support: call to function operator delete[](void *) cannot be vectorized   [ HaplotypePhaser.h(187,4) ]
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+LOOP END
+===========================================================================
+
+Begin optimization report for: HaplotypePhaser::CalcSingleScaledForward(HaplotypePhaser *, int, const double *, double *)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at HaplotypePhaser.cpp(295,2) inlined into HaplotypePhaser.cpp(334,29)
+   remark #15382: vectorization support: call to function std::vector<double, std::allocator<double>>::vector(std::vector<double, std::allocator<double>> *) cannot be vectorized
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+LOOP END
+
+LOOP BEGIN at HaplotypePhaser.cpp(288,3) inlined into HaplotypePhaser.cpp(334,29)
+   remark #15523: loop was not vectorized: loop control variable U24_V was found, but loop iteration count cannot be computed before executing the loop
+LOOP END
+
+LOOP BEGIN at HaplotypePhaser.cpp(288,3) inlined into HaplotypePhaser.cpp(337,9)
+   remark #15523: loop was not vectorized: loop control variable U24_V was found, but loop iteration count cannot be computed before executing the loop
+LOOP END
+
+LOOP BEGIN at HaplotypePhaser.cpp(278,8) inlined into HaplotypePhaser.cpp(330,109)
+   remark #15382: vectorization support: call to function operator delete(void *) cannot be vectorized   [ /usr/include/c++/4.8.5/ext/new_allocator.h(110,9) ]
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+LOOP END
+
+LOOP BEGIN at HaplotypePhaser.cpp(308,37) inlined into HaplotypePhaser.cpp(337,9)
+   remark #15542: loop was not vectorized: inner loop was already vectorized
+
+   LOOP BEGIN at HaplotypePhaser.cpp(305,1) inlined into HaplotypePhaser.cpp(337,9)
+   <Peeled loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at HaplotypePhaser.cpp(305,1) inlined into HaplotypePhaser.cpp(337,9)
+      remark #15389: vectorization support: reference states->first[j] has unaligned access   [ HaplotypePhaser.cpp(158,22) ]
+      remark #15388: vectorization support: reference table has aligned access   [ HaplotypePhaser.cpp(308,37) ]
+      remark #15381: vectorization support: unaligned access used inside loop body
+      remark #15328: vectorization support: non-unit strided load was emulated for the variable <states->first[j]>, stride is 2   [ HaplotypePhaser.cpp(158,22) ]
+      remark #15328: vectorization support: non-unit strided load was emulated for the variable <states->second[j]>, stride is 2   [ HaplotypePhaser.cpp(159,22) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <*(hs+hs)>, part of index is read from memory   [ HaplotypePhaser.cpp(158,7) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <*(hs+hs)>, part of index is read from memory   [ HaplotypePhaser.cpp(159,7) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <doEmissions>, 64-bit indexed, part of index is read from memory   [ HaplotypePhaser.cpp(161,25) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <doEmissions>, 64-bit indexed, part of index is read from memory   [ HaplotypePhaser.cpp(162,25) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <doEmissions>, 64-bit indexed, part of index is read from memory   [ HaplotypePhaser.cpp(163,25) ]
+      remark #15329: vectorization support: irregularly indexed store was emulated for the variable <U2b_V->hapSums[0][cp->first]>, part of index is read from memory   [ HaplotypePhaser.cpp(309,4) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <U2b_V->hapSums[0][cp->first]>, part of index is read from memory   [ HaplotypePhaser.cpp(309,4) ]
+      remark #15329: vectorization support: irregularly indexed store was emulated for the variable <U2b_V->hapSums[1][cp->second]>, part of index is read from memory   [ HaplotypePhaser.cpp(310,4) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <U2b_V->hapSums[1][cp->second]>, part of index is read from memory   [ HaplotypePhaser.cpp(310,4) ]
+      remark #15305: vectorization support: vector length 2
+      remark #15309: vectorization support: normalized vectorization overhead 0.176
+      remark #15301: OpenMP SIMD LOOP WAS VECTORIZED
+      remark #15442: entire loop may be executed in remainder
+      remark #15448: unmasked aligned unit stride loads: 1 
+      remark #15452: unmasked strided loads: 2 
+      remark #15462: unmasked indexed (or gather) loads: 7 
+      remark #15463: unmasked indexed (or scatter) stores: 2 
+      remark #15475: --- begin vector cost summary ---
+      remark #15476: scalar cost: 49 
+      remark #15477: vector cost: 62.500 
+      remark #15478: estimated potential speedup: 0.780 
+      remark #15487: type converts: 3 
+      remark #15488: --- end vector cost summary ---
+   LOOP END
+
+   LOOP BEGIN at HaplotypePhaser.cpp(305,1) inlined into HaplotypePhaser.cpp(337,9)
+   <Remainder loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at HaplotypePhaser.cpp(305,1) inlined into HaplotypePhaser.cpp(337,9)
+   <Peeled loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at HaplotypePhaser.cpp(305,1) inlined into HaplotypePhaser.cpp(337,9)
+      remark #15388: vectorization support: reference table has aligned access   [ HaplotypePhaser.cpp(308,69) ]
+      remark #15389: vectorization support: reference states->first[j] has unaligned access   [ HaplotypePhaser.cpp(309,15) ]
+      remark #15381: vectorization support: unaligned access used inside loop body
+      remark #15328: vectorization support: non-unit strided load was emulated for the variable <states->first[j]>, stride is 2   [ HaplotypePhaser.cpp(309,15) ]
+      remark #15328: vectorization support: non-unit strided load was emulated for the variable <states->second[j]>, stride is 2   [ HaplotypePhaser.cpp(310,15) ]
+      remark #15329: vectorization support: irregularly indexed store was emulated for the variable <U2b_V->hapSums[0][cp->first]>, part of index is read from memory   [ HaplotypePhaser.cpp(309,4) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <U2b_V->hapSums[0][cp->first]>, part of index is read from memory   [ HaplotypePhaser.cpp(309,4) ]
+      remark #15329: vectorization support: irregularly indexed store was emulated for the variable <U2b_V->hapSums[1][cp->second]>, part of index is read from memory   [ HaplotypePhaser.cpp(310,4) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <U2b_V->hapSums[1][cp->second]>, part of index is read from memory   [ HaplotypePhaser.cpp(310,4) ]
+      remark #15305: vectorization support: vector length 2
+      remark #15309: vectorization support: normalized vectorization overhead 0.279
+      remark #15301: OpenMP SIMD LOOP WAS VECTORIZED
+      remark #15442: entire loop may be executed in remainder
+      remark #15448: unmasked aligned unit stride loads: 1 
+      remark #15452: unmasked strided loads: 2 
+      remark #15462: unmasked indexed (or gather) loads: 2 
+      remark #15463: unmasked indexed (or scatter) stores: 2 
+      remark #15475: --- begin vector cost summary ---
+      remark #15476: scalar cost: 22 
+      remark #15477: vector cost: 21.500 
+      remark #15478: estimated potential speedup: 1.020 
+      remark #15488: --- end vector cost summary ---
+   LOOP END
+
+   LOOP BEGIN at HaplotypePhaser.cpp(305,1) inlined into HaplotypePhaser.cpp(337,9)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at HaplotypePhaser.cpp(357,2)
+   remark #15522: loop was not vectorized: loop control flow is too complex. Try using canonical loop form from OpenMP specification
+   remark #15442: entire loop may be executed in remainder
+   remark #15449: unmasked aligned unit stride stores: 1 
+   remark #15450: unmasked unaligned unit stride loads: 1 
+   remark #15462: unmasked indexed (or gather) loads: 7 
+   remark #15475: --- begin vector cost summary ---
+   remark #15476: scalar cost: 112 
+   remark #15477: vector cost: 68.370 
+   remark #15478: estimated potential speedup: 1.610 
+   remark #15482: vectorized math library calls: 1 
+   remark #15488: --- end vector cost summary ---
+
+   LOOP BEGIN at HaplotypePhaser.cpp(356,1)
+   <Peeled loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at HaplotypePhaser.cpp(356,1)
+      remark #15389: vectorization support: reference prev[s] has unaligned access   [ HaplotypePhaser.cpp(315,75) ]
+      remark #15388: vectorization support: reference now[s] has aligned access   [ HaplotypePhaser.cpp(371,4) ]
+      remark #15381: vectorization support: unaligned access used inside loop body
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <hapSum->hapSums[1][b]>, part of index is private   [ HaplotypePhaser.cpp(316,51) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <hapSum->hapSums[0][a]>, part of index is private   [ HaplotypePhaser.cpp(316,28) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <emission_probs->haplotypes_raw[b]>, part of index is private   [ HaplotypePhaser.cpp(159,7) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <emission_probs->haplotypes_raw[a]>, part of index is private   [ HaplotypePhaser.cpp(158,7) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <emission_probs->glfactors[hs][0]>, 64-bit indexed, part of index is read from memory   [ HaplotypePhaser.cpp(161,25) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <emission_probs->glfactors[hs][1]>, 64-bit indexed, part of index is read from memory   [ HaplotypePhaser.cpp(162,25) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <emission_probs->glfactors[hs][2]>, 64-bit indexed, part of index is read from memory   [ HaplotypePhaser.cpp(163,25) ]
+      remark #15305: vectorization support: vector length 8
+      remark #15309: vectorization support: normalized vectorization overhead 0.176
+      remark #15300: LOOP WAS VECTORIZED
+      remark #15442: entire loop may be executed in remainder
+      remark #15449: unmasked aligned unit stride stores: 1 
+      remark #15450: unmasked unaligned unit stride loads: 1 
+      remark #15462: unmasked indexed (or gather) loads: 7 
+      remark #15475: --- begin vector cost summary ---
+      remark #15476: scalar cost: 112 
+      remark #15477: vector cost: 68.370 
+      remark #15478: estimated potential speedup: 1.610 
+      remark #15482: vectorized math library calls: 1 
+      remark #15488: --- end vector cost summary ---
+   LOOP END
+
+   LOOP BEGIN at HaplotypePhaser.cpp(356,1)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at HaplotypePhaser.cpp(377,1)
+   remark #15542: loop was not vectorized: inner loop was already vectorized
+
+   LOOP BEGIN at HaplotypePhaser.cpp(377,1)
+   <Peeled loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at HaplotypePhaser.cpp(377,1)
+      remark #15388: vectorization support: reference now[s] has aligned access   [ HaplotypePhaser.cpp(379,3) ]
+      remark #15388: vectorization support: reference now[s] has aligned access   [ HaplotypePhaser.cpp(379,12) ]
+      remark #15305: vectorization support: vector length 4
+      remark #15399: vectorization support: unroll factor set to 4
+      remark #15309: vectorization support: normalized vectorization overhead 0.650
+      remark #15301: OpenMP SIMD LOOP WAS VECTORIZED
+      remark #15442: entire loop may be executed in remainder
+      remark #15448: unmasked aligned unit stride loads: 1 
+      remark #15449: unmasked aligned unit stride stores: 1 
+      remark #15475: --- begin vector cost summary ---
+      remark #15476: scalar cost: 8 
+      remark #15477: vector cost: 1.250 
+      remark #15478: estimated potential speedup: 5.110 
+      remark #15488: --- end vector cost summary ---
+   LOOP END
+
+   LOOP BEGIN at HaplotypePhaser.cpp(377,1)
+   <Remainder loop for vectorization>
+      remark #15388: vectorization support: reference now[s] has aligned access   [ HaplotypePhaser.cpp(379,3) ]
+      remark #15388: vectorization support: reference now[s] has aligned access   [ HaplotypePhaser.cpp(379,12) ]
+      remark #15335: remainder loop was not vectorized: vectorization possible but seems inefficient. Use vector always directive or -vec-threshold0 to override 
+      remark #15305: vectorization support: vector length 2
+      remark #15309: vectorization support: normalized vectorization overhead 2.400
+   LOOP END
+LOOP END
+
+LOOP BEGIN at HaplotypePhaser.cpp(295,2) inlined into HaplotypePhaser.cpp(334,29)
+   remark #15382: vectorization support: call to function std::vector<double, std::allocator<double>>::~vector(std::vector<double, std::allocator<double>> *) cannot be vectorized
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+LOOP END
+===========================================================================
+
+Begin optimization report for: HapSummer::~HapSummer(HapSummer *)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at HaplotypePhaser.cpp(278,8)
+   remark #15382: vectorization support: call to function operator delete(void *) cannot be vectorized   [ /usr/include/c++/4.8.5/ext/new_allocator.h(110,9) ]
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+LOOP END
+===========================================================================
+
+Begin optimization report for: HaplotypePhaser::CalcSingleScaledBackward(HaplotypePhaser *, int, const double *, double *)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at HaplotypePhaser.cpp(295,2) inlined into HaplotypePhaser.cpp(394,29)
+   remark #15382: vectorization support: call to function std::vector<double, std::allocator<double>>::vector(std::vector<double, std::allocator<double>> *) cannot be vectorized
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+LOOP END
+
+LOOP BEGIN at HaplotypePhaser.cpp(288,3) inlined into HaplotypePhaser.cpp(394,29)
+   remark #15523: loop was not vectorized: loop control variable U24_V was found, but loop iteration count cannot be computed before executing the loop
+LOOP END
+
+LOOP BEGIN at HaplotypePhaser.cpp(288,3) inlined into HaplotypePhaser.cpp(397,9)
+   remark #15523: loop was not vectorized: loop control variable U24_V was found, but loop iteration count cannot be computed before executing the loop
+LOOP END
+
+LOOP BEGIN at HaplotypePhaser.cpp(278,8) inlined into HaplotypePhaser.cpp(389,110)
+   remark #15382: vectorization support: call to function operator delete(void *) cannot be vectorized   [ /usr/include/c++/4.8.5/ext/new_allocator.h(110,9) ]
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+LOOP END
+
+LOOP BEGIN at HaplotypePhaser.cpp(308,37) inlined into HaplotypePhaser.cpp(397,9)
+   remark #15542: loop was not vectorized: inner loop was already vectorized
+
+   LOOP BEGIN at HaplotypePhaser.cpp(305,1) inlined into HaplotypePhaser.cpp(397,9)
+   <Peeled loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at HaplotypePhaser.cpp(305,1) inlined into HaplotypePhaser.cpp(397,9)
+      remark #15389: vectorization support: reference states->first[j] has unaligned access   [ HaplotypePhaser.cpp(158,22) ]
+      remark #15388: vectorization support: reference table has aligned access   [ HaplotypePhaser.cpp(308,37) ]
+      remark #15381: vectorization support: unaligned access used inside loop body
+      remark #15328: vectorization support: non-unit strided load was emulated for the variable <states->first[j]>, stride is 2   [ HaplotypePhaser.cpp(158,22) ]
+      remark #15328: vectorization support: non-unit strided load was emulated for the variable <states->second[j]>, stride is 2   [ HaplotypePhaser.cpp(159,22) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <*(hs+hs)>, part of index is read from memory   [ HaplotypePhaser.cpp(158,7) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <*(hs+hs)>, part of index is read from memory   [ HaplotypePhaser.cpp(159,7) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <doEmissions>, 64-bit indexed, part of index is read from memory   [ HaplotypePhaser.cpp(161,25) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <doEmissions>, 64-bit indexed, part of index is read from memory   [ HaplotypePhaser.cpp(162,25) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <doEmissions>, 64-bit indexed, part of index is read from memory   [ HaplotypePhaser.cpp(163,25) ]
+      remark #15329: vectorization support: irregularly indexed store was emulated for the variable <U2b_V->hapSums[0][cp->first]>, part of index is read from memory   [ HaplotypePhaser.cpp(309,4) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <U2b_V->hapSums[0][cp->first]>, part of index is read from memory   [ HaplotypePhaser.cpp(309,4) ]
+      remark #15329: vectorization support: irregularly indexed store was emulated for the variable <U2b_V->hapSums[1][cp->second]>, part of index is read from memory   [ HaplotypePhaser.cpp(310,4) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <U2b_V->hapSums[1][cp->second]>, part of index is read from memory   [ HaplotypePhaser.cpp(310,4) ]
+      remark #15305: vectorization support: vector length 2
+      remark #15309: vectorization support: normalized vectorization overhead 0.176
+      remark #15301: OpenMP SIMD LOOP WAS VECTORIZED
+      remark #15442: entire loop may be executed in remainder
+      remark #15448: unmasked aligned unit stride loads: 1 
+      remark #15452: unmasked strided loads: 2 
+      remark #15462: unmasked indexed (or gather) loads: 7 
+      remark #15463: unmasked indexed (or scatter) stores: 2 
+      remark #15475: --- begin vector cost summary ---
+      remark #15476: scalar cost: 49 
+      remark #15477: vector cost: 62.500 
+      remark #15478: estimated potential speedup: 0.780 
+      remark #15487: type converts: 3 
+      remark #15488: --- end vector cost summary ---
+   LOOP END
+
+   LOOP BEGIN at HaplotypePhaser.cpp(305,1) inlined into HaplotypePhaser.cpp(397,9)
+   <Remainder loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at HaplotypePhaser.cpp(305,1) inlined into HaplotypePhaser.cpp(397,9)
+   <Peeled loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at HaplotypePhaser.cpp(305,1) inlined into HaplotypePhaser.cpp(397,9)
+      remark #15388: vectorization support: reference table has aligned access   [ HaplotypePhaser.cpp(308,69) ]
+      remark #15389: vectorization support: reference states->first[j] has unaligned access   [ HaplotypePhaser.cpp(309,15) ]
+      remark #15381: vectorization support: unaligned access used inside loop body
+      remark #15328: vectorization support: non-unit strided load was emulated for the variable <states->first[j]>, stride is 2   [ HaplotypePhaser.cpp(309,15) ]
+      remark #15328: vectorization support: non-unit strided load was emulated for the variable <states->second[j]>, stride is 2   [ HaplotypePhaser.cpp(310,15) ]
+      remark #15329: vectorization support: irregularly indexed store was emulated for the variable <U2b_V->hapSums[0][cp->first]>, part of index is read from memory   [ HaplotypePhaser.cpp(309,4) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <U2b_V->hapSums[0][cp->first]>, part of index is read from memory   [ HaplotypePhaser.cpp(309,4) ]
+      remark #15329: vectorization support: irregularly indexed store was emulated for the variable <U2b_V->hapSums[1][cp->second]>, part of index is read from memory   [ HaplotypePhaser.cpp(310,4) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <U2b_V->hapSums[1][cp->second]>, part of index is read from memory   [ HaplotypePhaser.cpp(310,4) ]
+      remark #15305: vectorization support: vector length 2
+      remark #15309: vectorization support: normalized vectorization overhead 0.279
+      remark #15301: OpenMP SIMD LOOP WAS VECTORIZED
+      remark #15442: entire loop may be executed in remainder
+      remark #15448: unmasked aligned unit stride loads: 1 
+      remark #15452: unmasked strided loads: 2 
+      remark #15462: unmasked indexed (or gather) loads: 2 
+      remark #15463: unmasked indexed (or scatter) stores: 2 
+      remark #15475: --- begin vector cost summary ---
+      remark #15476: scalar cost: 22 
+      remark #15477: vector cost: 21.500 
+      remark #15478: estimated potential speedup: 1.020 
+      remark #15488: --- end vector cost summary ---
+   LOOP END
+
+   LOOP BEGIN at HaplotypePhaser.cpp(305,1) inlined into HaplotypePhaser.cpp(397,9)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at HaplotypePhaser.cpp(412,2)
+   remark #15522: loop was not vectorized: loop control flow is too complex. Try using canonical loop form from OpenMP specification
+   remark #15442: entire loop may be executed in remainder
+   remark #15449: unmasked aligned unit stride stores: 1 
+   remark #15450: unmasked unaligned unit stride loads: 1 
+   remark #15462: unmasked indexed (or gather) loads: 7 
+   remark #15475: --- begin vector cost summary ---
+   remark #15476: scalar cost: 113 
+   remark #15477: vector cost: 68.370 
+   remark #15478: estimated potential speedup: 1.630 
+   remark #15482: vectorized math library calls: 1 
+   remark #15488: --- end vector cost summary ---
+
+   LOOP BEGIN at HaplotypePhaser.cpp(411,1)
+   <Peeled loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at HaplotypePhaser.cpp(411,1)
+      remark #15389: vectorization support: reference prev[s] has unaligned access   [ HaplotypePhaser.cpp(315,43) ]
+      remark #15388: vectorization support: reference now[s] has aligned access   [ HaplotypePhaser.cpp(427,3) ]
+      remark #15381: vectorization support: unaligned access used inside loop body
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <emission_probs>, part of index is private   [ HaplotypePhaser.cpp(159,7) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <emission_probs>, part of index is private   [ HaplotypePhaser.cpp(158,7) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <emission_probs->glfactors[hs][0]>, 64-bit indexed, part of index is read from memory   [ HaplotypePhaser.cpp(161,25) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <emission_probs->glfactors[hs][1]>, 64-bit indexed, part of index is read from memory   [ HaplotypePhaser.cpp(162,25) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <emission_probs->glfactors[hs][2]>, 64-bit indexed, part of index is read from memory   [ HaplotypePhaser.cpp(163,25) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <hapSum->hapSums[1][b]>, part of index is private   [ HaplotypePhaser.cpp(316,51) ]
+      remark #15328: vectorization support: irregularly indexed load was emulated for the variable <hapSum->hapSums[0][a]>, part of index is private   [ HaplotypePhaser.cpp(316,28) ]
+      remark #15305: vectorization support: vector length 8
+      remark #15309: vectorization support: normalized vectorization overhead 0.176
+      remark #15300: LOOP WAS VECTORIZED
+      remark #15442: entire loop may be executed in remainder
+      remark #15449: unmasked aligned unit stride stores: 1 
+      remark #15450: unmasked unaligned unit stride loads: 1 
+      remark #15462: unmasked indexed (or gather) loads: 7 
+      remark #15475: --- begin vector cost summary ---
+      remark #15476: scalar cost: 113 
+      remark #15477: vector cost: 68.370 
+      remark #15478: estimated potential speedup: 1.630 
+      remark #15482: vectorized math library calls: 1 
+      remark #15488: --- end vector cost summary ---
+   LOOP END
+
+   LOOP BEGIN at HaplotypePhaser.cpp(411,1)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at HaplotypePhaser.cpp(433,1)
+   remark #15542: loop was not vectorized: inner loop was already vectorized
+
+   LOOP BEGIN at HaplotypePhaser.cpp(433,1)
+   <Peeled loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at HaplotypePhaser.cpp(433,1)
+      remark #15388: vectorization support: reference now[s] has aligned access   [ HaplotypePhaser.cpp(435,3) ]
+      remark #15388: vectorization support: reference now[s] has aligned access   [ HaplotypePhaser.cpp(435,12) ]
+      remark #15305: vectorization support: vector length 4
+      remark #15399: vectorization support: unroll factor set to 4
+      remark #15309: vectorization support: normalized vectorization overhead 0.650
+      remark #15301: OpenMP SIMD LOOP WAS VECTORIZED
+      remark #15442: entire loop may be executed in remainder
+      remark #15448: unmasked aligned unit stride loads: 1 
+      remark #15449: unmasked aligned unit stride stores: 1 
+      remark #15475: --- begin vector cost summary ---
+      remark #15476: scalar cost: 8 
+      remark #15477: vector cost: 1.250 
+      remark #15478: estimated potential speedup: 5.110 
+      remark #15488: --- end vector cost summary ---
+   LOOP END
+
+   LOOP BEGIN at HaplotypePhaser.cpp(433,1)
+   <Remainder loop for vectorization>
+      remark #15388: vectorization support: reference now[s] has aligned access   [ HaplotypePhaser.cpp(435,3) ]
+      remark #15388: vectorization support: reference now[s] has aligned access   [ HaplotypePhaser.cpp(435,12) ]
+      remark #15335: remainder loop was not vectorized: vectorization possible but seems inefficient. Use vector always directive or -vec-threshold0 to override 
+      remark #15305: vectorization support: vector length 2
+      remark #15309: vectorization support: normalized vectorization overhead 2.400
+   LOOP END
+LOOP END
+
+LOOP BEGIN at HaplotypePhaser.cpp(295,2) inlined into HaplotypePhaser.cpp(394,29)
+   remark #15382: vectorization support: call to function std::vector<double, std::allocator<double>>::~vector(std::vector<double, std::allocator<double>> *) cannot be vectorized
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+LOOP END
+===========================================================================
+
+Begin optimization report for: std::vector<double, std::allocator<double>>::_M_fill_assign(std::vector<double, std::allocator<double>> *, std::vector<double, std::allocator<double>>::size_type, const std::vector<double, std::allocator<double>>::value_type &)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(692,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(229,4)
+<Peeled loop for vectorization>
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(692,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(229,4)
+   remark #15388: vectorization support: reference *__first has aligned access   [ /usr/include/c++/4.8.5/bits/stl_algobase.h(693,3) ]
+   remark #15305: vectorization support: vector length 4
+   remark #15399: vectorization support: unroll factor set to 4
+   remark #15309: vectorization support: normalized vectorization overhead 1.083
+   remark #15300: LOOP WAS VECTORIZED
+   remark #15442: entire loop may be executed in remainder
+   remark #15449: unmasked aligned unit stride stores: 1 
+   remark #15475: --- begin vector cost summary ---
+   remark #15476: scalar cost: 3 
+   remark #15477: vector cost: 0.750 
+   remark #15478: estimated potential speedup: 3.390 
+   remark #15488: --- end vector cost summary ---
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(692,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(229,4)
+<Remainder loop for vectorization>
+   remark #15388: vectorization support: reference *__first has aligned access   [ /usr/include/c++/4.8.5/bits/stl_algobase.h(693,3) ]
+   remark #15305: vectorization support: vector length 4
+   remark #15309: vectorization support: normalized vectorization overhead 4.333
+   remark #15301: REMAINDER LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(692,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(229,4)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(230,4)
+<Peeled loop for vectorization>
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(230,4)
+   remark #15388: vectorization support: reference *__first has aligned access   [ /usr/include/c++/4.8.5/bits/stl_algobase.h(751,3) ]
+   remark #15305: vectorization support: vector length 4
+   remark #15399: vectorization support: unroll factor set to 4
+   remark #15309: vectorization support: normalized vectorization overhead 1.083
+   remark #15300: LOOP WAS VECTORIZED
+   remark #15442: entire loop may be executed in remainder
+   remark #15449: unmasked aligned unit stride stores: 1 
+   remark #15475: --- begin vector cost summary ---
+   remark #15476: scalar cost: 3 
+   remark #15477: vector cost: 0.750 
+   remark #15478: estimated potential speedup: 3.390 
+   remark #15488: --- end vector cost summary ---
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(230,4)
+<Remainder loop for vectorization>
+   remark #15388: vectorization support: reference *__first has aligned access   [ /usr/include/c++/4.8.5/bits/stl_algobase.h(751,3) ]
+   remark #15305: vectorization support: vector length 4
+   remark #15309: vectorization support: normalized vectorization overhead 4.333
+   remark #15301: REMAINDER LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(230,4)
+<Remainder loop for vectorization>
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(236,25)
+<Peeled loop for vectorization>
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(236,25)
+   remark #15388: vectorization support: reference *__first has aligned access   [ /usr/include/c++/4.8.5/bits/stl_algobase.h(751,3) ]
+   remark #15305: vectorization support: vector length 8
+   remark #15399: vectorization support: unroll factor set to 2
+   remark #15309: vectorization support: normalized vectorization overhead 1.357
+   remark #15300: LOOP WAS VECTORIZED
+   remark #15442: entire loop may be executed in remainder
+   remark #15449: unmasked aligned unit stride stores: 1 
+   remark #15475: --- begin vector cost summary ---
+   remark #15476: scalar cost: 4 
+   remark #15477: vector cost: 0.870 
+   remark #15478: estimated potential speedup: 3.760 
+   remark #15488: --- end vector cost summary ---
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(236,25)
+<Remainder loop for vectorization>
+   remark #15388: vectorization support: reference *__first has aligned access   [ /usr/include/c++/4.8.5/bits/stl_algobase.h(751,3) ]
+   remark #15305: vectorization support: vector length 4
+   remark #15309: vectorization support: normalized vectorization overhead 4.000
+   remark #15301: REMAINDER LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(236,25)
+<Remainder loop for vectorization>
+LOOP END
+===========================================================================
+
+Begin optimization report for: std::vector<double, std::allocator<double>>::vector(std::vector<double, std::allocator<double>> *, std::vector<double, std::allocator<double>>::size_type, const std::vector<double, std::allocator<double>>::value_type &, const std::vector<double, std::allocator<double>>::allocator_type &)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/stl_vector.h(285,9)
+<Peeled loop for vectorization>
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/stl_vector.h(285,9)
+   remark #15388: vectorization support: reference *__first has aligned access   [ /usr/include/c++/4.8.5/bits/stl_algobase.h(751,3) ]
+   remark #15305: vectorization support: vector length 4
+   remark #15399: vectorization support: unroll factor set to 4
+   remark #15309: vectorization support: normalized vectorization overhead 1.083
+   remark #15300: LOOP WAS VECTORIZED
+   remark #15442: entire loop may be executed in remainder
+   remark #15449: unmasked aligned unit stride stores: 1 
+   remark #15475: --- begin vector cost summary ---
+   remark #15476: scalar cost: 3 
+   remark #15477: vector cost: 0.750 
+   remark #15478: estimated potential speedup: 3.390 
+   remark #15488: --- end vector cost summary ---
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/stl_vector.h(285,9)
+<Remainder loop for vectorization>
+   remark #15388: vectorization support: reference *__first has aligned access   [ /usr/include/c++/4.8.5/bits/stl_algobase.h(751,3) ]
+   remark #15305: vectorization support: vector length 4
+   remark #15309: vectorization support: normalized vectorization overhead 4.333
+   remark #15301: REMAINDER LOOP WAS VECTORIZED
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/stl_vector.h(285,9)
+<Remainder loop for vectorization>
+LOOP END
+===========================================================================
+
+Begin optimization report for: std::_Destroy<std::_Vector_base<std::vector<double, std::allocator<double>>, std::allocator<std::vector<double, std::allocator<double>>>>::pointer>(std::_Vector_base<std::vector<double, std::allocator<double>>, std::allocator<std::vector<double, std::allocator<double>>>>::pointer, std::_Vector_base<std::vector<double, std::allocator<double>>, std::allocator<std::vector<double, std::allocator<double>>>>::pointer)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_construct.h(102,4) inlined into /usr/include/c++/4.8.5/bits/stl_construct.h(127,7)
+   remark #15382: vectorization support: call to function operator delete(void *) cannot be vectorized   [ /usr/include/c++/4.8.5/ext/new_allocator.h(110,9) ]
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+   remark #15346: vector dependence: assumed ANTI dependence between __first->_M_start (160:9) and call:operator delete(void *) (110:9)
+   remark #15346: vector dependence: assumed FLOW dependence between call:operator delete(void *) (110:9) and __first->_M_start (160:9)
+LOOP END
+===========================================================================
+
+Begin optimization report for: HaplotypePhaser::CalcEmissionProbs(HaplotypePhaser *, int, double *)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at HaplotypePhaser.cpp(221,11)
+   remark #15541: outer loop was not auto-vectorized: consider using SIMD directive
+
+   LOOP BEGIN at HaplotypePhaser.cpp(190,1)
+      remark #15316: simd loop was not vectorized: scalar assignment in simd loop is prohibited, consider private, lastprivate or reduction clauses   [ HaplotypePhaser.cpp(205,4) ]
+      remark #15552: loop was not vectorized with "simd"
+   LOOP END
+LOOP END
+===========================================================================
+
+Begin optimization report for: std::_Destroy<std::_Vector_base<std::vector<int, std::allocator<int>>, std::allocator<std::vector<int, std::allocator<int>>>>::pointer>(std::_Vector_base<std::vector<int, std::allocator<int>>, std::allocator<std::vector<int, std::allocator<int>>>>::pointer, std::_Vector_base<std::vector<int, std::allocator<int>>, std::allocator<std::vector<int, std::allocator<int>>>>::pointer)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_construct.h(102,4) inlined into /usr/include/c++/4.8.5/bits/stl_construct.h(127,7)
+   remark #15382: vectorization support: call to function operator delete(void *) cannot be vectorized   [ /usr/include/c++/4.8.5/ext/new_allocator.h(110,9) ]
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+   remark #15346: vector dependence: assumed ANTI dependence between __first->_M_start (160:9) and call:operator delete(void *) (110:9)
+   remark #15346: vector dependence: assumed FLOW dependence between call:operator delete(void *) (110:9) and __first->_M_start (160:9)
+LOOP END
+===========================================================================
+
+Begin optimization report for: VcfUtils::get_GL(std::vector<double, std::allocator<double>> *, VcfHeader &, VcfRecord &, int)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at VcfUtils.cpp(427,2) inlined into VcfUtils.cpp(445,19)
+   remark #15333: loop was not vectorized: exception handling for a call prevents vectorization   [ VcfUtils.cpp(428,17) ]
+LOOP END
+===========================================================================
+
+Begin optimization report for: HaplotypePhaser::InitPriorScaledBackward(HaplotypePhaser *)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at HaplotypePhaser.cpp(272,2)
+   remark #15523: loop was not vectorized: loop control variable s was found, but loop iteration count cannot be computed before executing the loop
+
+   LOOP BEGIN at HaplotypePhaser.h(160,33) inlined into HaplotypePhaser.cpp(273,13)
+      remark #15523: loop was not vectorized: loop control variable j was found, but loop iteration count cannot be computed before executing the loop
+   LOOP END
+LOOP END
+===========================================================================
+
+Begin optimization report for: HaplotypePhaser::InitPriorScaledForward(HaplotypePhaser *)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at HaplotypePhaser.cpp(258,2)
+   remark #15389: vectorization support: reference emission_probs[s] has unaligned access   [ HaplotypePhaser.cpp(259,9) ]
+   remark #15381: vectorization support: unaligned access used inside loop body
+   remark #15305: vectorization support: vector length 2
+   remark #15309: vectorization support: normalized vectorization overhead 3.143
+   remark #15315: loop was not vectorized: estimated number of iterations (2) is insufficient for vectorization
+   remark #15450: unmasked unaligned unit stride loads: 1 
+   remark #15475: --- begin vector cost summary ---
+   remark #15476: scalar cost: 6 
+   remark #15477: vector cost: 3.500 
+   remark #15478: estimated potential speedup: 0.410 
+   remark #15488: --- end vector cost summary ---
+LOOP END
+
+LOOP BEGIN at HaplotypePhaser.cpp(258,2)
+<Remainder>
+LOOP END
+
+LOOP BEGIN at HaplotypePhaser.cpp(264,2)
+   remark #15523: loop was not vectorized: loop control variable s was found, but loop iteration count cannot be computed before executing the loop
+LOOP END
+===========================================================================
+
+Begin optimization report for: std::vector<double *, std::allocator<double *>>::_M_default_append(std::vector<double *, std::allocator<double *>> *, std::vector<double *, std::allocator<double *>>::size_type)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(541,8)
+   remark #15398: loop was not vectorized: loop was transformed to memset or memcpy
+
+   LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(541,8)
+      remark #15389: vectorization support: reference *__first has unaligned access   [ /usr/include/c++/4.8.5/bits/stl_algobase.h(751,3) ]
+      remark #15381: vectorization support: unaligned access used inside loop body
+      remark #15335: loop was not vectorized: vectorization possible but seems inefficient. Use vector always directive or -vec-threshold0 to override 
+      remark #15305: vectorization support: vector length 2
+      remark #15309: vectorization support: normalized vectorization overhead 0.500
+      remark #15451: unmasked unaligned unit stride stores: 1 
+      remark #15475: --- begin vector cost summary ---
+      remark #15476: scalar cost: 2 
+      remark #15477: vector cost: 3.000 
+      remark #15478: estimated potential speedup: 0.610 
+      remark #15488: --- end vector cost summary ---
+   LOOP END
+
+   LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(541,8)
+   <Remainder>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(558,5)
+   remark #15398: loop was not vectorized: loop was transformed to memset or memcpy
+
+   LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(558,5)
+      remark #15389: vectorization support: reference *__first has unaligned access   [ /usr/include/c++/4.8.5/bits/stl_algobase.h(751,3) ]
+      remark #15381: vectorization support: unaligned access used inside loop body
+      remark #15335: loop was not vectorized: vectorization possible but seems inefficient. Use vector always directive or -vec-threshold0 to override 
+      remark #15305: vectorization support: vector length 2
+      remark #15309: vectorization support: normalized vectorization overhead 0.500
+      remark #15451: unmasked unaligned unit stride stores: 1 
+      remark #15475: --- begin vector cost summary ---
+      remark #15476: scalar cost: 2 
+      remark #15477: vector cost: 3.000 
+      remark #15478: estimated potential speedup: 0.610 
+      remark #15488: --- end vector cost summary ---
+   LOOP END
+
+   LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(558,5)
+   <Remainder>
+   LOOP END
+LOOP END
+===========================================================================
+
+Begin optimization report for: std::vector<double, std::allocator<double>>::_M_default_append(std::vector<double, std::allocator<double>> *, std::vector<double, std::allocator<double>>::size_type)
+
+    Report from: Vector optimizations [vec]
+
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(541,8)
+   remark #15542: loop was not vectorized: inner loop was already vectorized
+
+   LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(541,8)
+   <Peeled loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(541,8)
+      remark #15388: vectorization support: reference *__first has aligned access   [ /usr/include/c++/4.8.5/bits/stl_algobase.h(751,3) ]
+      remark #15305: vectorization support: vector length 4
+      remark #15399: vectorization support: unroll factor set to 2
+      remark #15309: vectorization support: normalized vectorization overhead 1.667
+      remark #15300: LOOP WAS VECTORIZED
+      remark #15442: entire loop may be executed in remainder
+      remark #15449: unmasked aligned unit stride stores: 1 
+      remark #15475: --- begin vector cost summary ---
+      remark #15476: scalar cost: 3 
+      remark #15477: vector cost: 0.750 
+      remark #15478: estimated potential speedup: 1.280 
+      remark #15488: --- end vector cost summary ---
+   LOOP END
+
+   LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(541,8)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+
+LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(558,5)
+   remark #15542: loop was not vectorized: inner loop was already vectorized
+
+   LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(558,5)
+   <Peeled loop for vectorization>
+   LOOP END
+
+   LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(558,5)
+      remark #15388: vectorization support: reference *__first has aligned access   [ /usr/include/c++/4.8.5/bits/stl_algobase.h(751,3) ]
+      remark #15305: vectorization support: vector length 4
+      remark #15399: vectorization support: unroll factor set to 2
+      remark #15309: vectorization support: normalized vectorization overhead 1.667
+      remark #15300: LOOP WAS VECTORIZED
+      remark #15442: entire loop may be executed in remainder
+      remark #15449: unmasked aligned unit stride stores: 1 
+      remark #15475: --- begin vector cost summary ---
+      remark #15476: scalar cost: 3 
+      remark #15477: vector cost: 0.750 
+      remark #15478: estimated potential speedup: 1.280 
+      remark #15488: --- end vector cost summary ---
+   LOOP END
+
+   LOOP BEGIN at /usr/include/c++/4.8.5/bits/stl_algobase.h(749,7) inlined into /usr/include/c++/4.8.5/bits/vector.tcc(558,5)
+   <Remainder loop for vectorization>
+   LOOP END
+LOOP END
+===========================================================================

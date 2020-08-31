@@ -15,7 +15,8 @@
 
 
 using Eigen::Dynamic;
-typedef Eigen::Matrix<int,Dynamic, Dynamic> MatrixXc;
+// TODO: No way to use 8-bit types without casuing aliasing havok???
+typedef Eigen::Matrix<int8_t,Dynamic, Dynamic> MatrixXc;
 
 using namespace Eigen;
 using namespace std;

@@ -1,0 +1,26 @@
+
+Options
+        Files : --directory [Camille/],
+                --results_directory [Camille_out_190822/],
+                --sample_file [IMP.chr20.pooled.snps.gl.chunk10000.vcf.gz],
+                --reference_file [Camille//REF.chr20.snps.gt.chunk10000.vcf.gz],
+                --map [examples/5_snps_interpolated_HapMap2_map_20],
+                --sampleId [240]
+   Parameters : --Ne [11418.00], --Error [1.0e-05]
+
+Invalid sample number 240 (string 240)
+Phasing file : Camille/IMP.chr20.pooled.snps.gl.chunk10000.vcf.gz 
+----------------
+Reference file : Camille//REF.chr20.snps.gt.chunk10000.vcf.gz 
+Map file : examples/5_snps_interpolated_HapMap2_map_20 
+With: 
+Ne 11418.000000 
+error 0.000010 
+algorithm .full 
+
+Template vcf: Camille/IMP.chr20.pooled.snps.gl.chunk10000.template.vcf 
+
+ ----------------
+Writing to : Camille_out_190822/IMP.chr20.pooled.snps.gl.chunk10000.full 
+
+Num inds tot: 2257 

@@ -1,0 +1,16 @@
+adaptive_gls.csv: GL-values (RR, RA, AA) computed from simpool.csv used for filling missing genotypes after pooling + decoding or random deletion. NB: no replacement when GT, missing genotype remains ./.
+
+*.csi: index files
+
+IMP.chr20.pooled.snps.gt.chunk10000.vcf.gz: study population (i.e. 240) samples and 9999 markers with 1% randomly deleted genotypes (GT)
+
+IMP.chr20.pooled.snps.gl.chunk10000.vcf.gz: study population (i.e. 240) samples and 9999 markers with pooled-decoded genotypes (GL)
+
+IMP.chr20.pooled.snps.gt.chunk10000.vcf.gz: study population (i.e. 240) samples and 9999 markers with pooled-decoded genotypes (GT)
+
+IMP.chr20.snps.gt.chunk10000.vcf.gz: study population (i.e. 240) samples and 9999 markers without any processing (GT)
+
+REF.chr20.snps.gt.chunk10000.vcf.gz: reference panel (i.e. 2256) samples and 9999 markers without any processing (GT)
+
+aaf_evol.scatter.gtgl.pooled.chunk9999.png: alternate allele frequencies (AAF) for 9999 markers after pooling from GT or GL vs. expected AAF for the same markers
+
