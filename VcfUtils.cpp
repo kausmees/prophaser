@@ -499,7 +499,7 @@ void LoadGeneticMap(const char *file_name, const Pedigree &ped, vector<double> &
 			result = fscanf(mapstream, "%255s %d %lf", marker_name, &map_pos, &dist);
 		}
 		if(map_pos == ped_pos) {
-			distances[i] = (dist - prev_dist > 0.0000000000001) ? (dist - prev_dist) : 0.01;
+            distances[i] = (dist - prev_dist > 1e-10) ? (dist - prev_dist) : 1e-10;
 			prev_dist = dist;
 		}
 		else{
