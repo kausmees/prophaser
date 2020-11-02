@@ -35,7 +35,7 @@ int main(int argc, char ** argv){
 
 	// Defaults
 	Ne = Ne ? Ne : 11418.0;
-	error = error ? error : 0.001;
+	error = error ? error : 1e-12;
 
 	dir = !dir.IsEmpty() ? dir : "../../Data/1KGData/vcfs/chrom20/";
 	res_dir = !res_dir.IsEmpty() ? res_dir : "./Results/";
@@ -68,7 +68,7 @@ int main(int argc, char ** argv){
 	printf("Map file : %s \n", map_file.c_str());
 	//
 	printf("With: \nNe %f \n", phaser.Ne);
-	printf("error %f \n", phaser.error);
+	printf("error %.13e \n", phaser.error);
 	printf("algorithm %s \n", suffix.c_str());
 
 	printf("\nTemplate GT vcf: %s \n\n ", vcf_template.c_str());
