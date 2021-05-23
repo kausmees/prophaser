@@ -209,7 +209,7 @@ struct HapSummer
 		reset();
 	}
 
-	void sum(const double* table, const vector<ChromosomePair>& states, double* doEmissions) {
+	void sum(const double* __restrict table, const vector<ChromosomePair>& states, const double* __restrict doEmissions) {
 		reset();
 
 		// 1024 entries means touching 8192 bytes of forward data
@@ -223,7 +223,7 @@ struct HapSummer
 		}
 	}
 
-	const array<double, 3> caseProbs(const double* table, double* doEmissions, int s, const ChromosomePair cp) {
+	const array<double, 3> caseProbs(const double* __restrict table, const double* __restrict doEmissions, int s, const ChromosomePair cp) {
 		const double diagonal = doEmissions ? table[s] * doEmissions[s] : table[s];
 		const double halfmatch = hapSums[0][cp.first] + hapSums[1][cp.second] - 2 * diagonal;
 		// Nothing special really happens when cp.first == cp.second... RIGHT???
@@ -237,7 +237,7 @@ struct HapSummer
 	}
 };
 
-void HaplotypePhaser::CalcSingleScaledForward(int m, const double* prev, double* now) {
+void HaplotypePhaser::CalcSingleScaledForward(int m, const double* __restrict prev, double* __restrict now) {
 	double* emission_probs = new double[num_states];
 	double c, c1, c2;
 	double probs[3];
@@ -293,9 +293,7 @@ void HaplotypePhaser::CalcScaledForward(){
 	s_forward.fillAllButFirst();	
 }
 
-void HaplotypePhaser::CalcSingleScaledBackward(int m, const double* prev, double* now) {
-	InitPriorScaledBackward();
-
+void HaplotypePhaser::CalcSingleScaledBackward(int m, const double* __restrict prev, double* __restrict now) {
 	double* emission_probs = new double[num_states];
 	double probs[3];
 	double scaled_dist;
