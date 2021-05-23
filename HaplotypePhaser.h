@@ -34,10 +34,10 @@ typedef Eigen::Matrix<int, Dynamic,Dynamic, RowMajor> rowmajdyn;
  *
  */
 struct ChromosomePair {
-	int first;
-	int second;
+	__uint16_t first;
+	__uint16_t second;
 
-	ChromosomePair(int a, int b) {
+	ChromosomePair(__uint16_t a, __uint16_t b) {
 		first = a;
 		second = b;
 
