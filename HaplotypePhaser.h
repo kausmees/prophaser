@@ -74,12 +74,13 @@ template<class T>
 class StepMemoizer
 {
 	vector<double*> mainTable;
-	vector<double*> auxTable;
+	vector<double*> auxTable[2];
 	T* parent;
 	int num_markers;
 	bool dirup;
 	int step;
-	int auxAnchor = -1;	
+	int auxAnchor[2] = {-1, -1};
+	int auxCeil[2] = {0, 0};	
 	int totalAnchor;
 	using gent = void (T::*)(int, const double*, double*);
 	gent generator;
@@ -90,12 +91,15 @@ public:
 
 	// TODO: Copy assignment is dangerous.
 	StepMemoizer(T* parent, int num_markers, int num_states, bool dirup, int step, gent generator) : parent(parent), num_markers(num_markers), dirup(dirup), step(step), generator(generator) {
-		auxTable.resize(step - 1);
-		for (double*& t : auxTable) {
+		for (auto& subv : auxTable)
+		{
+			subv.resize(step - 1);
+			for (double*& t : subv) {
 			t = new double[num_states];
 		}
+		}		
 
-		int numElems = (num_markers - 1) / step + 1;
+		int numElems = (num_markers - 1) / step / step + 1;
 		mainTable.resize(numElems);
 		for (double*& t : mainTable) {
 			t = new double[num_states];
@@ -108,30 +112,63 @@ public:
 		const int dir = dirup ? 1 : -1;
 		const int i2 = totalAnchor + i * dir;
 
+		
+		const int auxIndex0 = (i2 % (step * step)) / step - 1;
+		const int auxIndex1 = (i2 % (step)) - 1;
+		const int midAnchor = i2 / step / step;
+		double* prev = mainTable[midAnchor];
+		if (auxIndex0 == -1 && auxIndex1 == -1) {
+			return prev;
+		}
+
 		const int anchor = i2 / step;
-		const int auxIndex = (i2 % step) - 1;
-		if (auxIndex == -1) {
-			return mainTable[anchor];
+		if (anchor != auxAnchor[1] || auxIndex1 >= auxCeil[1]) {
+			if (auxIndex0 != -1)
+			{
+				if (midAnchor != auxAnchor[0])
+				{	
+					auxAnchor[0] = midAnchor;			
+					auxCeil[0] = 0;
+				}
+				if (auxIndex0 >= auxCeil[0])
+				{
+					for (int& j = auxCeil[0]; j <= auxIndex0; j++) {
+						int jorig = totalAnchor + (auxAnchor[0] * step * step + (j + 1) * step) * dir;
+						if (jorig < 0 || jorig >= num_markers) break;
+						(parent->*generator)(jorig, (*this)[jorig - dir], auxTable[0][j]);
+					}
+				}
+			
+				prev = auxTable[0][auxIndex0];
 		}
 
-		if (anchor != auxAnchor) {
-			double* prev = mainTable[anchor];
-			for (int j = 0; j < auxTable.size(); j++) {
-				int jorig = totalAnchor + (anchor * step + j + 1) * dir;
+			if (auxIndex1 != -1)
+			{
+				if (auxAnchor[1] != anchor)
+				{
+					auxAnchor[1] = anchor;
+					auxCeil[1] = 0;
+				}
+				for (int& j = auxCeil[1]; j <= auxIndex1; j++) {
+					int jorig = totalAnchor + (auxAnchor[1] * step + j + 1) * dir;
 				if (jorig < 0 || jorig >= num_markers) break;
-				(parent->*generator)(jorig, prev, auxTable[j]);
-				prev = auxTable[j];
+					(parent->*generator)(jorig, prev, auxTable[1][j]);
+					prev = auxTable[1][j];
 			}
-			auxAnchor = anchor;
+			}
 		}
 
-		return auxTable[auxIndex];
+		if (auxIndex1 == -1) {
+			return prev;
+		}
+
+		return auxTable[1][auxIndex1];
 	}
 
 	void fillAllButFirst() {
 		int dir = dirup ? 1 : -1;
 		for (int j = 1; j < mainTable.size(); j++) {
-			int jorig = totalAnchor + (j * step) * dir;			
+			int jorig = totalAnchor + (j * step * step) * dir;			
 
 			// Will trigger auxTable filling as needewd
 			(parent->*generator)(jorig, (*this)[jorig - dir], mainTable[j]);
@@ -142,9 +179,12 @@ public:
 		for (double* t : mainTable) {
 			delete[] t;
 		}
-		for (double* t : auxTable) {
+		for (auto& subv : auxTable)
+		{
+			for (double* t : subv) {
 			delete[] t;
 		}
+	}
 	}
 };
 
