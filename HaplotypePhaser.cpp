@@ -213,13 +213,15 @@ struct HapSummer
 		reset();
 
 		// 1024 entries means touching 8192 bytes of forward data
-		// double additions should be atomic, let's hope that all works out (big chance?)
-#pragma omp parallel for schedule(dynamic,131072)
+
+		auto* sums0 = &hapSums[0][0];
+		auto* sums1 = &hapSums[1][0];
+#pragma omp parallel for schedule(dynamic,131072) reduction(+:sums0[:num_haps], sums1[:num_haps])
 		for (int j = 0; j < num_states; j++) {
 			const ChromosomePair& cp = states[j];
 			const double val = doEmissions ? table[j] * doEmissions[j] : table[j];
-			hapSums[0][cp.first] += val;
-			hapSums[1][cp.second] += val;
+			sums0[cp.first] += val;
+			sums1[cp.second] += val;
 		}
 	}
 
