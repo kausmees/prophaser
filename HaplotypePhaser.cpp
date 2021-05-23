@@ -51,8 +51,8 @@ void HaplotypePhaser::AllocateMemory(){
 	normalizersb = new double[num_markers];
 
 	// <decltype(CalcSingleScaledForwardObj)>
-	new(&s_forward) StepMemoizer<HaplotypePhaser>(this, num_markers, num_states, true, 128, &HaplotypePhaser::CalcSingleScaledForward);
-	new(&s_backward) StepMemoizer<HaplotypePhaser>(this, num_markers, num_states, false, 128, &HaplotypePhaser::CalcSingleScaledBackward);
+	new(&s_forward) StepMemoizer<HaplotypePhaser>(this, num_markers, num_states, true, 32, &HaplotypePhaser::CalcSingleScaledForward);
+	new(&s_backward) StepMemoizer<HaplotypePhaser>(this, num_markers, num_states, false, 32, &HaplotypePhaser::CalcSingleScaledBackward);
 };
 
 /**
