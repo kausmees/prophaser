@@ -94,9 +94,6 @@ void HaplotypePhaser::LoadSampleData(const String &sample_file, int sample_index
  */
 
 void HaplotypePhaser::CalcEmissionProbs(int marker, double * probs) {
-	int h1;
-	int h2;
-	double sum;
 
 	double case_1 = (pow(1 - error, 2) + pow(error, 2));
 	double case_2 = 2 * (1 - error) * error;
@@ -104,18 +101,18 @@ void HaplotypePhaser::CalcEmissionProbs(int marker, double * probs) {
 	double case_4 = (1 - error) * error;
 	double case_5 = pow(error,2);
 
-
+#pragma omp parallel for schedule(dynamic,131072)
 	for (int state = 0; state < num_states; state++) {
 
 		ChromosomePair chrom_state = states[state];
 
 		// Reference hapotype at chromosome 1 - fixed (0: REF 1: ALT)
-		h1 = haplotypes(chrom_state.first, marker);
+		int h1 = haplotypes(chrom_state.first, marker);
 
 		// Reference hapotype at chromosome 2 (0: REF 1: ALT)
-		h2 = haplotypes(chrom_state.second,marker);
+		int h2 = haplotypes(chrom_state.second,marker);
 
-		sum = 0.0;
+		double sum = 0.0;
 		// case1: g = 0
 
 		if(h1 == 0 and h2 == 0){
