@@ -492,25 +492,23 @@ void LoadGeneticMap(const char *file_name, const Pedigree &ped, vector<double> &
 	map_pos = -1;
 	prev_dist = 0.0;
 	result = 3;
-	int i = 0;
 
-	for (; i < Pedigree::markerCount && result == 3; i++) {
+	distances[0] = 0;
+	for (int i = 0; i < Pedigree::markerCount && result == 3; i++) {
 		ped_pos = GetMarkerPos(i);
 		while(map_pos < ped_pos && result == 3) {
 			result = fscanf(mapstream, "%255s %d %lf", marker_name, &map_pos, &dist);
 		}
 		if(map_pos == ped_pos) {
-		  if (i) distances[i-1] = (dist - prev_dist > 1e-10) ? (dist - prev_dist) : 1e-10;
+		    distances[i] = (dist - prev_dist > 1e-10) ? (dist - prev_dist) : 1e-10;
 			prev_dist = dist;
 		}
 		else{
-		  if (i) distances[i-1] = distances[i-2];
+		    if (i) distances[i] = distances[i-1];
 			printf("WARNING: Marker %d is not present in crossover file. \n", GetMarkerPos(i));
 			continue;
 		}
 	}
-
-	distances[i - 1] = 0.0;
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
