@@ -130,14 +130,11 @@ public:
 					auxAnchor[0] = midAnchor;			
 					auxCeil[0] = 0;
 				}
-				if (auxIndex0 >= auxCeil[0])
-				{
 					for (int& j = auxCeil[0]; j <= auxIndex0; j++) {
 						int jorig = totalAnchor + (auxAnchor[0] * step * step + (j + 1) * step) * dir;
 						if (jorig < 0 || jorig >= num_markers) break;
 						(parent->*generator)(jorig, (*this)[jorig - dir], auxTable[0][j]);
 					}
-				}
 			
 				prev = auxTable[0][auxIndex0];
 		}
@@ -148,6 +145,10 @@ public:
 				{
 					auxAnchor[1] = anchor;
 					auxCeil[1] = 0;
+				}
+				if (auxCeil[1] != 0)
+				{
+					prev = auxTable[1][auxCeil[1] - 1];
 				}
 				for (int& j = auxCeil[1]; j <= auxIndex1; j++) {
 					int jorig = totalAnchor + (auxAnchor[1] * step + j + 1) * dir;
