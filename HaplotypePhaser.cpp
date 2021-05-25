@@ -49,6 +49,11 @@ void HaplotypePhaser::AllocateMemory(){
 	sample_gls.resize(num_markers*3);
 	normalizersf = new double[num_markers];
 	normalizersb = new double[num_markers];
+	for (int i = 0; i < num_markers; i++)
+	{
+		normalizersf[i] = 0;
+		normalizersb[i] = 0;
+	}
 
 	// <decltype(CalcSingleScaledForwardObj)>
 	new(&s_forward) StepMemoizer<HaplotypePhaser>(this, num_markers, num_states, true, 32, &HaplotypePhaser::CalcSingleScaledForward);
@@ -264,7 +269,8 @@ void HaplotypePhaser::CalcSingleScaledForward(int m, const double* __restrict pr
 
 	// Based on normalization scheme, sum over all previous forwards is always 1
 	// Let's precalc sum over all halves in first and second half of pair
-	if (m % 1000 == 0) fprintf(stderr, "%d\n", m);
+	//if (m % 1000 == 0) fprintf(stderr, "%d\n", m);
+	double oldnormalizer = normalizersf[m];
 
 #pragma omp parallel for schedule(dynamic,131072) reduction(+ : c)
 	for (int s = 0; s < num_states; s++) {
@@ -276,14 +282,19 @@ void HaplotypePhaser::CalcSingleScaledForward(int m, const double* __restrict pr
 			sum += allcases[chrom_case] * probs[chrom_case];
 		}
 		now[s] = emission_probs[s] * sum;
+		if (oldnormalizer) now[s] *= oldnormalizer;
+		else
 		c += now[s];
 	}
 
+	if (!oldnormalizer)
+	{
 	normalizersf[m] = 1.0 / c;
 
 #pragma omp parallel for schedule(dynamic,131072)
 	for (int s = 0; s < num_states; s++) {
 		now[s] = now[s] * normalizersf[m];
+	}
 	}
 
 	delete[] emission_probs;
@@ -317,6 +328,8 @@ void HaplotypePhaser::CalcSingleScaledBackward(int m, const double* __restrict p
 	probs[1] = (c2 * c1) + pow(c1, 2);
 	// no switch
 	probs[2] = pow(c2, 2) + (2 * c2 * c1) + pow(c1, 2);
+	if (m % 1000 == 0) fprintf(stderr, "%d\n", m);
+	double oldnormalizer = normalizersb[m];
 
 #pragma omp parallel for schedule(dynamic,131072) reduction(+ : c)
 	for (int s = 0; s < num_states; s++) {
@@ -332,14 +345,19 @@ void HaplotypePhaser::CalcSingleScaledBackward(int m, const double* __restrict p
 		}
 
 		now[s] = sum;
+		if (oldnormalizer) now[s] *= oldnormalizer;
+		else
 		c += now[s];
 	}
 
+	if (!oldnormalizer)
+	{
 	normalizersb[m] = 1.0 / c;
 
 #pragma omp parallel for schedule(dynamic,131072)
 	for (int s = 0; s < num_states; s++) {
 		now[s] = now[s] * normalizersb[m];
+	}
 	}
 
 	delete[] emission_probs;
