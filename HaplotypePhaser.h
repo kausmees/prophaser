@@ -29,6 +29,8 @@ using namespace Eigen;
 
 typedef Eigen::Matrix<int, Dynamic,Dynamic, RowMajor> rowmajdyn;
 
+using phaserreal = float;
+
 /**
  * Represents the reference haplotypes at a loci as an ordered pair.
  *
@@ -73,16 +75,17 @@ struct ChromosomePair {
 template<class T>
 class StepMemoizer
 {
-	vector<double*> mainTable;
-	vector<double*> auxTable[2];
+	vector<phaserreal*> mainTable;
+	vector<phaserreal*> auxTable[2];
 	T* parent;
 	int num_markers;
+	int num_states;
 	bool dirup;
 	int step;
 	int auxAnchor[2] = {-1, -1};
 	int auxCeil[2] = {0, 0};	
 	int totalAnchor;
-	using gent = void (T::*)(int, const double*, double*);
+	using gent = void (T::*)(int, const phaserreal*, phaserreal*);
 	gent generator;
 	
 
@@ -90,25 +93,25 @@ public:
 	StepMemoizer() = default;
 
 	// TODO: Copy assignment is dangerous.
-	StepMemoizer(T* parent, int num_markers, int num_states, bool dirup, int step, gent generator) : parent(parent), num_markers(num_markers), dirup(dirup), step(step), generator(generator) {
+	StepMemoizer(T* parent, int num_markers, int num_states, bool dirup, int step, gent generator) : parent(parent), num_markers(num_markers), dirup(dirup), step(step), generator(generator), num_states(num_states) {		
 		for (auto& subv : auxTable)
 		{
 			subv.resize(step - 1);
-			for (double*& t : subv) {
-			t = new double[num_states];
+			for (phaserreal*& t : subv) {
+				t = new phaserreal[num_states];
 		}
 		}		
 
 		int numElems = (num_markers - 1) / step / step + 1;
 		mainTable.resize(numElems);
-		for (double*& t : mainTable) {
-			t = new double[num_states];
+		for (phaserreal*& t : mainTable) {
+			t = new phaserreal[num_states];
 		}
 
 		totalAnchor = dirup ? 0 : num_markers - 1;
 	}
 
-	double* operator [](int i) {
+	phaserreal* rawindexer(int i) {
 		const int dir = dirup ? 1 : -1;
 		const int i2 = totalAnchor + i * dir;
 
@@ -116,7 +119,7 @@ public:
 		const int auxIndex0 = (i2 % (step * step)) / step - 1;
 		const int auxIndex1 = (i2 % (step)) - 1;
 		const int midAnchor = i2 / step / step;
-		double* prev = mainTable[midAnchor];
+		phaserreal* prev = mainTable[midAnchor];
 		if (auxIndex0 == -1 && auxIndex1 == -1) {
 			return prev;
 		}
@@ -166,6 +169,10 @@ public:
 		return auxTable[1][auxIndex1];
 	}
 
+	phaserreal* operator [](int i) {
+		phaserreal* data = rawindexer(i);
+		return data;
+	}
 	void fillAllButFirst() {
 		int dir = dirup ? 1 : -1;
 		for (int j = 1; j < mainTable.size(); j++) {
@@ -177,17 +184,19 @@ public:
 	}
 
 	~StepMemoizer() {
-		for (double* t : mainTable) {
+		for (phaserreal* t : mainTable) {
 			delete[] t;
 		}
 		for (auto& subv : auxTable)
 		{
-			for (double* t : subv) {
+			for (phaserreal* t : subv) {
 			delete[] t;
 		}
 	}
 	}
 };
+
+struct HapSummer;
 
 /**
 
@@ -195,7 +204,9 @@ Main haplotype phasing and imputation functionality.
 
  */
 class HaplotypePhaser {
-
+	phaserreal* emission_probs;
+	HapSummer* hapSum;
+	phaserreal case_1, case_2, case_3, case_4, case_5;
 public:
 
 //	char ** haplotypes;
@@ -206,13 +217,13 @@ public:
 	MatrixXc haplotypes;
 
 
-	vector <double> sample_gls;
+	vector<phaserreal> sample_gls;
 	Pedigree ped;
 	float error;
 	float Ne;
-	double pop_const;
+	phaserreal pop_const;
 
-	std::vector<double> distances;
+	std::vector<phaserreal> distances;
 
 	vector<ChromosomePair> states;
 
@@ -233,18 +244,19 @@ public:
 
 	int num_ref_inds;
 	int num_inds;
-	void CalcSingleScaledForward(int marker, const double* prev, double* now);
-	void CalcSingleScaledBackward(int marker, const double* prev, double* now);
+	void CalcSingleScaledForward(int marker, const phaserreal* prev, phaserreal* now);
+	void CalcSingleScaledBackward(int marker, const phaserreal* prev, phaserreal* now);
 
 	StepMemoizer<HaplotypePhaser> s_forward;
 	StepMemoizer<HaplotypePhaser> s_backward;
-	double * normalizersf = 0;
-	double * normalizersb = 0;
+	phaserreal* normalizersf = 0;
+	phaserreal* normalizersb = 0;
 
 
 	void AllocateMemory();
 
-	void CalcEmissionProbs(int marker, double * probs);
+	phaserreal CalcEmissionProb(const ChromosomePair cp, int marker);
+	void CalcEmissionProbs(int marker, phaserreal* probs);
 
 	void InitPriorScaledForward();
 	void InitPriorScaledBackward();
@@ -252,11 +264,11 @@ public:
 	void CalcScaledForward();
 	void CalcScaledBackward();
 	void GetMLHaplotypes(int * ml_states);
-	vector<vector<double>> GetPosteriorStats(const char * filename, bool print);
-	vector<vector<double>>  ReadPosteriorStats(const char * filename);
+	vector<vector<phaserreal>> GetPosteriorStats(const char * filename, bool print);
+	vector<vector<phaserreal>>  ReadPosteriorStats(const char * filename);
 
 	void PrintGenotypesToVCF(vector<vector<int>> & ml_genotypes, const char * out_file, const char * sample_file, const char * vcf_template);
-    void PrintPostGenotypesToVCF(vector<vector<int>> & ml_genotypes, vector<vector<vector<double>>> & ml_postprobs, const char * out_file, const char * sample_file, const char * vcf_template);
+    void PrintPostGenotypesToVCF(vector<vector<int>> & ml_genotypes, vector<vector<vector<phaserreal>>> & ml_postprobs, const char * out_file, const char * sample_file, const char * vcf_template);
     void PrintHaplotypesToVCF(vector<vector<int>> & ml_genotypes, const char * out_file, const char * sample_file, const char * vcf_template);
 
 };
