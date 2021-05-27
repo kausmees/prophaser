@@ -15,7 +15,7 @@
 
 
 using Eigen::Dynamic;
-typedef Eigen::Matrix<int,Dynamic, Dynamic> MatrixXc;
+typedef Eigen::Matrix<__uint16_t,Dynamic, Dynamic> MatrixXc;
 
 using namespace Eigen;
 using namespace std;
@@ -26,6 +26,7 @@ using namespace std;
  */
 namespace VcfUtils {
 
+using vcfreal = float;
 extern int max_pl;
 extern std::vector<int> unphased_marker_subset;
 
@@ -54,11 +55,11 @@ void LoadSampleIndividual(Pedigree &ped, const String & sample_file, int sample_
 void LoadHaplotypes(const String &file_name, const Pedigree &ped, char** haplotypes);
 void LoadHaplotypes(const String &file_name, const Pedigree &ped, MatrixXc & haplotypes );
 void FillSampleHaplotypes(const Pedigree &ped, MatrixXc & haplotypes, int index);
-void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, vector<double> & genotypes, int sample_ind_file);
+void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, vector<vcfreal> & genotypes, int sample_ind_file);
 int GetMarkerPos(int marker_id);
-void LoadGeneticMap(const char * file_name, const Pedigree &ped, vector<double> &thetas);
-void writeVectorToCSV(const char* file_name, const std::vector<vector<double>>& v, const char* opentype);
-vector<double> get_GL(VcfHeader& header, VcfRecord& record, int sample);
+void LoadGeneticMap(const char * file_name, const Pedigree &ped, vector<vcfreal> &thetas);
+void writeVectorToCSV(const char* file_name, const std::vector<vector<vcfreal>>& v, const char* opentype);
+vector<vcfreal> get_GL(VcfHeader& header, VcfRecord& record, int sample);
 std::string get_likelihood_format(VcfHeader& header);
 }
 

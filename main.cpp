@@ -93,7 +93,7 @@ int main(int argc, char ** argv){
 	vector<vector<int>> ml_genotypes;
 
     // n_samples x n_markers x 3 array of most posterior genotypes probabilities
-    vector<vector<vector<double>>> ml_postprobs;
+    vector<vector<vector<phaserreal>>> ml_postprobs;
 
 	// n_samples x n_markers array of most likely states
 	vector<vector<int>> ml_states;
@@ -138,7 +138,7 @@ int main(int argc, char ** argv){
 		begin = chrono::steady_clock::now();
 		cout << "Starting Stats \n";
 
-		vector<vector<double>> stats = phaser.GetPosteriorStats((result_file+"_"+to_string(sample)+"_stats").c_str(), true);
+		vector<vector<phaserreal>> stats = phaser.GetPosteriorStats((result_file+"_"+to_string(sample)+"_stats").c_str(), true);
 		cout << "Done Stats \n";
 
 		// push back a vector for this sample

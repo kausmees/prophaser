@@ -105,7 +105,7 @@ void LoadReferenceIndividuals(Pedigree &ped, const String &ref_file) {
 
 };
 
-void writeVectorToCSV(const char * file_name, const std::vector<vector<double>>& v, const char* opentype){
+void writeVectorToCSV(const char * file_name, const std::vector<vector<vcfreal>>& v, const char* opentype){
 	FILE * csvout = fopen(file_name, opentype);
 
 	for(const auto& vector : v) {
@@ -222,8 +222,8 @@ void LoadHaplotypes(const String &file_name, const Pedigree &ped, MatrixXc & hap
 		int marker_id = Pedigree::LookupMarker(marker_name);
 		if(marker_id >= 0){
 			for (int ind = 0; ind < ped.count; ind++) {
-				int i0 = record.getGT(ind,0);
-				int i1 = record.getGT(ind,1);
+				__uint8_t i0 = record.getGT(ind,0);
+				__uint8_t i1 = record.getGT(ind,1);
 
 				haplotypes(ind*2,marker_id) = i0;
 				haplotypes(ind*2 + 1,marker_id) = i1;
@@ -242,7 +242,7 @@ void LoadHaplotypes(const String &file_name, const Pedigree &ped, MatrixXc & hap
  *
  * temproary: fill all other genotypes with 0
  */
-void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, vector<double> & sample_gls, int sample_index_file) {
+void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, vector<vcfreal> & sample_gls, int sample_index_file) {
 	//	printf("Loading genotype likelihoods from file %s \n", file_name.c_str());
 
 	//	int sample_index_ped = ped.count-1;
@@ -361,7 +361,7 @@ void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, vecto
 			//			genotypes[sample_index_ped][marker_id*3+1] = pl_01;
 			//			genotypes[sample_index_ped][marker_id*3+2] = pl_11;
 
-			vector<double> gls = get_GL(header, record, sample_index_file);
+			vector<vcfreal> gls = get_GL(header, record, sample_index_file);
 
 			// OBS GL SHOULD BE log10(likelihood, so thould be this)
 			sample_gls[marker_id*3] = pow(10,gls[0]);
@@ -437,8 +437,8 @@ std::string get_likelihood_format(VcfHeader& header) {
 };
 
 
-vector<double> get_GL(VcfHeader& header, VcfRecord& record, int sample) {
-	vector<double> gl_vals;
+vector<vcfreal> get_GL(VcfHeader& header, VcfRecord& record, int sample) {
+	vector<vcfreal> gl_vals;
 	string lformat = get_likelihood_format(header);
 
 
@@ -478,11 +478,11 @@ vector<double> get_GL(VcfHeader& header, VcfRecord& record, int sample) {
  *
  *
  */
-void LoadGeneticMap(const char *file_name, const Pedigree &ped, vector<double> &distances) {
+void LoadGeneticMap(const char *file_name, const Pedigree &ped, vector<vcfreal> &distances) {
 	int ped_pos;
 	int map_pos;
 	double dist;
-	double prev_dist;
+	vcfreal prev_dist;
 	char marker_name [256];
 	int result;
 	//TODO dont hardcode Ne
