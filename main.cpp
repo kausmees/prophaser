@@ -84,6 +84,7 @@ int main(int argc, char ** argv){
 
 	phaser.LoadData(r_file.c_str(), sample_file.c_str(), map_file.c_str());
 
+	// TESTING ChromStateToHaplotypeIndex
 	//
 	//	for (int sample = 0; sample < 2; sample++) {
 	//
@@ -104,6 +105,8 @@ int main(int argc, char ** argv){
 	//	}
 	//
 	//	return 0;
+
+
 	// n_samples x n_markers array of most likely genotypes
 	vector<vector<int>> ml_genotypes;
 
@@ -112,8 +115,6 @@ int main(int argc, char ** argv){
 
 	vector<int> ml_states_this_sample(phaser.num_markers, -1);
 
-
-
 	chrono::steady_clock::time_point begin1;
 	chrono::steady_clock::time_point begin;
 	chrono::steady_clock::time_point end;
@@ -121,7 +122,6 @@ int main(int argc, char ** argv){
 	begin1 = chrono::steady_clock::now();
 
 	// first iteration: we ignore the sample haplotypes, they havent been initalized to anything good yet (just 0s)
-	printf("Setting num haps 1 \n");
 	phaser.SetNumHaps(phaser.num_ref_inds * 2);
 
 	for(int iter = 0; iter < niter; iter++){

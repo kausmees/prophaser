@@ -103,17 +103,10 @@ void HaplotypePhaser::LoadData(const String &ref_file, const String &sample_file
 	printf("Num inds : %d  \nNum markers: %d\n", num_inds, num_markers);
 
 	AllocateMemory();
-	printf("After allocate \n");
-
 
 	VcfUtils::LoadPhasedHaplotypes(ref_file, ped, haplotypes);
-	printf("After load phased \n");
-
 	VcfUtils::LoadUnphasedHaplotypes(sample_file, ped, haplotypes, num_ref_inds * 2);
-	printf("After load unphased \n");
-
 	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls);
-	printf("Allocated liks \n");
 
 	if(!map_file.IsEmpty()) {
 		VcfUtils::LoadGeneticMap(map_file.c_str(), ped, distances);
