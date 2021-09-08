@@ -8,7 +8,7 @@
 int main(int argc, char ** argv){
 
 	String dir;
-	String res_dir;
+	String res_file;
 	String s_file;
 	String r_file;
 	String map_file;
@@ -20,7 +20,7 @@ int main(int argc, char ** argv){
 	LongParamContainer long_parameters;
 	long_parameters.addGroup("Files");
 	long_parameters.addString("directory", &dir);
-	long_parameters.addString("results_directory", &res_dir);
+	long_parameters.addString("outfile", &res_file);
 	long_parameters.addString("sample_file", &s_file);
 	long_parameters.addString("reference_file", &r_file);
 	long_parameters.addString("map", &map_file);
@@ -38,16 +38,13 @@ int main(int argc, char ** argv){
 	error = error ? error : 1e-12;
 
 	dir = !dir.IsEmpty() ? dir : "../../Data/1KGData/vcfs/chrom20/";
-	res_dir = !res_dir.IsEmpty() ? res_dir : "./Results/";
+	res_file = !res_file.IsEmpty() ? res_file : "./Results/" + s_file;
 
 
 // TODO implement base class and have algorithm choice in parameters
 
 	HaplotypePhaser phaser;
-	string suffix = ".full";
 
-//	HaplotypePhaserSym phaser;
-//	string suffix = ".sym";
 
 	phaser.Ne = Ne;
 	phaser.error = error;
@@ -56,7 +53,7 @@ int main(int argc, char ** argv){
 	string sample_file = string(dir) + string(s_file);
 	string sfilebase = string(s_file).substr(0, s_file.Find(".vcf.gz"));
 	string ref_file = string(r_file);
-	string result_file = string(res_dir) + sfilebase;
+	string result_file = string(res_file);
 
 	string vcf_template = string(dir) + sfilebase + ".template.vcf";
     string vcf_template_gtgp = string(dir) + sfilebase + ".template_gtgp.vcf";
@@ -69,13 +66,12 @@ int main(int argc, char ** argv){
 	//
 	printf("With: \nNe %f \n", phaser.Ne);
 	printf("error %.13e \n", phaser.error);
-	printf("algorithm %s \n", suffix.c_str());
 
 	printf("\nTemplate GT vcf: %s \n\n ", vcf_template.c_str());
     printf("\nTemplate GT:GP vcf: %s \n\n ", vcf_template_gtgp.c_str());
 
 	printf("----------------\n");
-	printf("Writing to : %s \n\n", (result_file+suffix).c_str());
+	printf("Writing to : %s \n\n", (result_file).c_str());
 
 
 	////////////////////////////////////////// phasing start //////////////////////////////////////////////////////////////
@@ -177,8 +173,8 @@ int main(int argc, char ** argv){
 	};
 
 
-	phaser.PrintGenotypesToVCF(ml_genotypes, (result_file + suffix+ ".genos" ).c_str(), sample_file.c_str(), vcf_template.c_str());
-    phaser.PrintPostGenotypesToVCF(ml_genotypes, ml_postprobs, (result_file + suffix+ ".postgenos" ).c_str(), sample_file.c_str(), vcf_template_gtgp.c_str());
+	phaser.PrintGenotypesToVCF(ml_genotypes, (result_file + ".genos" ).c_str(), sample_file.c_str(), vcf_template.c_str());
+    phaser.PrintPostGenotypesToVCF(ml_genotypes, ml_postprobs, (result_file + ".postgenos" ).c_str(), sample_file.c_str(), vcf_template_gtgp.c_str());
     // phaser.PrintHaplotypesToVCF(ml_states, (result_file+ suffix + ".phased").c_str(), sample_file.c_str(), vcf_template.c_str()); # no longer relevant way of computing results
 
 
