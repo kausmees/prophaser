@@ -85,7 +85,6 @@ int main(int argc, char ** argv){
 	phaser.LoadData(r_file.c_str(), sample_file.c_str(), map_file.c_str());
 
 	// TESTING ChromStateToHaplotypeIndex
-	//
 	//	for (int sample = 0; sample < 2; sample++) {
 	//
 	//		phaser.current_sample = sample;
