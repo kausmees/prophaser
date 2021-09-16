@@ -20,7 +20,7 @@ IGNORES=HaplotypePhaserSym.o
 
 FILTERED=$(filter-out $(IGNORES),$(OBJECTS))
 
-TARGET=phase_ompnew
+TARGET=phase_ompmod
 
 all: $(TARGET)
 
