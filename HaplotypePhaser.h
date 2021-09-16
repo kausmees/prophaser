@@ -31,6 +31,9 @@ typedef Eigen::Matrix<int, Dynamic,Dynamic, RowMajor> rowmajdyn;
 
 using phaserreal = float;
 
+typedef Eigen::Matrix<phaserreal,Dynamic, Dynamic> MatrixXpreal;
+
+
 /**
  * Represents the reference haplotypes at a loci as an ordered pair.
  *
@@ -217,7 +220,7 @@ public:
 	MatrixXc haplotypes;
 
 
-	vector<phaserreal> sample_gls;
+	MatrixXpreal sample_gls;
 	Pedigree ped;
 	float error;
 	float Ne;
@@ -233,6 +236,9 @@ public:
 
 
 	~HaplotypePhaser();
+
+	void LoadData(const String &ref_file, const String &sample_file, const String &map_file);
+
 	void LoadReferenceData(const String &ref_file, String &map_file);
 	void LoadSampleData(const String &sample_file,  int sample_index);
 
@@ -243,7 +249,14 @@ public:
 	int num_markers;
 
 	int num_ref_inds;
+	int num_sample_inds;
 	int num_inds;
+
+	// index of the sample we are curently updating haplotype estimates for
+	int current_sample;
+	// index of current_sample's first haplotype in haplotypes matrix
+	int current_sample_hap_index;
+
 	void CalcSingleScaledForward(int marker, const phaserreal* prev, phaserreal* now);
 	void CalcSingleScaledBackward(int marker, const phaserreal* prev, phaserreal* now);
 

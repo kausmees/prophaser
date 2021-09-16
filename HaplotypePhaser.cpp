@@ -139,9 +139,8 @@ void HaplotypePhaser::AllocateMemory(){
 
 	// haplotypes(h,m) = 0/1 representing allele of haplotype h at marker m
 	haplotypes = MatrixXc(num_haps+2, num_markers);
+	sample_gls = MatrixXpreal(num_sample_inds, num_markers * 3);
 
-
-	sample_gls.resize(num_markers*3);
 	normalizersf = new phaserreal[num_markers];
 	normalizersb = new phaserreal[num_markers];
 	emission_probs = new phaserreal[num_states];
@@ -162,6 +161,40 @@ void HaplotypePhaser::AllocateMemory(){
 	new(&s_forward) StepMemoizer<HaplotypePhaser>(this, num_markers, num_states, true, 32, &HaplotypePhaser::CalcSingleScaledForward);
 	new(&s_backward) StepMemoizer<HaplotypePhaser>(this, num_markers, num_states, false, 32, &HaplotypePhaser::CalcSingleScaledBackward);
 };
+
+
+/**
+ * Load information about reference and sample individuals, and reference markers
+ * into pedigree from the specified files.
+ *
+ *
+ * Load genetic distances from map file if specified.
+ *
+ */
+void HaplotypePhaser::LoadData(const String &ref_file, const String &sample_file, const String &map_file){
+	VcfUtils::LoadReferenceMarkers(ref_file);
+	VcfUtils::LoadIndividuals(ped,ref_file);
+	num_ref_inds = ped.count;
+	VcfUtils::LoadIndividuals(ped, sample_file);
+	num_sample_inds = ped.count - num_ref_inds;
+
+	num_inds = ped.count;
+	num_markers = Pedigree::markerCount;
+
+	printf("Num inds : %d  \nNum markers: %d\n", num_inds, num_markers);
+
+	AllocateMemory();
+
+	VcfUtils::LoadPhasedHaplotypes(ref_file, ped, haplotypes);
+	VcfUtils::LoadUnphasedHaplotypes(sample_file, ped, haplotypes, num_ref_inds * 2);
+	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls);
+
+	if(!map_file.IsEmpty()) {
+		VcfUtils::LoadGeneticMap(map_file.c_str(), ped, distances);
+	};
+};
+
+
 
 /**
  * Load reference data from specified file.
@@ -187,8 +220,8 @@ void HaplotypePhaser::LoadReferenceData(const String &ref_file, String &map_file
  *
  */
 void HaplotypePhaser::LoadSampleData(const String &sample_file, int sample_index){
-	VcfUtils::LoadSampleIndividual(ped, sample_file, sample_index);
-	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls, sample_index);
+	//VcfUtils::LoadSampleIndividual(ped, sample_file, sample_index);
+	//VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls, sample_index);
 
 };
 
@@ -200,45 +233,45 @@ phaserreal HaplotypePhaser::CalcEmissionProb(const ChromosomePair chrom_state, i
 		// Reference hapotype at chromosome 2 (0: REF 1: ALT)
 		int h2 = haplotypes(chrom_state.second,marker);
 
-	phaserreal sum = 0.0f;
+		phaserreal sum = 0.0f;
 		// case1: g = 0
 
 		if(h1 == 0 and h2 == 0){
-			sum += case_3 *  sample_gls[marker * 3];
+			sum += case_3 *  sample_gls(current_sample,marker * 3);
 		}
 		else {
 			if((h1 == 0 and h2 == 1) or (h1 == 1 and h2 == 0)){
 
-				sum += case_4 * sample_gls[marker * 3];
+				sum += case_4 * sample_gls(current_sample,marker * 3);
 
 			}
 			else{
-				sum +=  case_5 *  sample_gls[marker * 3];
+				sum +=  case_5 *  sample_gls(current_sample,marker * 3);
 
 			}
 		}
 
 		// case2: g = 1
 		if((h1 == 0 and h2 == 1) or (h1 == 1 and h2 == 0)){
-			sum += case_1 *  sample_gls[marker * 3 + 1];
+			sum += case_1 *  sample_gls(current_sample,marker * 3 + 1);
 
 		}
 		else{
-			sum +=case_2 * sample_gls[marker * 3 + 1];
+			sum +=case_2 * sample_gls(current_sample,marker * 3 + 1);
 
 		}
 
 		// case3: g = 2
 		if(h1 == 1 and h2 == 1){
-			sum += case_3 * sample_gls[marker * 3 + 2];
+			sum += case_3 * sample_gls(current_sample,marker * 3 + 2);
 
 		} else{
 			if((h1 == 0 and h2 == 1) or (h1 == 1 and h2 == 0)){
-				sum += case_4 * sample_gls[marker * 3 + 2];
+				sum += case_4 * sample_gls(current_sample,marker * 3 + 2);
 
 			}
 			else{
-				sum += case_5 * sample_gls[marker * 3 + 2];
+				sum += case_5 * sample_gls(current_sample,marker * 3 + 2);
 
 			}
 		}

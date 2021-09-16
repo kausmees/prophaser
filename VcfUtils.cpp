@@ -79,6 +79,36 @@ void LoadReferenceMarkers(const String &file_name){
 	reader.close();
 };
 
+
+
+/**
+ * Add individuals from filename to the pedigree ped.
+ *
+ */
+void LoadIndividuals(Pedigree &ped, const String &file_name) {
+
+	VcfFileReader reader;
+	VcfHeader header;
+	reader.open(file_name, header);
+
+	int num_samples = header.getNumSamples();
+	//	printf("Num reference inds : %d \n", num_samples);
+
+	if(num_samples == 0) {
+		//	TODO add exception
+		printf("ERROR: No individuals in file: %s", file_name);
+	}
+
+	for(int i = 0; i < num_samples; i++) {
+		ped.AddPerson(header.getSampleName(i), header.getSampleName(i), "0", "0", 0, 1);
+	}
+
+	reader.close();
+
+};
+
+
+
 /**
  * Add individuals from ref_file to the pedigree ped.
  *
@@ -197,6 +227,75 @@ void LoadHaplotypes(const String &file_name, const Pedigree &ped, char** haploty
 };
 
 
+
+/**
+ * Load all haplotypes from file_name at markers present in pedigree into haplotypes.
+ *
+ * Assumes the file only contains samples that are phased at all markers, have no missing reference of alternative alleles,
+ * and that the pedigree only contains monomorphic SNPs.
+ *
+ * Haplotypes are loaded in the order they appear in file_name, to indices [0 - num_inds_in_file * 2 - 1] in haplotypes.
+ *
+ */
+void LoadPhasedHaplotypes(const String &file_name, const Pedigree &ped, MatrixXc & haplotypes ) {
+
+	//	printf("Loading haplotypes from file %s \n", file_name.c_str());
+	VcfFileReader reader;
+	VcfHeader header;
+	VcfRecord record;
+
+	const char * marker_name;
+	int marker_id;
+
+	reader.open(file_name, header);
+	int num_samples = header.getNumSamples();
+
+	while(reader.readRecord(record)){
+		std::stringstream ss;
+		ss << record.getChromStr() << ":" << record.get1BasedPosition();
+		marker_name = ss.str().c_str();
+		int marker_id = Pedigree::LookupMarker(marker_name);
+
+		if(marker_id >= 0){
+			for (int ind = 0; ind < num_samples; ind++) {
+				__uint8_t i0 = record.getGT(ind,0);
+				__uint8_t i1 = record.getGT(ind,1);
+
+				haplotypes(ind*2,marker_id) = i0;
+				haplotypes(ind*2 + 1,marker_id) = i1;
+			}
+		}
+	}
+	reader.close();
+};
+
+
+/**
+ * Initialize the haplotypes of the samples to 0.
+ *
+ * Index indicates the first index in haplotypes that contains sample data.
+ *
+ */
+void LoadUnphasedHaplotypes(const String &file_name, const Pedigree &ped, MatrixXc & haplotypes, int index) {
+
+	VcfFileReader reader;
+	VcfHeader header;
+	reader.open(file_name, header);
+
+	int num_samples = header.getNumSamples();
+
+	if (index + num_samples * 2 > haplotypes.rows()) {
+		printf("ERROR: Not enough space in haplotypes to fill %d rows for the unphased haplotypes. \n", num_samples * 2);
+	}
+
+	for (int hap = index; hap < haplotypes.rows(); hap++) {
+		for (int m = 0;  m < ped.markerCount; m++) {
+			haplotypes(hap, m) = 0;
+		}
+	}
+};
+
+
 /**
  * Load all alleles from file_name at markers present in pedigree into haplotypes.
  *
@@ -234,6 +333,102 @@ void LoadHaplotypes(const String &file_name, const Pedigree &ped, MatrixXc & hap
 	reader.close();
 	//	printf("Done \n");
 };
+
+
+
+/**
+ * Load genotypes of all samples in file_name into sample_gls.
+ * Markers present in pedigree but not in file_name are given genotype phreds 0.
+ *
+ * temproary: fill all other genotypes with 0
+ */
+void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, MatrixXvreal & sample_gls) {
+	//	printf("Loading genotype likelihoods from file %s \n", file_name.c_str());
+
+	const char * marker_name;
+	//	int pl_00, pl_01, pl_11;
+	int num_common_markers = 0;
+	int num_total_markers = 0;
+
+	//	std::string sub00, sub01, sub11;
+
+	VcfFileReader reader;
+	VcfHeader header;
+	VcfRecord record;
+
+	reader.open(file_name, header);
+	int num_samples = header.getNumSamples();
+
+
+
+	while(reader.readRecord(record)){
+		num_total_markers += 1;
+
+		// TODO: This pattern could be factored out...
+		std::stringstream ss;
+		ss << record.getChromStr() << ":" << record.get1BasedPosition();
+		std::string markers = ss.str();
+		marker_name = markers.c_str();
+
+		int marker_id = Pedigree::LookupMarker(marker_name);
+
+		if(marker_id >= 0){
+			//			printf("DOING MARKER ID %d\n", marker_id);
+			// if marker is a monomorphic SNP with no missing bases
+			if(record.getNumRefBases() != 1 || record.getNumAlts() != 1) {
+				//TODO throw error
+				printf("ERROR: Sample marker is not monomorphic SNP\n");
+				//TODO check how this affects imputation. this marker will behave as one we have no info on in sample,
+				//do we want it to be imputed as if it was missing in sample?
+				continue;
+
+			}
+			String sample_ref_base = String(record.getRefStr()[0]);
+			String sample_alt_base = String(record.getAltStr()[0]);
+
+			MarkerInfo * mi = Pedigree::GetMarkerInfo(marker_id);
+
+			String phased_ref_base = mi->GetAlleleLabel(1);
+			String phased_alt_base = mi->GetAlleleLabel(2);
+
+			if(sample_ref_base != phased_ref_base || sample_alt_base != phased_alt_base){
+
+				//TODO throw error or warning
+				printf("ERROR: Sample alleles do not match phased reference's alles\n");
+				//TODO check how this affects imputation. this marker will behave as one we have no info on in sample,
+				//do we want it to be imputed as if it was missing in sample?
+				continue;
+
+
+			}
+
+			for (int s = 0; s < num_samples; s++){
+				vector<vcfreal> gls = get_GL(header, record, s);
+
+				// OBS GL SHOULD BE log10(likelihood, so thould be this)
+				sample_gls(s,marker_id*3) = pow(10,gls[0]);
+				sample_gls(s,marker_id*3+1) = pow(10,gls[1]);
+				sample_gls(s,marker_id*3+2) = pow(10,gls[2]);
+			}
+
+			unphased_marker_subset[marker_id] = 1;
+			num_common_markers += 1;
+		}
+	}
+	reader.close();
+
+	for (int s = 0; s < num_samples; s++){
+		for(int marker_id = 0; marker_id < ped.markerCount; marker_id++){
+			if(!unphased_marker_subset[marker_id]){
+				sample_gls(s, marker_id * 3) = 0.3333;
+				sample_gls(s, marker_id * 3 + 1) = 0.3333;
+				sample_gls(s, marker_id * 3 + 2) = 0.3333;
+			}
+		}
+	}
+	//	printf("Num reference markers : %d, Num sample markers: %d, %d of which are also in reference. \n", ped.markerCount, num_total_markers, num_common_markers);
+};
+
 
 
 /**

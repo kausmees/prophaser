@@ -76,7 +76,7 @@ int main(int argc, char ** argv){
 
 	////////////////////////////////////////// phasing start //////////////////////////////////////////////////////////////
 
-	phaser.LoadReferenceData(r_file.c_str(), map_file);
+	//phaser.LoadReferenceData(r_file.c_str(), map_file);
 
 	VcfFileReader reader;
 	VcfHeader header_read;
@@ -101,11 +101,14 @@ int main(int argc, char ** argv){
 
 	begin1 = chrono::steady_clock::now();
 
+	// TODO just for tesiting
+	phaser.LoadData(r_file.c_str(), sample_file.c_str(), map_file);
+
 	for(int sample = 0; sample< num_samples; sample++) {
 
 		cout << "\n\n------------- Starting sample " << sample << "-------------"<< endl;
 
-		phaser.LoadSampleData(sample_file.c_str(), sample);
+		//phaser.LoadSampleData(sample_file.c_str(), sample);
 		printf("Num inds in ped after load sample: %d \n ", phaser.ped.count);
 
 
@@ -113,7 +116,7 @@ int main(int argc, char ** argv){
 
 		cout << "Sample GLs:\n" << endl;
 		for (int m = 0; m < 4 ; m++) {
-			printf("--- marker %d : %f %f %f \n" , m, phaser.sample_gls[m*3], phaser.sample_gls[m*3 +1 ], phaser.sample_gls[m*3+2]);
+			printf("--- marker %d : %f %f %f \n" , m, phaser.sample_gls(sample,m*3), phaser.sample_gls(sample,m*3 +1), phaser.sample_gls(sample,m*3+2));
 		}
 
 		begin = chrono::steady_clock::now();
