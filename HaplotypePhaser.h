@@ -66,7 +66,6 @@ struct ChromosomePair {
 		}
 		if (second == other.second) {
 			num += 1;
-
 		}
 
 	return num;
@@ -250,12 +249,17 @@ public:
 
 	int num_ref_inds;
 	int num_sample_inds;
+	// total number of individuals
 	int num_inds;
 
 	// index of the sample we are curently updating haplotype estimates for
 	int current_sample;
 	// index of current_sample's first haplotype in haplotypes matrix
 	int current_sample_hap_index;
+
+	void SetNumHaps(int num_haps);
+	void FillStates();
+	int ChromStateToHaplotypeIndex(int chrom_state);
 
 	void CalcSingleScaledForward(int marker, const phaserreal* prev, phaserreal* now);
 	void CalcSingleScaledBackward(int marker, const phaserreal* prev, phaserreal* now);
@@ -277,6 +281,8 @@ public:
 	void CalcScaledForward();
 	void CalcScaledBackward();
 	void GetMLHaplotypes(int * ml_states);
+	vector<int>  GetMLStates();
+	void UpdateSampleHaplotypes(vector<int> & ml_states);
 	vector<vector<phaserreal>> GetPosteriorStats(const char * filename, bool print);
 	vector<vector<phaserreal>>  ReadPosteriorStats(const char * filename);
 
