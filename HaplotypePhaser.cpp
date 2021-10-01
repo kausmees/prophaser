@@ -404,10 +404,15 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 
 		double sum = 0.0;
 		double* geno_probs_m = &geno_probs[m][0];
-#pragma omp parallel for schedule(dynamic,131072) reduction(+ : sum) reduction(+ : geno_probs_m[:3])
+//#pragma omp parallel for schedule(dynamic,131072) reduction(+ : sum) reduction(+ : geno_probs_m[:3])
 		for(int s = 0; s < num_states; s++) {
 			posteriors[s] = s_forward[m][s] * s_backward[m][s] / norm;
 			sum += posteriors[s];
+
+//			if (m == 0) {
+//				cout << "backward " << s_backward[m][s] << endl;
+//			}
+
 
 			//////////genotype probability/////////////////
 			int ref_hap1 = states[s].first;
@@ -469,11 +474,11 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 
 	}
 
-	if (print) {
-		printf("Writing stats to %s \n", filename);
-		VcfUtils::writeVectorToCSV(filename, stats, "w");
-
-	}
+//	if (print) {
+//		printf("Writing stats to %s \n", filename);
+//		VcfUtils::writeVectorToCSV(filename, stats, "w");
+//
+//	}
 
 	return stats;
 }
