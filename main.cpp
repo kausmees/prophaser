@@ -5,6 +5,7 @@
 #include "Pedigree.h"
 
 
+
 int main(int argc, char ** argv){
 
 	String dir;
@@ -276,7 +277,7 @@ int main(int argc, char ** argv){
 
 			// Number of reference haplotypes that will be considered when handling one sample
 			// After first iteration, sample haps have been filled and will be used for other samples.
-			//phaser.SetNumHaps((phaser.num_inds - 1) * 2);
+			phaser.SetNumHaps((phaser.num_inds - 1) * 2);
 			end = std::chrono::steady_clock::now();
 			cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl<<endl;
 
@@ -286,8 +287,6 @@ int main(int argc, char ** argv){
 
 	phaser.PrintGenotypesToVCF(ml_genotypes, (result_file + ".genos" ).c_str(), sample_file.c_str(), vcf_template.c_str());
     phaser.PrintPostGenotypesToVCF(ml_genotypes, ml_postprobs, (result_file + ".postgenos" ).c_str(), sample_file.c_str(), vcf_template_gtgp.c_str());
-    // phaser.PrintHaplotypesToVCF(ml_states, (result_file+ suffix + ".phased").c_str(), sample_file.c_str(), vcf_template.c_str()); # no longer relevant way of computing results
-
 
 	end = std::chrono::steady_clock::now();
 	cout << "Total: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin1).count() << " millisec" <<endl<<endl<<endl;

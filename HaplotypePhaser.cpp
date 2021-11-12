@@ -11,6 +11,7 @@
 #include <thrust/execution_policy.h>
 
 
+
 HaplotypePhaser::~HaplotypePhaser(){
 	delete [] normalizersf;
 	delete [] normalizersb;
@@ -289,7 +290,7 @@ phaserreal HaplotypePhaser::CalcEmissionProb(const ChromosomePair chrom_state, i
 		int h1 = haplotypes(ChromStateToHaplotypeIndex(chrom_state.first), marker);
 
 		// Reference hapotype at chromosome 2 (0: REF 1: ALT)
-		int h2 = haplotypes(ChromStateToHaplotypeIndex(chrom_state.second),marker);
+		int h2 = haplotypes(ChromStateToHaplotypeIndex(chrom_state.second), marker);
 
 
 		phaserreal sum = 0.0f;
@@ -362,11 +363,16 @@ void HaplotypePhaser::CalcEmissionProbs(int marker, phaserreal * probs) {
 
 
 
-
 void HaplotypePhaser::InitPriorScaledForward(){
 	phaserreal * emission_probs = new phaserreal[num_states];
 	phaserreal prior = 1.0 / num_states;
 	phaserreal c1 = 0.0;
+
+	for (int i = 0; i < num_markers; i++)
+	{
+		normalizersf[i] = 0;
+	}
+
 
 	CalcEmissionProbs(0, emission_probs);
 
@@ -385,6 +391,10 @@ void HaplotypePhaser::InitPriorScaledForward(){
 
 void HaplotypePhaser::InitPriorScaledBackward(){
 	phaserreal prior = 1.0 / num_states;
+	for (int i = 0; i < num_markers; i++)
+	{
+		normalizersb[i] = 0;
+	}
 	normalizersb[num_markers - 1] = 1.0 / prior;
 	for(int s = 0; s < num_states; s++){
 		s_backward[num_markers-1][s] = normalizersb[num_markers-1];
@@ -462,7 +472,6 @@ void HaplotypePhaser::CalcSingleScaledBackward(int m, const phaserreal* __restri
 	phaserreal scaled_dist;
 	phaserreal c, c1, c2;
 	HapSummer hapSum(num_haps, num_states);
-
 	c = 0;
 	CalcEmissionProbs(m + 1, emission_probs);
 	hapSum.sum(prev, states, emission_probs);
@@ -495,13 +504,13 @@ void HaplotypePhaser::CalcSingleScaledBackward(int m, const phaserreal* __restri
 		for (int chrom_case = 0; chrom_case < 3; chrom_case++) {
 
 			sum += allcases[chrom_case] * probs[chrom_case];
-
 		}
 
 		now[s] = sum;
 		if (oldnormalizer) now[s] *= oldnormalizer;
 		else
 		c += now[s];
+
 	}
 
 	if (!oldnormalizer)
@@ -522,7 +531,9 @@ void HaplotypePhaser::CalcSingleScaledBackward(int m, const phaserreal* __restri
 void HaplotypePhaser::CalcScaledBackward() {
 	InitPriorScaledBackward();
 	s_backward.fillAllButFirst();
+
 }
+
 
 
 
@@ -541,8 +552,6 @@ void HaplotypePhaser::CalcScaledBackward() {
  */
 vector<int>  HaplotypePhaser::GetMLStates(){
 
-	printf("In ML stats \n");
-
 	vector<int> ml_states(num_markers, -1);
 
 	for(int m = 0; m < num_markers; m++) {
@@ -558,9 +567,6 @@ vector<int>  HaplotypePhaser::GetMLStates(){
 #pragma omp parallel for schedule(dynamic,131072) reduction(+ : norm)
 #endif
 		for(int i = 0; i < num_states; i++) {
-			if (m == 100) {
-				cout << "backward = " << backward[i] << endl << endl;
-			}
 			norm += forward[i] * backward[i];
 		}
 
@@ -581,25 +587,11 @@ vector<int>  HaplotypePhaser::GetMLStates(){
 			posteriors[s] = posterior;
 			sum += posterior;
 
-			if (m == 100 and current_sample == 1) {
-				cout << "Posterior = " << posterior<<" for s = "<< s << " forward = " << forward[s] << " backward = " << backward[s] << " norm = " << norm << endl << endl;
-			}
 		}
-//		int maxPosteriorIndex = *max_element(posteriors.rbegin(), posteriors.rend());
-		int maxPosteriorIndex = 0;
-
-		if (m == 100 && current_sample == 1 && (maxPosteriorIndex < 0 || maxPosteriorIndex > num_states -1 )) {
-			cout << "Max Posterior Index = " << maxPosteriorIndex << " for marker " << m << endl << endl;
-			for(int s = 0; s < num_states; s++) {
-//				 these are nan for sample 1
-				cout << "Posterior  = " << posteriors[s] << " for state " << s << endl << endl;
-
-			}
-		}
+		int maxPosteriorIndex = *max_element(posteriors.rbegin(), posteriors.rend());
 		ml_states[m] = maxPosteriorIndex;
 
 	}
-	printf("Eetrurning \n");
 	return ml_states;
 
 }
@@ -703,9 +695,6 @@ vector<vector<phaserreal>>  HaplotypePhaser::GetPosteriorStats(const char * file
 #pragma omp parallel for schedule(dynamic,131072) reduction(+ : norm)
 #endif
 		for(int i = 0; i < num_states; i++) {
-			if (m == 100) {
-				cout << "backward = " << backward[i] << endl << endl;
-			}
 			norm += forward[i] * backward[i];
 		}
 
@@ -799,13 +788,6 @@ vector<vector<phaserreal>>  HaplotypePhaser::GetPosteriorStats(const char * file
 		stats[m][41] = geno_probs[m][0];
 		stats[m][42] = geno_probs[m][1];
 		stats[m][43] = geno_probs[m][2];
-//        if (m % 1000 == 0) {
-//            printf("\n");
-//            printf("\nposterior probability of genotype 0 at marker %d = %f", m, stats[m][41]);
-//            printf("\nposterior probability of genotype 1 at marker %d = %f", m, stats[m][42]);
-//            printf("\nposterior probability of genotype 2 at marker %d = %f", m, stats[m][43]);
-//            printf("\n");
-//        }
 
 	}
 
