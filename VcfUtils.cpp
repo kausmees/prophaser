@@ -96,7 +96,7 @@ void LoadIndividuals(Pedigree &ped, const String &file_name) {
 
 	if(num_samples == 0) {
 		//	TODO add exception
-		printf("ERROR: No individuals in file: %s", file_name);
+		printf("ERROR: No individuals in file: %s", file_name.c_str());
 	}
 
 	for(int i = 0; i < num_samples; i++) {
@@ -253,7 +253,8 @@ void LoadPhasedHaplotypes(const String &file_name, const Pedigree &ped, MatrixXc
 	while(reader.readRecord(record)){
 		std::stringstream ss;
 		ss << record.getChromStr() << ":" << record.get1BasedPosition();
-		marker_name = ss.str().c_str();
+		const string& ss_str = ss.str();
+		marker_name = ss_str.c_str();
 		int marker_id = Pedigree::LookupMarker(marker_name);
 
 		if(marker_id >= 0){
