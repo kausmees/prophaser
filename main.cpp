@@ -1,3 +1,5 @@
+
+
 #include <chrono>
 //#include "HaplotypePhaserSym.h"
 #include "HaplotypePhaser.h"
@@ -17,6 +19,7 @@ int main(int argc, char ** argv){
 	double Ne;
 	double error;
 	int niter;
+	int* x = new int[1048576];
 
 	ParameterList parameter_list;
 	LongParamContainer long_parameters;

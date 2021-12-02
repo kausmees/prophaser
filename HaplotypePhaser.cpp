@@ -125,8 +125,8 @@ void HaplotypePhaser::SetNumHaps(int new_num_haps){
 	hapSum = new HapSummer(num_haps, num_states);
 
 	// <decltype(CalcSingleScaledForwardObj)>
-	new(&s_forward) StepMemoizer<HaplotypePhaser>(this, num_markers, num_states, true, 32, &HaplotypePhaser::CalcSingleScaledForward);
-	new(&s_backward) StepMemoizer<HaplotypePhaser>(this, num_markers, num_states, false, 32, &HaplotypePhaser::CalcSingleScaledBackward);
+	new(&s_forward) StepMemoizer<HaplotypePhaser>(this, num_markers, num_states, true, 64, &HaplotypePhaser::CalcSingleScaledForward);
+	new(&s_backward) StepMemoizer<HaplotypePhaser>(this, num_markers, num_states, false, 64, &HaplotypePhaser::CalcSingleScaledBackward);
 
 }
 
@@ -467,12 +467,15 @@ void HaplotypePhaser::CalcScaledForward(){
 	s_forward.fillAllButFirst();	
 }
 
+
 void HaplotypePhaser::CalcSingleScaledBackward(int m, const phaserreal* __restrict prev, phaserreal* __restrict now) {
 	phaserreal probs[3];
 	phaserreal scaled_dist;
 	phaserreal c, c1, c2;
+	vector<ChromosomePair>& states{this->states};
 	HapSummer hapSum(num_haps, num_states);
 	c = 0;
+	phaserreal* emission_probs = this->emission_probs;
 	CalcEmissionProbs(m + 1, emission_probs);
 	hapSum.sum(prev, states, emission_probs);
 	scaled_dist = 1 - exp(-(distances[m + 1] * pop_const) / num_haps);
@@ -490,41 +493,68 @@ void HaplotypePhaser::CalcSingleScaledBackward(int m, const phaserreal* __restri
 	//if (m % 1000 == 0) fprintf(stderr, "%d\n", m);
 	phaserreal oldnormalizer = normalizersb[m];
 
-#ifdef TARGET_GPU
-	#pragma omp target teams distribute parallel for reduction(+ : c)
-#else
-#pragma omp parallel for schedule(dynamic,131072) reduction(+ : c)
-#endif
-	for (int s = 0; s < num_states; s++) {
-		const ChromosomePair& cp = states[s];
-		phaserreal sum = 0.0f;
-
-		const array<phaserreal, 3> allcases = hapSum.caseProbs(prev, emission_probs, s, cp);
-
-		for (int chrom_case = 0; chrom_case < 3; chrom_case++) {
-
-			sum += allcases[chrom_case] * probs[chrom_case];
-		}
-
-		now[s] = sum;
-		if (oldnormalizer) now[s] *= oldnormalizer;
-		else
-		c += now[s];
-
-	}
 
 	if (!oldnormalizer)
 	{
-	normalizersb[m] = 1.0 / c;
+	#ifdef TARGET_GPU
+	#pragma omp target teams distribute parallel for reduction(+ : c)
+	#else
+	#pragma omp parallel for schedule(dynamic,131072) reduction(+ : c)
+	#endif
+		for (int s = 0; s < num_states; s++) {
+			// Lambda of this not supported in current nvc++, keep in synch with loop below
+			const ChromosomePair& cp = states[s];
+			phaserreal sum = 0.0f;
 
-#ifdef TARGET_GPU
-	#pragma omp target teams distribute parallel for
-#else
-#pragma omp parallel for schedule(dynamic,131072)
-#endif
-	for (int s = 0; s < num_states; s++) {
-		now[s] = now[s] * normalizersb[m];
+			const array<phaserreal, 3> allcases = hapSum.caseProbs(prev, emission_probs, s, cp);
+
+			for (int chrom_case = 0; chrom_case < 3; chrom_case++) {
+
+				sum += allcases[chrom_case] * probs[chrom_case];
+			}
+
+			now[s] = sum;
+			if (oldnormalizer) now[s] *= oldnormalizer;
+			else
+			c += now[s];
+		}
+		normalizersb[m] = 1.0 / c;	
+
+	#ifdef TARGET_GPU
+	//#pragma omp target teams distribute parallel for
+	#pragma omp target teams num_teams(512) thread_limit(512) distribute parallel for
+	#else
+	#pragma omp parallel for schedule(dynamic,131072)
+	#endif
+		for (int s = 0; s < num_states; s++) {
+			now[s] = now[s] * normalizersb[m];
+		}
 	}
+	else
+	{
+		#ifdef TARGET_GPU
+		#pragma omp target teams num_teams(512) thread_limit(512) distribute parallel for
+		//#pragma omp target loop
+		#else
+		#pragma omp parallel for schedule(dynamic,131072)
+		#endif
+		for (int s = 0; s < num_states; s++) {
+			// Lambda of this not supported in current nvc++, keep in synch with loop above
+			const ChromosomePair& cp = states[s];
+			phaserreal sum = 0.0f;
+
+			const array<phaserreal, 3> allcases = hapSum.caseProbs(prev, emission_probs, s, cp);
+
+			for (int chrom_case = 0; chrom_case < 3; chrom_case++) {
+
+				sum += allcases[chrom_case] * probs[chrom_case];
+			}
+
+			now[s] = sum;
+			if (oldnormalizer) now[s] *= oldnormalizer;
+			else
+			c += now[s];
+		}		
 	}
 }
 
@@ -576,10 +606,10 @@ vector<int>  HaplotypePhaser::GetMLStates(){
 		phaserreal geno2 = 0.f;
 		norm = 1.f / norm;
 #ifdef TARGET_GPU
-	#pragma omp target teams distribute parallel for reduction(+ : sum) reduction(+ : geno0, geno1, geno2)
+	#pragma omp target teams distribute parallel for reduction(+ : sum)
 	//
 #else
-	#pragma omp parallel for schedule(dynamic,131072) reduction(+ : sum) reduction(+ : geno0, geno1, geno2)
+	#pragma omp parallel for schedule(dynamic,131072) reduction(+ : sum)
 #endif
 		for(int s = 0; s < num_states; s++) {
 			phaserreal posterior = forward[s] * backward[s] * norm;
