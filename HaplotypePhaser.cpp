@@ -9,7 +9,8 @@
 #include <thrust/iterator/transform_iterator.h>
 #include <thrust/reduce.h>
 #include <thrust/execution_policy.h>
-
+#include <thrust/extrema.h>
+#include <thrust/device_vector.h>
 
 
 HaplotypePhaser::~HaplotypePhaser(){
@@ -585,7 +586,7 @@ vector<int>  HaplotypePhaser::GetMLStates(){
 	vector<int> ml_states(num_markers, -1);
 
 	for(int m = 0; m < num_markers; m++) {
-		vector<phaserreal> posteriors;
+		thrust::device_vector<phaserreal> posteriors;
 		posteriors.resize(num_states, -1);
 
 		phaserreal norm = 0.f;
@@ -618,7 +619,8 @@ vector<int>  HaplotypePhaser::GetMLStates(){
 			sum += posterior;
 
 		}
-		int maxPosteriorIndex = *max_element(posteriors.rbegin(), posteriors.rend());
+		thrust::device_vector<phaserreal>::iterator iter = thrust::max_element(posteriors.begin(), posteriors.end());
+		unsigned int maxPosteriorIndex = iter - posteriors.begin();
 		ml_states[m] = maxPosteriorIndex;
 
 	}
