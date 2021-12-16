@@ -586,7 +586,11 @@ vector<int>  HaplotypePhaser::GetMLStates(){
 	vector<int> ml_states(num_markers, -1);
 
 	for(int m = 0; m < num_markers; m++) {
+#ifdef TARGET_GPU
 		thrust::device_vector<phaserreal> posteriors;
+#else
+vector<phaserreal> posteriors;
+#endif
 		posteriors.resize(num_states, -1);
 
 		phaserreal norm = 0.f;
@@ -619,9 +623,16 @@ vector<int>  HaplotypePhaser::GetMLStates(){
 			sum += posterior;
 
 		}
+
+#ifdef TARGET_GPU
 		thrust::device_vector<phaserreal>::iterator iter = thrust::max_element(posteriors.begin(), posteriors.end());
 		unsigned int maxPosteriorIndex = iter - posteriors.begin();
 		ml_states[m] = maxPosteriorIndex;
+
+#else
+		int maxPosteriorIndex = *max_element(posteriors.rbegin(), posteriors.rend());
+		ml_states[m] = maxPosteriorIndex;
+#endif
 
 	}
 	return ml_states;
