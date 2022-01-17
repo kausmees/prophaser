@@ -52,7 +52,7 @@ vector<size_t> sort_indexes(const vector<T> &v) {
 
 // new
 void LoadPhasedHaplotypes(const String &file_name, const Pedigree &ped, MatrixXc & haplotypes);
-void LoadUnphasedHaplotypes(const String &file_name, const Pedigree &ped, MatrixXc & haplotypes, int index);
+void InitSampleHaplotypes(const String &file_name, const Pedigree &ped, MatrixXc & haplotypes, int index);
 void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, MatrixXvreal & genotypes);
 void LoadIndividuals(Pedigree &ped, const String &file_name);
 

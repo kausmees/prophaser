@@ -216,7 +216,7 @@ void HaplotypePhaser::LoadData(const String &ref_file, const String &sample_file
 	AllocateMemory();
 
 	VcfUtils::LoadPhasedHaplotypes(ref_file, ped, haplotypes);
-	VcfUtils::LoadUnphasedHaplotypes(sample_file, ped, haplotypes, num_ref_inds * 2);
+	VcfUtils::InitSampleHaplotypes(sample_file, ped, haplotypes, num_ref_inds * 2);
 	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls);
 
 	if(!map_file.IsEmpty()) {

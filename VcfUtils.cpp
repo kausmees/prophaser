@@ -272,18 +272,19 @@ void LoadPhasedHaplotypes(const String &file_name, const Pedigree &ped, MatrixXc
 
 
 /**
- * Initialize the haplotypes of the samples to 0.
+ * Initialize the haplotypes of the samples to 0. Assumes haplotypes contains enough rows to contain haplotypes
+ * for all samples in file_name.
  *
  * Index indicates the first index in haplotypes that contains sample data.
  *
  */
-void LoadUnphasedHaplotypes(const String &file_name, const Pedigree &ped, MatrixXc & haplotypes, int index) {
+void InitSampleHaplotypes(const String &file_name, const Pedigree &ped, MatrixXc & haplotypes, int index) {
 
 	VcfFileReader reader;
 	VcfHeader header;
 	reader.open(file_name, header);
-
 	int num_samples = header.getNumSamples();
+	reader.close();
 
 	if (index + num_samples * 2 > haplotypes.rows()) {
 		printf("ERROR: Not enough space in haplotypes to fill %d rows for the unphased haplotypes. \n", num_samples * 2);
@@ -378,7 +379,7 @@ void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, Matri
 			// if marker is a monomorphic SNP with no missing bases
 			if(record.getNumRefBases() != 1 || record.getNumAlts() != 1) {
 				//TODO throw error
-				printf("ERROR: Sample marker is not monomorphic SNP\n");
+				printf("ERROR: Sample marker is not monomorphic SNP:  %s \n", marker_name);
 				//TODO check how this affects imputation. this marker will behave as one we have no info on in sample,
 				//do we want it to be imputed as if it was missing in sample?
 				continue;
@@ -395,7 +396,7 @@ void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, Matri
 			if(sample_ref_base != phased_ref_base || sample_alt_base != phased_alt_base){
 
 				//TODO throw error or warning
-				printf("ERROR: Sample alleles do not match phased reference's alles\n");
+				printf("ERROR: Sample alleles do not match phased reference's alles at %s \n", marker_name);
 				//TODO check how this affects imputation. this marker will behave as one we have no info on in sample,
 				//do we want it to be imputed as if it was missing in sample?
 				continue;
@@ -406,7 +407,7 @@ void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, Matri
 			for (int s = 0; s < num_samples; s++){
 				vector<vcfreal> gls = get_GL(header, record, s);
 
-				// OBS GL SHOULD BE log10(likelihood, so thould be this)
+				// OBS GL SHOULD BE log10(likelihood), so we exp to get raw likelihood
 				sample_gls(s,marker_id*3) = pow(10,gls[0]);
 				sample_gls(s,marker_id*3+1) = pow(10,gls[1]);
 				sample_gls(s,marker_id*3+2) = pow(10,gls[2]);
@@ -473,7 +474,7 @@ void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, vecto
 			// if marker is a monomorphic SNP with no missing bases
 			if(record.getNumRefBases() != 1 || record.getNumAlts() != 1) {
 				//TODO throw error
-				printf("ERROR: Sample marker is not monomorphic SNP\n");
+				printf("ERROR: Sample marker is not monomorphic SNP:  %s \n", marker_name);
 				//TODO check how this affects imputation. this marker will behave as one we have no info on in sample,
 				//do we want it to be imputed as if it was missing in sample?
 				continue;
@@ -490,7 +491,7 @@ void LoadGenotypeLikelihoods(const String &file_name, const Pedigree &ped, vecto
 			if(sample_ref_base != phased_ref_base || sample_alt_base != phased_alt_base){
 
 				//TODO throw error or warning
-				printf("ERROR: Sample alleles do not match phased reference's alles\n");
+				printf("ERROR: Sample alleles do not match phased reference's alles at %s \n", marker_name);
 				//TODO check how this affects imputation. this marker will behave as one we have no info on in sample,
 				//do we want it to be imputed as if it was missing in sample?
 				continue;
@@ -641,25 +642,30 @@ vector<vcfreal> get_GL(VcfHeader& header, VcfRecord& record, int sample) {
 	std::string sub00, sub01, sub11;
 	const string * likelihood = record.getGenotypeInfo().getString(lformat,sample);
 
-	if(*likelihood == "" || *likelihood == ".") {
-		//TODO throw error or handle somehow
-		printf("ERROR: INDIVIDUAL WITH NO LIKELIHOOD FOUND \n");
-	}
-
-	std::istringstream iss(*likelihood);
-
 	double gl_00;
 	double gl_01;
 	double gl_11;
 
-	std::getline(iss, sub00, ',');
-	std::getline(iss, sub01, ',');
-	std::getline(iss, sub11, ',');
+	if(*likelihood == "" || *likelihood == ".") {
+		// missing GLs set to likelihood 0.3333,0.3333,0.33333
+		gl_00 = -0.477164;
+		gl_01 = -0.477164;
+		gl_11 = -0.477164;
 
-	gl_00 = (lformat == "PL") ? atof(sub00.c_str())/-10.0 : atof(sub00.c_str());
-	gl_01 = (lformat == "PL") ? atof(sub01.c_str())/-10.0 : atof(sub01.c_str());
-	gl_11 = (lformat == "PL") ? atof(sub11.c_str())/-10.0 : atof(sub11.c_str());
+	}
+	else {
+		std::istringstream iss(*likelihood);
 
+
+		std::getline(iss, sub00, ',');
+		std::getline(iss, sub01, ',');
+		std::getline(iss, sub11, ',');
+
+		gl_00 = (lformat == "PL") ? atof(sub00.c_str())/-10.0 : atof(sub00.c_str());
+		gl_01 = (lformat == "PL") ? atof(sub01.c_str())/-10.0 : atof(sub01.c_str());
+		gl_11 = (lformat == "PL") ? atof(sub11.c_str())/-10.0 : atof(sub11.c_str());
+
+	}
 	gl_vals.push_back(gl_00);
 	gl_vals.push_back(gl_01);
 	gl_vals.push_back(gl_11);
