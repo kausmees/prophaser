@@ -265,7 +265,7 @@ void HaplotypePhaser::CalcSingleScaledForward(int m, const double* prev, double*
 
 	// Based on normalization scheme, sum over all previous forwards is always 1
 	// Let's precalc sum over all halves in first and second half of pair
-	if (m % 1000 == 0) fprintf(stderr, "%d\n", m);
+	// if (m % 1000 == 0) fprintf(stderr, "%d\n", m);
 
 #pragma omp parallel for schedule(dynamic,131072) reduction(+ : c)
 	for (int s = 0; s < num_states; s++) {
@@ -442,9 +442,9 @@ vector<vector<double>>  HaplotypePhaser::GetPosteriorStats(const char * filename
 		for(int i = 0; i < 3 ; i++) {
 			check_sum += geno_probs[m][i];
 		}
-		if(abs(check_sum - 1.0) > 0.000001 || !isfinite(check_sum)) {
-			printf("!!!!!!!!!!!!!!!!!!!!!!!!!Sum of all geno probs is %f at marker %d !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1\n ", check_sum, m);
-		}
+//		if(abs(check_sum - 1.0) > 0.000001 || !isfinite(check_sum)) {
+//			printf("!!!!!!!!!!!!!!!!!!!!!!!!!Sum of all geno probs is %f at marker %d !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1\n ", check_sum, m);
+//		}
 
 
 		vector<size_t> res = VcfUtils::sort_indexes(posteriors);

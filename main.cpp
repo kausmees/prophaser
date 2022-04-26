@@ -118,12 +118,12 @@ int main(int argc, char ** argv){
 		printf("Num inds in ped after load sample: %d \n ", phaser.ped.count);
 
 
-		cout << "Haplotypes:\n" << phaser.haplotypes.block(0,0,4,10) << endl;
+//		cout << "Haplotypes:\n" << phaser.haplotypes.block(0,0,4,10) << endl;
 
-		cout << "Sample GLs:\n" << endl;
-		for (int m = 0; m < 4 ; m++) {
-			printf("--- marker %d : %f %f %f \n" , m, phaser.sample_gls[m*3], phaser.sample_gls[m*3 +1 ], phaser.sample_gls[m*3+2]);
-		}
+//		cout << "Sample GLs:\n" << endl;
+//		for (int m = 0; m < 4 ; m++) {
+//			printf("--- marker %d : %f %f %f \n" , m, phaser.sample_gls[m*3], phaser.sample_gls[m*3 +1 ], phaser.sample_gls[m*3+2]);
+//		}
 
 		begin = chrono::steady_clock::now();
 		cout << "Starting Forward \n";
