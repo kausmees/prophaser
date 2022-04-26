@@ -23,7 +23,6 @@ using Eigen::VectorXd;
 using Eigen::MatrixXi;
 using Eigen::RowMajor;
 using Eigen::Dynamic;
-//using Eigen::Matrix;
 
 using namespace Eigen;
 
@@ -284,7 +283,6 @@ public:
 	vector<int>  GetMLStates();
 	void UpdateSampleHaplotypes(vector<int> & ml_states);
 	vector<vector<phaserreal>> GetPosteriorStats(const char * filename, bool print);
-	vector<vector<phaserreal>>  ReadPosteriorStats(const char * filename);
 
 	void PrintGenotypesToVCF(vector<vector<int>> & ml_genotypes, const char * out_file, const char * sample_file, const char * vcf_template);
     void PrintPostGenotypesToVCF(vector<vector<int>> & ml_genotypes, vector<vector<vector<phaserreal>>> & ml_postprobs, const char * out_file, const char * sample_file, const char * vcf_template);

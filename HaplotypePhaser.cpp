@@ -77,7 +77,7 @@ struct HapSummer
 #ifdef TARGET_GPU		
 		#pragma omp target teams distribute parallel for
 #else		
-		#pragma omp parallel for schedule(dynamic,131072) reduction(+:sums0[:num_haps], sums1[:num_haps])
+		#pragma omp parallel for schedule(dynamic,131072)
 #endif
 		for (int j = 0; j < num_states; j++) {
 			const ChromosomePair cp = states[j];
@@ -176,20 +176,12 @@ void HaplotypePhaser::AllocateMemory(){
 		normalizersb[i] = 0;
 	}
 
-	// temporary: only consider reference inds ever
-	//SetNumHaps(num_ref_inds * 2);
-
-//	hapSum = new HapSummer(num_haps, num_states);
-
 	case_1 = (pow(1 - error, 2) + pow(error, 2));
 	case_2 = 2 * (1 - error) * error;
 	case_3 = pow(1 - error, 2);
 	case_4 = (1 - error) * error;
 	case_5 = pow(error,2);
 
-	// <decltype(CalcSingleScaledForwardObj)>
-//	new(&s_forward) StepMemoizer<HaplotypePhaser>(this, num_markers, num_states, true, 32, &HaplotypePhaser::CalcSingleScaledForward);
-//	new(&s_backward) StepMemoizer<HaplotypePhaser>(this, num_markers, num_states, false, 32, &HaplotypePhaser::CalcSingleScaledBackward);
 };
 
 
@@ -216,12 +208,15 @@ void HaplotypePhaser::LoadData(const String &ref_file, const String &sample_file
 	AllocateMemory();
 
 	VcfUtils::LoadPhasedHaplotypes(ref_file, ped, haplotypes);
+
 	VcfUtils::InitSampleHaplotypes(sample_file, ped, haplotypes, num_ref_inds * 2);
+
 	VcfUtils::LoadGenotypeLikelihoods(sample_file, ped, sample_gls);
 
 	if(!map_file.IsEmpty()) {
 		VcfUtils::LoadGeneticMap(map_file.c_str(), ped, distances);
 	};
+
 };
 
 
@@ -646,8 +641,6 @@ vector<phaserreal> posteriors;
  *
  */
 void HaplotypePhaser::UpdateSampleHaplotypes(vector<int> & ml_states) {
-
-	cout << "In UpdateSampleHaplotypes" << endl << endl;
 	int template_hap1;
 	int template_hap2;
 	int hapcode1;
@@ -656,19 +649,11 @@ void HaplotypePhaser::UpdateSampleHaplotypes(vector<int> & ml_states) {
 
 	for (int m = 0;  m < num_markers; m++) {
 
-		if (current_sample == 10) {
-			cout << "m = " << m << "ml state = " << ml_states[m] << endl << endl;
-			cout << "first =" << states[ml_states[m]].first << "second = " << states[ml_states[m]].second << endl << endl;
-		}
 
 		//////////genotype probability/////////////////
 		template_hap1 = ChromStateToHaplotypeIndex(states[ml_states[m]].first);
 		template_hap2 = ChromStateToHaplotypeIndex(states[ml_states[m]].second);
 
-		if (current_sample == 10) {
-
-		cout << "first translated = " << template_hap1 << "second translated " << template_hap2 << endl << endl;
-		}
 
 		// AGCT allele
 		// String allele1 = Pedigree::GetMarkerInfo(m)->GetAlleleLabel(haplotypes[ref_hap1][m]+1);
@@ -677,10 +662,6 @@ void HaplotypePhaser::UpdateSampleHaplotypes(vector<int> & ml_states) {
 		// 00, 01, 10, 11
 		hapcode1 = haplotypes(template_hap1, m);
 		hapcode2 = haplotypes(template_hap2, m);
-		if (current_sample == 10) {
-
-		cout << "hapcode 1 = " << hapcode1 << "hapcode 2" << hapcode2 << endl << endl;
-		}
 		haplotypes(current_sample_hap_index, m) = hapcode1;
 		haplotypes(current_sample_hap_index + 1, m) = hapcode2;
 
@@ -806,11 +787,12 @@ vector<vector<phaserreal>>  HaplotypePhaser::GetPosteriorStats(const char * file
 		for(int i = 0; i < 3 ; i++) {
 			check_sum += geno_probs[m][i];
 		}
-		if(abs(check_sum - 1.0) > 0.0001 || !isfinite(check_sum)) {
-			printf("!!!!!!!!!!!!!!!!!!!!!!!!!Sum of all geno probs is %f at marker %d !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1\n ", check_sum, m);
-		}
+//		if(abs(check_sum - 1.0) > 0.0001 || !isfinite(check_sum)) {
+//			printf("!!!!!!!!!!!!!!!!!!!!!!!!!Sum of all geno probs is %f at marker %d !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1\n ", check_sum, m);
+//		}
 
 
+		// Sorting is slow, so we avoid doing it now, as we are interested in outputting posterior genotype probs, not phased haplotypes.
 		/*		vector<size_t> res = VcfUtils::sort_indexes(posteriors);
 
 		//add lowest elements to stats[m]
@@ -842,132 +824,6 @@ vector<vector<phaserreal>>  HaplotypePhaser::GetPosteriorStats(const char * file
 
 	return stats;
 }
-
-/**
- * Read stats from filename
- */
-vector<vector<phaserreal>>  HaplotypePhaser::ReadPosteriorStats(const char * filename){
-
-	vector<vector<phaserreal>> stats;
-
-
-	FILE * statstream = fopen(filename, "r");
-
-	printf("Opened statsream for %s \n", filename);
-	float low1;
-	float low2;
-	float low3;
-	float low4;
-	float low5;
-	float low6;
-	float low7;
-	float low8;
-	float low9;
-	float low10;
-
-	float low1_i;
-	float low2_i;
-	float low3_i;
-	float low4_i;
-	float low5_i;
-	float low6_i;
-	float low7_i;
-	float low8_i;
-	float low9_i;
-	float low10_i;
-
-	float high1;
-	float high2;
-	float high3;
-	float high4;
-	float high5;
-	float high6;
-	float high7;
-	float high8;
-	float high9;
-	float high10;
-
-	float high1_i;
-	float high2_i;
-	float high3_i;
-	float high4_i;
-	float high5_i;
-	float high6_i;
-	float high7_i;
-	float high8_i;
-	float high9_i;
-	float high10_i;
-
-	float average;
-	int result;
-
-
-	for(int m = 0; m < num_markers; m++) {
-		stats.push_back({});
-		stats[m].resize(41,-1.0);
-	}
-
-	for(int m = 0; m < num_markers; m++) {
-		printf("scanning for marker = %d \n", m);
-		result = fscanf(statstream, "%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,\n",
-				&low1,&low2,&low3,&low4,&low5,&low6,&low7,&low8,&low9,&low10,&low1_i,&low2_i,&low3_i,&low4_i,&low5_i,&low6_i,&low7_i,&low8_i,&low9_i,&low10_i,
-				&high1,&high2,&high3,&high4,&high5,&high6,&high7,&high8,&high9,&high10,&high1_i,&high2_i,&high3_i,&high4_i,&high5_i,&high6_i,&high7_i,&high8_i,&high9_i,&high10_i,&average);
-
-
-		printf("result = %d \n", result);
-
-		printf("scanned for marker = %d \n", m);
-		stats[m][0] = low1;
-		stats[m][1] = low2;
-		stats[m][2] = low3;
-		stats[m][3] = low4;
-		stats[m][4] = low5;
-		stats[m][5] = low6;
-		stats[m][6] = low7;
-		stats[m][7] = low8;
-		stats[m][8] = low9;
-		stats[m][9] = low10;
-
-		stats[m][10] = low1_i;
-		stats[m][11] = low2_i;
-		stats[m][12] = low3_i;
-		stats[m][13] = low4_i;
-		stats[m][14] = low5_i;
-		stats[m][15] = low6_i;
-		stats[m][16] = low7_i;
-		stats[m][17] = low8_i;
-		stats[m][18] = low9_i;
-		stats[m][19] = low10_i;
-
-		stats[m][20] = high1;
-		stats[m][21] = high2;
-		stats[m][22] = high3;
-		stats[m][23] = high4;
-		stats[m][24] = high5;
-		stats[m][25] = high6;
-		stats[m][26] = high7;
-		stats[m][27] = high8;
-		stats[m][28] = high9;
-		stats[m][29] = high10;
-
-		stats[m][30] = high1_i;
-		stats[m][31] = high2_i;
-		stats[m][32] = high3_i;
-		stats[m][33] = high4_i;
-		stats[m][34] = high5_i;
-		stats[m][35] = high6_i;
-		stats[m][36] = high7_i;
-		stats[m][37] = high8_i;
-		stats[m][38] = high9_i;
-		stats[m][39] = high10_i;
-
-		stats[m][40] = average;
-
-
-	}
-	return stats;
-}
-
 
 /**
  * Print the given genotypes to a VCF.
@@ -1092,9 +948,6 @@ void HaplotypePhaser::PrintPostGenotypesToVCF(vector<vector<int>> & genotypes, v
             string s_postprobs;
 
             s_postprobs = to_string(postprobs[sample][m][0]) + "," + to_string(postprobs[sample][m][1]) + "," + to_string(postprobs[sample][m][2]);
-//            if (m % 1000 == 0) {
-//                printf("Writing GP %s for samnple %d at marker %d\n", s_postprobs, sample, m);
-//            }
             succ = record_template.getGenotypeInfo().setString("GP", sample, s_postprobs);
 
             //			if (genotypes[sample][m] == 0) {

@@ -1,7 +1,5 @@
 
-
 #include <chrono>
-//#include "HaplotypePhaserSym.h"
 #include "HaplotypePhaser.h"
 #include "Parameters.h"
 #include "Pedigree.h"
@@ -41,13 +39,11 @@ int main(int argc, char ** argv){
 
 	// Defaults
 	Ne = Ne ? Ne : 11418.0;
-	error = error ? error : 1e-12;
+	error = error ? error : 0.001;
+	niter = niter ? niter : 1;
 
-	dir = !dir.IsEmpty() ? dir : "../../Data/1KGData/vcfs/chrom20/";
 	res_file = !res_file.IsEmpty() ? res_file : "./Results/" + s_file;
 
-
-// TODO implement base class and have algorithm choice in parameters
 
 	HaplotypePhaser phaser;
 
@@ -61,8 +57,21 @@ int main(int argc, char ** argv){
 	string ref_file = string(r_file);
 	string result_file = string(res_file);
 
-	string vcf_template = string(dir) + sfilebase + ".template.vcf";
-    string vcf_template_gtgp = string(dir) + sfilebase + ".template_gtgp.vcf";
+	string vcf_template = string(dir) + sfilebase + ".template_gtgp.vcf";
+
+	if (dir.IsEmpty()) {
+		printf("ERROR: Input directory must be specified.\n");
+		return 1;
+	};
+	if (s_file.IsEmpty()) {
+		printf("ERROR: Sample file must be specified.\n");
+		return 1;
+	};
+	if (r_file.IsEmpty()) {
+		printf("ERROR: Phased reference file must be specified.\n");
+		return 1;
+	};
+
 
 	printf("Phasing file : %s \n", sample_file.c_str());
 	printf("----------------\n");
@@ -72,9 +81,9 @@ int main(int argc, char ** argv){
 	//
 	printf("With: \nNe %f \n", phaser.Ne);
 	printf("error %.13e \n", phaser.error);
+	printf("iterations %d \n", niter);
 
 	printf("\nTemplate GT vcf: %s \n\n ", vcf_template.c_str());
-    printf("\nTemplate GT:GP vcf: %s \n\n ", vcf_template_gtgp.c_str());
 
 	printf("----------------\n");
 	printf("Writing to : %s \n\n", (result_file).c_str());
@@ -86,7 +95,6 @@ int main(int argc, char ** argv){
 
 	VcfFileReader reader;
 	VcfHeader header_read;
-
 
 	// n_samples x n_markers array of most likely genotypes
 	vector<vector<int>> ml_genotypes;
@@ -110,6 +118,7 @@ int main(int argc, char ** argv){
 	phaser.SetNumHaps(phaser.num_ref_inds * 2);
 
 	for(int iter = 0; iter < niter; iter++){
+
 		cout << "\n\n------------- Starting iteration " << iter << "-------------"<< endl;
 
 		for(int sample = 0; sample < phaser.num_sample_inds; sample++) {
@@ -120,15 +129,15 @@ int main(int argc, char ** argv){
 
 			cout << "\n\n------------- Starting sample " << sample << "-------------"<< endl;
 			//(Index startRow, Index startCol, Index blockRows, Index blockCols)
-			cout << "Haplotypes:\n" << phaser.haplotypes.block(0,0,4,10) << endl;
-			cout << "Sample GLs:\n" << endl;
+//			cout << "Haplotypes:\n" << phaser.haplotypes.block(0,0,4,10) << endl;
+//			cout << "Sample GLs:\n" << endl;
 
-			for (int m = 0; m < 4 ; m++) {
-				printf("--- marker %d : %f %f %f \n" , m, phaser.sample_gls(sample,m*3), phaser.sample_gls(sample,m*3 +1), phaser.sample_gls(sample,m*3+2));
-			}
-			for (int m = phaser.num_markers-5; m < phaser.num_markers-1 ; m++) {
-				printf("--- marker %d : %f %f %f \n" , m, phaser.sample_gls(sample,m*3), phaser.sample_gls(sample,m*3 +1), phaser.sample_gls(sample,m*3+2));
-			}
+//			for (int m = 0; m < 4 ; m++) {
+//				printf("--- marker %d : %f %f %f \n" , m, phaser.sample_gls(sample,m*3), phaser.sample_gls(sample,m*3 +1), phaser.sample_gls(sample,m*3+2));
+//			}
+//			for (int m = phaser.num_markers-5; m < phaser.num_markers-1 ; m++) {
+//				printf("--- marker %d : %f %f %f \n" , m, phaser.sample_gls(sample,m*3), phaser.sample_gls(sample,m*3 +1), phaser.sample_gls(sample,m*3+2));
+//			}
 
 			begin = chrono::steady_clock::now();
 			cout << "Starting Forward \n";
@@ -147,46 +156,6 @@ int main(int argc, char ** argv){
 			cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
 			begin = chrono::steady_clock::now();
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
-			// Old code
-//			cout << "Starting Stats \n";
-//			vector<vector<phaserreal>> stats = phaser.GetPosteriorStats((result_file+"_"+to_string(sample)+"_stats").c_str(), true);
-//			cout << "Done Stats \n";
-//
-//			// push back a vector for this sample
-//			ml_genotypes.push_back({});
-//			ml_states.push_back({});
-//			ml_postprobs.push_back({});
-//
-//			for(int m = 0; m < phaser.num_markers; m++) {
-//				float max_geno_prob = 0.0;
-//				int max_geno_code;
-//				ml_postprobs[sample].push_back({});
-//				ml_postprobs[sample][m].resize(3);
-//				for(int i = 0; i < 3; i++) {
-//					if(stats[m][41+i] > max_geno_prob) {
-//						max_geno_prob = stats[m][41+i];
-//						max_geno_code = i;
-//					};
-//				};
-//				ml_genotypes[sample].push_back(max_geno_code);
-//
-//				for(int g = 0; g < 3; g++) {
-//					ml_postprobs[sample][m][g] = stats[m][41+g];
-//				}
-//	//            if (m % 1000 == 0) {
-//	//                printf("\nSample %d", sample);
-//	//                printf("\nposterior probabilities RR,RA,AA at marker %d = %f,%f,%f", m, ml_postprobs[sample][m][0], ml_postprobs[sample][m][1], ml_postprobs[sample][m][2]);
-//	//                printf("\n");
-//	//            }
-//
-//				ml_states[sample].push_back(stats[m][39]);
-//			};
-//
-//			end = std::chrono::steady_clock::now();
-//			cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl;
-////////////////////////////////////////////////////////////////////////////////////////////////////////////7
-
 			// if its not the last iteration, we just get the ML states - no ml genos
 			if (iter < niter -1) {
 
@@ -196,7 +165,7 @@ int main(int argc, char ** argv){
 
 				end = std::chrono::steady_clock::now();
 				cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec    size: " <<  ml_states_this_sample.size() << endl<<endl;
-				///////////////////////////////////////////////////////////////////////////////
+
 				cout << "ml states: " << endl << endl;
 				for (int m = 0; m < 10 ; m++) {
 					cout << ml_states_this_sample[m] << endl;
@@ -213,9 +182,9 @@ int main(int argc, char ** argv){
 			// final iteration: we also get the ML genos
 			// and store ml_states and ml_genos for all samples for printing to file
 			else {
-				///////////////////////////////////////////////////////////////////////////////////////////
+
 				cout << "Starting Stats \n";
-				vector<vector<phaserreal>> stats = phaser.GetPosteriorStats((result_file+"_"+to_string(sample)+"_stats").c_str(), iter == niter -1);
+				vector<vector<phaserreal>> stats = phaser.GetPosteriorStats((result_file+"_"+to_string(sample)+"_stats").c_str(), false);
 
 				end = std::chrono::steady_clock::now();
 				cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<  endl<<endl;
@@ -260,8 +229,6 @@ int main(int argc, char ** argv){
 				end = std::chrono::steady_clock::now();
 				cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl<<endl;
 
-				///////////////////////////////////////////////////////////////////////////////////////////
-
 
 				end = std::chrono::steady_clock::now();
 				cout << "Time: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " millisec" <<endl<<endl;
@@ -287,9 +254,7 @@ int main(int argc, char ** argv){
 		}
 	};
 
-
-	phaser.PrintGenotypesToVCF(ml_genotypes, (result_file + ".genos" ).c_str(), sample_file.c_str(), vcf_template.c_str());
-    phaser.PrintPostGenotypesToVCF(ml_genotypes, ml_postprobs, (result_file + ".postgenos" ).c_str(), sample_file.c_str(), vcf_template_gtgp.c_str());
+    phaser.PrintPostGenotypesToVCF(ml_genotypes, ml_postprobs, (result_file + ".postgenos" ).c_str(), sample_file.c_str(), vcf_template.c_str());
 
 	end = std::chrono::steady_clock::now();
 	cout << "Total: " << chrono::duration_cast<std::chrono::milliseconds>(end - begin1).count() << " millisec" <<endl<<endl<<endl;
