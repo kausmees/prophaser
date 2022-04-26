@@ -23,7 +23,6 @@ using Eigen::VectorXd;
 using Eigen::MatrixXi;
 using Eigen::RowMajor;
 using Eigen::Dynamic;
-//using Eigen::Matrix;
 
 using namespace Eigen;
 

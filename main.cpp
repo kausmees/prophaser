@@ -1,5 +1,4 @@
 #include <chrono>
-//#include "HaplotypePhaserSym.h"
 #include "HaplotypePhaser.h"
 #include "Parameters.h"
 #include "Pedigree.h"
@@ -37,17 +36,12 @@ int main(int argc, char ** argv){
 	Ne = Ne ? Ne : 11418.0;
 	error = error ? error : 0.001;
 
-	dir = !dir.IsEmpty() ? dir : "../../Data/1KGData/vcfs/chrom20/";
 	res_dir = !res_dir.IsEmpty() ? res_dir : "./Results/";
 
-
-// TODO implement base class and have algorithm choice in parameters
 
 	HaplotypePhaser phaser;
 	string suffix = ".full";
 
-//	HaplotypePhaserSym phaser;
-//	string suffix = ".sym";
 
 	phaser.Ne = Ne;
 	phaser.error = error;
@@ -60,6 +54,23 @@ int main(int argc, char ** argv){
 
 	string vcf_template = string(dir) + sfilebase + ".template.vcf";
 
+
+	if (dir.IsEmpty()) {
+		printf("ERROR: Input directory must be specified.\n");
+		return 1;
+	};
+	if (s_file.IsEmpty()) {
+		printf("ERROR: Sample file must be specified.\n");
+		return 1;
+	};
+	if (r_file.IsEmpty()) {
+		printf("ERROR: Phased reference file must be specified.\n");
+		return 1;
+	};
+
+
+
+
 	printf("Phasing file : %s \n", sample_file.c_str());
 	printf("----------------\n");
 
@@ -68,7 +79,6 @@ int main(int argc, char ** argv){
 	//
 	printf("With: \nNe %f \n", phaser.Ne);
 	printf("error %f \n", phaser.error);
-	printf("algorithm %s \n", suffix.c_str());
 
 	printf("\nTemplate vcf: %s \n\n ", vcf_template.c_str());
 
